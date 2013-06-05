@@ -1,5 +1,5 @@
 import pecan
-from core.api.controllers import v1
+from core.wsgi.controllers import v1
 
 
 class RootController(object):

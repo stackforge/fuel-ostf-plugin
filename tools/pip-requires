@@ -1,0 +1,6 @@
+pecan
+requests
+stevedore
+gevent
+redis
+hiredis
