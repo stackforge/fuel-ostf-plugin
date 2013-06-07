@@ -5,8 +5,7 @@ class V1Controller(rest.RestController):
 
     @expose('json')
     def post(self, test_service, **kwargs):
-        res = request.api.invoke_build(test_service,
-                                       job_name=kwargs.get('job'))
+        res = request.api.invoke_build(test_service, kwargs.get('job'))
         return res
 
     @expose()
@@ -21,5 +20,8 @@ class V1Controller(rest.RestController):
 
     @expose('json')
     def get(self, test_service, **kwargs):
-        res = request.api.get_test_results(test_service)
+        if 'job' in kwargs:
+            res = request.api.get_job_test_results(test_service, kwargs['job'])
+        else:
+            res = request.api.get_test_results(test_service)
         return res

@@ -19,3 +19,6 @@ class RedisStorage(object):
     def delete_test_service(self, test_service):
         fields = self._r.hkeys(test_service)
         self._r.hdel(test_service, *fields)
+
+    def get_job_test_results(self, test_service, job):
+        return self._r.hget(test_service, job)

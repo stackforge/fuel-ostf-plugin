@@ -5,7 +5,7 @@ import gevent
 import time
 from itertools import cycle
 
-
+#TODO remove this, or explore possibility to add some queue logic
 JOB_QUEUE = cycle(['tempest_RunServerTests'])
 
 
@@ -50,3 +50,7 @@ class API(object):
     def update_test_results(self, test_service, job, test_results):
         return self._storage.update_test_results(test_service, job,
                                                  test_results)
+
+    def get_job_test_results(self, test_service, job):
+        return {test_service: { job:
+                    self._storage.get_job_test_results(test_service, job)}}
