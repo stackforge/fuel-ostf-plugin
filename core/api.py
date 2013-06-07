@@ -6,7 +6,7 @@ import time
 from itertools import cycle
 
 #TODO remove this, or explore possibility to add some queue logic
-JOB_QUEUE = cycle(['tempest_RunServerTests'])
+JOB_QUEUE = cycle(['tempest'])
 
 
 class API(object):
@@ -19,11 +19,12 @@ class API(object):
     def invoke_build(self, test_service, job=None):
         if not job:
             job = JOB_QUEUE.next()
-        self._transport.invoke_build(job)
-        stored_info = self._storage.create_test_suite(test_service, job)
-        gevent.spawn(self._handle_update, test_service, job)
-        gevent.sleep(0)
-        return stored_info
+        response = self._transport.invoke_build(job)
+        if response.status_code == 200:
+            stored_info = self._storage.create_test_suite(test_service, job)
+            gevent.spawn(self._handle_update, test_service, job)
+            gevent.sleep(0)
+            return stored_info
 
     def _handle_update(self, test_service, job):
         gevent.sleep(0)

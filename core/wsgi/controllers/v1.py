@@ -6,6 +6,8 @@ class V1Controller(rest.RestController):
     @expose('json')
     def post(self, test_service, **kwargs):
         res = request.api.invoke_build(test_service, kwargs.get('job'))
+        if not res:
+            response.status = 400
         return res
 
     @expose()
@@ -16,7 +18,7 @@ class V1Controller(rest.RestController):
     def delete(self, test_service):
         request.api.delete_test_service(test_service)
         response.status = 200
-        return {}
+        return 'DELETED'
 
     @expose('json')
     def get(self, test_service, **kwargs):
