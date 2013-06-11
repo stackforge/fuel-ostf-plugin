@@ -5,9 +5,7 @@ class V1Controller(rest.RestController):
 
     @expose('json')
     def post(self, test_service, **kwargs):
-        res = request.api.invoke_build(test_service, kwargs.get('job'))
-        if not res:
-            response.status = 400
+        res = request.api.run(test_service)
         return res
 
     @expose()
