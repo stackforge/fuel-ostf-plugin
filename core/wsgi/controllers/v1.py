@@ -5,23 +5,14 @@ class V1Controller(rest.RestController):
 
     @expose('json')
     def post(self, test_service, **kwargs):
-        res = request.api.run(test_service)
-        return res
-
-    @expose()
-    def head(self, service, *kwargs):
-        pass
-
-    @expose()
-    def delete(self, test_service):
-        request.api.delete_test_service(test_service)
-        response.status = 200
-        return 'DELETED'
+        return request.api.run(test_service,
+            {'test_path': ['/home/dshulyak/projects/ceilometer/tests']})
 
     @expose('json')
-    def get(self, test_service, **kwargs):
-        if 'job' in kwargs:
-            res = request.api.get_job_test_results(test_service, kwargs['job'])
-        else:
-            res = request.api.get_test_results(test_service)
-        return res
+    def get(self, test_service, service_id=1, test_id=None, meta=False):
+        return request.api.get_info(test_service, service_id, test_id, meta)
+
+    @expose('json')
+    def delete(self):
+        request.api.flush_storage()
+        return {}

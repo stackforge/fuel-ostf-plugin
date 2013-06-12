@@ -8,13 +8,17 @@ class API(object):
         self._storage = get_storage()
         self._transport = get_transport()
 
-    def run(self, service_name):
-        service_path = '/home/dshulyak/projects/ceilometer/tests/test_novaclient.py'
-        service_id = '{}:{}'.format(service_name, 3)
-        self._transport.run(service_path, service_id)
-        return {'service_id': service_id}
+    def run(self, service_name, conf):
+        service_id = self._storage.add_test_run(service_name)
+        stored_id = '{}:{}'.format(service_name, service_id)
+        self._transport.run(stored_id, conf)
+        return {service_name: service_id}
 
-    def get_info(self, service_id, test_id=None, meta=True):
+    def get_info(self, service_name, service_id, test_id=None, meta=True):
+        stored_id = '{}:{}'.format(service_name, service_id)
         if not test_id:
-            return self._storage.get_test_results(service_id)
-        return self._storage.get_test_result(service_id, test_id, meta=meta)
+            return self._storage.get_test_results(stored_id)
+        return self._storage.get_test_result(stored_id, test_id, meta=meta)
+
+    def flush_storage(self):
+        self._storage.flush_db()
