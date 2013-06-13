@@ -4,12 +4,10 @@ import json
 from nose import tools
 
 
-
-
 class TestRedisStorage(unittest.TestCase):
 
     def setUp(self):
-        self.redis_client = redis_storage.RedisStorage()
+        self.redis_client = redis_storage.RedisStorage(db=10)
         _raw = self.redis_client._r
         unique_keys_container = 'unique'
         text_run = 'tempest'

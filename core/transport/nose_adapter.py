@@ -6,15 +6,27 @@ from time import time
 import sys
 from StringIO import StringIO
 from oslo.config import cfg
+import json
 
 nose_opts = [
     cfg.StrOpt('default_test_path', default='.',
                help='test path used with nose test runner'),
     cfg.StrOpt('config_template', default='tempest.conf',
-               help='template that will be used for running tempest')
+               help='template that will be used for running tempest'),
+    cfg.ListOpt('commands', default=[],
+                help='commands separated by ",", args should be separated by ";"')
 ]
 
 cfg.CONF.register_opts(nose_opts)
+
+
+def get_args(test_run):
+    commands = {}
+    test_run_name, _ = test_run.split(':')
+    for command in cfg.CONF.commands:
+        name, argv = command.split('=')
+        commands[name] = argv.split(';')
+    return commands.get(test_run_name, [])
 
 
 class RedisPlugin(plugins.Plugin):
@@ -45,20 +57,20 @@ class RedisPlugin(plugins.Plugin):
 
     def addSuccess(self, test, capt=None):
         self.stats['passes'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), {'type': 'success'})
+        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'success'}))
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         self.stats['failures'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), {'type': 'failure'})
+        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'failure'}))
 
     def addError(self, test, err, capt=None, tb_info=None):
         self.stats['errors'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), {'type': 'error'})
+        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'error'}))
 
     def report(self, stream):
         stats_values = sum(self.stats.values())
         self.stats['total'] = stats_values
-        self.storage.add_test_result(self.test_run_id, 'stats', self.stats)
+        self.storage.add_test_result(self.test_run_id, 'stats', json.dumps(self.stats))
 
     def _start_capture(self):
         self._capture.append((sys.stdout, sys.stderr))
@@ -110,15 +122,16 @@ class NoseDriver(object):
     def __init__(self):
         self._default_path = cfg.CONF.default_test_path
 
-    def run(self, test_run):
-        gevent.spawn(self._run_tests, test_run, self._default_path)
+    def run(self, test_run, conf):
+        argv_add = get_args(test_run)
+        gevent.spawn(self._run_tests, test_run, argv_add)
 
-    def _run_tests(self, service_id, test_path):
+    def _run_tests(self, test_run, argv_add):
         gevent.sleep(0)
         main(defaultTest=None,
-             addplugins=[RedisPlugin(service_id)],
+             addplugins=[RedisPlugin(test_run)],
              exit=False,
-             argv=[service_id] + [test_path])
+             argv=[test_run]+argv_add)
         raise gevent.GreenletExit
 
 

@@ -4,3 +4,4 @@ stevedore
 gevent
 redis
 hiredis
+oslo.config

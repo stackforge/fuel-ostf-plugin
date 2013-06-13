@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # Build the WSGI app
     root = app.setup_app()
     cfg.CONF([], project='testingadapter',
-                 default_config_files=['bin/testingadapter.conf'])
+                 default_config_files=['/etc/testingadapter.conf'])
     # Create the WSGI server and start it
     host, port = config.server.values()
     srv = pywsgi.WSGIServer((host, int(port)), root)

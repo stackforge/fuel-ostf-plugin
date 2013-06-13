@@ -6,7 +6,10 @@ class V1Controller(rest.RestController):
 
     @expose('json')
     def post(self, test_service):
-        conf = json.loads(request.body)
+        if request.body:
+            conf = json.loads(request.body)
+        else:
+            conf = {}
         return request.api.run(test_service, conf)
 
     @expose('json')

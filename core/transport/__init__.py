@@ -1,5 +1,6 @@
 from core.transport import jenkins_adapter, nose_adapter
 from oslo.config import cfg
+from stevedore import driver
 
 plugins = cfg.ListOpt('plugins', default=[],
                       help='plugins mapping that will be used for custom test running')
@@ -7,8 +8,11 @@ plugins = cfg.ListOpt('plugins', default=[],
 cfg.CONF.register_opt(plugins)
 
 
+PLUGINS_NAMESPACE = 'plugins'
+
+
 def get_transport(service_name):
-    for plugin in cfg.CONF.plugins:
-        test_run, plug = plugin.split('=')
-        if test_run == service_name:
-            return nose_adapter.NoseDriver()
+    mgr = driver.DriverManager(PLUGINS_NAMESPACE,
+                               'nose',
+                               invoke_on_load=True)
+    return mgr.driver

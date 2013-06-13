@@ -6,8 +6,8 @@ import json
 
 class RedisStorage(object):
 
-    def __init__(self):
-        self._r = redis.StrictRedis('localhost')
+    def __init__(self, db=0):
+        self._r = redis.StrictRedis('localhost', db=db)
 
     def add_test_run(self, test_run):
         return self._r.hincrby('unique', test_run)
@@ -15,10 +15,10 @@ class RedisStorage(object):
     def get_current_test_run(self, test_run):
         return self._r.hget('unique', test_run)
 
-    def get_test_results(self, test_run_id):
-        res = self._r.hgetall(test_run_id)
+    def get_test_results(self, stored_id):
+        res = self._r.hgetall(stored_id)
         res = {key: json.loads(value) for key, value in res.iteritems()}
-        return {test_run_id: res}
+        return {stored_id: res}
 
     def get_test_result(self, test_run_id, test_id, stats=False):
         res = {}
