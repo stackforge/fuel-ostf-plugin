@@ -29,5 +29,3 @@ logging = {
     },
 }
 
-
-jenkins_url = 'http://172.18.214.29:8080'

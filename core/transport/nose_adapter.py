@@ -7,6 +7,15 @@ import sys
 from StringIO import StringIO
 from oslo.config import cfg
 
+nose_opts = [
+    cfg.StrOpt('default_test_path', default='.',
+               help='test path used with nose test runner'),
+    cfg.StrOpt('config_template', default='tempest.conf',
+               help='template that will be used for running tempest')
+]
+
+cfg.CONF.register_opts(nose_opts)
+
 
 class RedisPlugin(plugins.Plugin):
 
@@ -96,17 +105,21 @@ class RedisPlugin(plugins.Plugin):
         return self._start_time - self._end_time
 
 
-def run(service_id, conf):
-    gevent.spawn(_run, service_id, conf)
+class NoseDriver(object):
 
+    def __init__(self):
+        self._default_path = cfg.CONF.default_test_path
 
-def _run(service_id, conf):
-    gevent.sleep(0)
-    main(defaultTest=None,
-         addplugins=[RedisPlugin(service_id)],
-         exit=False,
-         argv=[service_id] + conf['test_path'])
-    raise gevent.GreenletExit
+    def run(self, test_run):
+        gevent.spawn(self._run_tests, test_run, self._default_path)
+
+    def _run_tests(self, service_id, test_path):
+        gevent.sleep(0)
+        main(defaultTest=None,
+             addplugins=[RedisPlugin(service_id)],
+             exit=False,
+             argv=[service_id] + [test_path])
+        raise gevent.GreenletExit
 
 
 

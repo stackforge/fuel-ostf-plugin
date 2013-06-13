@@ -1,6 +1,5 @@
 import requests
 import json
-from nose import run
 
 
 class JenkinsClient(object):
