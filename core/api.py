@@ -20,6 +20,11 @@ class API(object):
             return self._storage.get_test_results(stored_id)
         return self._storage.get_test_result(stored_id, test_id, meta=meta)
 
+    def kill(self, test_run, test_run_id):
+        transport = get_transport(test_run)
+        stored_id = '{}:{}'.format(test_run, test_run_id)
+        return transport.kill(stored_id)
+
     def flush_storage(self):
         self._storage.flush_db()
 

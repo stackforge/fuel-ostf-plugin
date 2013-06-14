@@ -20,6 +20,9 @@ nose_opts = [
 cfg.CONF.register_opts(nose_opts)
 
 
+TESTS_PROCESS = {}
+
+
 class RedisPlugin(plugins.Plugin):
 
     enabled = True
@@ -33,7 +36,7 @@ class RedisPlugin(plugins.Plugin):
         super(RedisPlugin, self).__init__()
         self._current_stderr = None
         self._current_stdout = None
-        self._start_capture()
+        # self._start_capture()
 
     def options(self, parser, env=os.environ):
         pass
@@ -54,7 +57,6 @@ class RedisPlugin(plugins.Plugin):
     def addSuccess(self, test, capt=None):
         self.stats['passes'] += 1
         self.add_message(test, type='success')
-
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         self.stats['failures'] += 1
@@ -121,7 +123,7 @@ class NoseDriver(object):
 
     def run(self, test_run, conf):
         gev = gevent.spawn(self._run_tests, test_run, [conf['working_directory']])
-        gev.join()
+        TESTS_PROCESS[test_run] = gev
 
     def _run_tests(self, test_run, argv_add):
         try:
@@ -130,7 +132,15 @@ class NoseDriver(object):
                  exit=True,
                  argv=[test_run]+argv_add)
         finally:
+            # del TESTS_PROCESS[test_run]
             raise gevent.GreenletExit
+
+    def kill(self, test_run):
+        if test_run in TESTS_PROCESS:
+            TESTS_PROCESS[test_run].kill()
+            del TESTS_PROCESS[test_run]
+
+
 
 
 

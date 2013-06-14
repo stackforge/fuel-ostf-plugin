@@ -17,6 +17,6 @@ class V1Controller(rest.RestController):
         return request.api.get_info(test_run, test_run_id, test_id, stats)
 
     @expose('json')
-    def delete(self):
-        request.api.flush_storage()
+    def delete(self, test_run, test_run_id=0):
+        request.api.kill(test_run, test_run_id)
         return {}
