@@ -2,6 +2,8 @@ from core.storage import get_storage
 from core.transport import get_transport
 
 
+
+
 class API(object):
 
     def __init__(self):
@@ -22,3 +24,5 @@ class API(object):
 
     def flush_storage(self):
         self._storage.flush_db()
+
+api = API()

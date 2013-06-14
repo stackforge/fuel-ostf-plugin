@@ -5,7 +5,7 @@ from core import api
 class APIHook(pecan.hooks.PecanHook):
 
     def before(self, state):
-        state.request.api = api.API()
+        state.request.api = api.api
 
 
 # class StorageHook(hooks.PecanHook):

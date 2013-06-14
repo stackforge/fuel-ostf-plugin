@@ -20,15 +20,6 @@ nose_opts = [
 cfg.CONF.register_opts(nose_opts)
 
 
-def get_args(test_run):
-    commands = {}
-    test_run_name, _ = test_run.split(':')
-    for command in cfg.CONF.commands:
-        name, argv = command.split('=')
-        commands[name] = argv.split(';')
-    return commands.get(test_run_name, [])
-
-
 class RedisPlugin(plugins.Plugin):
 
     enabled = True
@@ -123,16 +114,19 @@ class NoseDriver(object):
         self._default_path = cfg.CONF.default_test_path
 
     def run(self, test_run, conf):
-        argv_add = get_args(test_run)
-        gevent.spawn(self._run_tests, test_run, argv_add)
+        gev = gevent.spawn(self._run_tests, test_run, [conf['working_directory']])
+        gev.join()
 
     def _run_tests(self, test_run, argv_add):
-        gevent.sleep(0)
-        main(defaultTest=None,
-             addplugins=[RedisPlugin(test_run)],
-             exit=False,
-             argv=[test_run]+argv_add)
-        raise gevent.GreenletExit
+        try:
+            main(defaultTest=None,
+                 addplugins=[RedisPlugin(test_run)],
+                 exit=True,
+                 argv=[test_run]+argv_add)
+        except:
+            raise gevent.GreenletExit
+        finally:
+            raise gevent.GreenletExit
 
 
 

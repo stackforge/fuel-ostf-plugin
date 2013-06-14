@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import os
-from gevent import pywsgi
+from gevent import wsgi
 from core.wsgi import app
 from core.wsgi import config
 from oslo.config import cfg
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                  default_config_files=['/etc/testingadapter.conf'])
     # Create the WSGI server and start it
     host, port = config.server.values()
-    srv = pywsgi.WSGIServer((host, int(port)), root)
+    srv = wsgi.WSGIServer((host, int(port)), root)
 
     print 'Starting server in PID %s' % os.getpid()
 
