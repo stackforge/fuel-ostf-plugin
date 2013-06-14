@@ -2,6 +2,7 @@ from nose import main, plugins
 import os
 from core.storage import get_storage
 import gevent
+from gevent import pool
 from time import time
 import sys
 from StringIO import StringIO
@@ -116,13 +117,17 @@ class RedisPlugin(plugins.Plugin):
         return time() - self._start_time
 
 
+g_pool = pool.Pool(10)
+
+
 class NoseDriver(object):
 
     def __init__(self):
         self._default_path = cfg.CONF.default_test_path
 
+
     def run(self, test_run, conf):
-        gev = gevent.spawn(self._run_tests, test_run, [conf['working_directory']])
+        gev = g_pool.spawn(self._run_tests, test_run, [conf['working_directory']])
         TESTS_PROCESS[test_run] = gev
 
     def _run_tests(self, test_run, argv_add):
