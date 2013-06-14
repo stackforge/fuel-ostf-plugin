@@ -2,8 +2,6 @@ from core.storage import get_storage
 from core.transport import get_transport
 
 
-
-
 class API(object):
 
     def __init__(self):

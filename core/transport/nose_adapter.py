@@ -27,7 +27,6 @@ class RedisPlugin(plugins.Plugin):
     score = 15000
 
     def __init__(self, test_run_id):
-
         self._capture = []
         self.test_run_id = test_run_id
         self.storage = get_storage()
@@ -46,17 +45,24 @@ class RedisPlugin(plugins.Plugin):
                       'passes': 0,
                       'skipped': 0}
 
+    def add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
+        data = {'name': test.id(),
+                'taken': self.taken}
+        data.update(kwargs)
+        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps(data))
+
     def addSuccess(self, test, capt=None):
         self.stats['passes'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'success'}))
+        self.add_message(test, type='success')
+
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         self.stats['failures'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'failure'}))
+        self.add_message(test, type='failure')
 
     def addError(self, test, err, capt=None, tb_info=None):
         self.stats['errors'] += 1
-        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps({'type': 'error'}))
+        self.add_message(test, type='error')
 
     def report(self, stream):
         stats_values = sum(self.stats.values())
@@ -64,7 +70,8 @@ class RedisPlugin(plugins.Plugin):
         self.storage.add_test_result(self.test_run_id, 'stats', json.dumps(self.stats))
 
     def _start_capture(self):
-        self._capture.append((sys.stdout, sys.stderr))
+        if not self._capture:
+            self._capture.append((sys.stdout, sys.stderr))
         self._current_stderr = StringIO()
         self._current_stdout = StringIO()
         sys.stdout = self._current_stdout
@@ -79,7 +86,6 @@ class RedisPlugin(plugins.Plugin):
         self._start_capture()
 
     def afterTest(self, test):
-        self._end_time = time()
         self._end_capture()
         self._current_stdout = None
         self._current_stderr = None
@@ -105,7 +111,7 @@ class RedisPlugin(plugins.Plugin):
 
     @property
     def taken(self):
-        return self._start_time - self._end_time
+        return time() - self._start_time
 
 
 class NoseDriver(object):
@@ -123,8 +129,6 @@ class NoseDriver(object):
                  addplugins=[RedisPlugin(test_run)],
                  exit=True,
                  argv=[test_run]+argv_add)
-        except:
-            raise gevent.GreenletExit
         finally:
             raise gevent.GreenletExit
 
