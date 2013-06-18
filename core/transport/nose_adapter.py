@@ -7,24 +7,12 @@ from time import time
 import sys
 from StringIO import StringIO
 from oslo.config import cfg
-import json
-
-nose_opts = [
-    cfg.StrOpt('default_test_path', default='.',
-               help='test path used with nose test runner'),
-    cfg.StrOpt('config_template', default='tempest.conf',
-               help='template that will be used for running tempest'),
-    cfg.ListOpt('commands', default=[],
-                help='commands separated by ",", args should be separated by ";"')
-]
-
-cfg.CONF.register_opts(nose_opts)
 
 
 TESTS_PROCESS = {}
 
 
-class RedisPlugin(plugins.Plugin):
+class StoragePlugin(plugins.Plugin):
 
     enabled = True
     name = 'redis'
@@ -34,7 +22,7 @@ class RedisPlugin(plugins.Plugin):
         self._capture = []
         self.test_run_id = test_run_id
         self.storage = get_storage()
-        super(RedisPlugin, self).__init__()
+        super(StoragePlugin, self).__init__()
         self._current_stderr = None
         self._current_stdout = None
         # self._start_capture()
@@ -53,7 +41,7 @@ class RedisPlugin(plugins.Plugin):
         data = {'name': test.id(),
                 'taken': self.taken}
         data.update(kwargs)
-        self.storage.add_test_result(self.test_run_id, test.id(), json.dumps(data))
+        # self.storage.add_test_result(self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
         self.stats['passes'] += 1
@@ -70,7 +58,8 @@ class RedisPlugin(plugins.Plugin):
     def report(self, stream):
         stats_values = sum(self.stats.values())
         self.stats['total'] = stats_values
-        self.storage.add_test_result(self.test_run_id, 'stats', json.dumps(self.stats))
+        # self.storage.add_test_result(self.test_run_id, 'stats', self.stats)
+        pass
 
     def _start_capture(self):
         if not self._capture:
@@ -86,7 +75,8 @@ class RedisPlugin(plugins.Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
-        self._start_capture()
+        # self._start_capture()
+        pass
 
     def afterTest(self, test):
         self._end_capture()
@@ -94,7 +84,8 @@ class RedisPlugin(plugins.Plugin):
         self._current_stderr = None
 
     def startContext(self, context):
-        self._start_capture()
+        # self._start_capture()
+        pass
 
     def finalize(self, test):
         while self._capture:
@@ -122,9 +113,6 @@ g_pool = pool.Pool(10)
 
 class NoseDriver(object):
 
-    def __init__(self):
-        self._default_path = cfg.CONF.default_test_path
-
 
     def run(self, test_run, conf):
         gev = g_pool.spawn(self._run_tests, test_run, [conf['working_directory']])
@@ -133,7 +121,7 @@ class NoseDriver(object):
     def _run_tests(self, test_run, argv_add):
         try:
             main(defaultTest=None,
-                 addplugins=[RedisPlugin(test_run)],
+                 addplugins=[StoragePlugin(test_run)],
                  exit=True,
                  argv=[test_run]+argv_add)
         finally:

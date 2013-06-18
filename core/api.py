@@ -10,15 +10,11 @@ class API(object):
     def run(self, test_run_name, conf):
         transport = get_transport(test_run_name)
         test_run_id = self._storage.add_test_run(test_run_name)
-        stored_id = '{}:{}'.format(test_run_name, test_run_id)
-        transport.run(stored_id, conf)
+        transport.run(test_run_id['id'], conf)
         return {test_run_name: test_run_id}
 
     def get_info(self, test_run_name, test_run_id, test_id=None, meta=True):
-        stored_id = '{}:{}'.format(test_run_name, test_run_id)
-        if not test_id:
-            return self._storage.get_test_results(stored_id)
-        return self._storage.get_test_result(stored_id, test_id, meta=meta)
+        return self._storage.get_test_results(test_run_id)
 
     def kill(self, test_run, test_run_id):
         transport = get_transport(test_run)
