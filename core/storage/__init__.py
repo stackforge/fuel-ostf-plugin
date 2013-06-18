@@ -10,8 +10,6 @@ STORAGE_OPTS = [
 
 cfg.CONF.register_opts(STORAGE_OPTS)
 
-cfg.CONF(project='testing_adapter', default_config_files=[])
-
 
 def get_storage():
     return sql_storage.SqlStorage(cfg.CONF.database_connection)

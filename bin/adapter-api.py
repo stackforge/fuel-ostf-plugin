@@ -13,12 +13,15 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from oslo.config import cfg
+cfg.CONF(project='testing_adapter', default_config_files=[])
+
 import sys
 import os
 from gevent import wsgi
 from core.wsgi import app
 from core.wsgi import config
-from oslo.config import cfg
+
 
 
 if __name__ == '__main__':
@@ -29,7 +32,6 @@ if __name__ == '__main__':
     # Create the WSGI server and start it
     host, port = config.server.values()
     srv = wsgi.WSGIServer((host, int(port)), root)
-
     print 'Starting server in PID %s' % os.getpid()
 
     if host == '0.0.0.0':
