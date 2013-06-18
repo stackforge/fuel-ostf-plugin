@@ -1,5 +1,6 @@
 from core.storage import get_storage
 from core.transport import get_transport
+from oslo.config import cfg
 
 
 class API(object):
@@ -9,19 +10,20 @@ class API(object):
 
     def run(self, test_run_name, conf):
         transport = get_transport(test_run_name)
-        test_run_id = self._storage.add_test_run(test_run_name)
-        transport.run(test_run_id['id'], conf)
-        return {test_run_name: test_run_id}
+        test_run = self._storage.add_test_run(test_run_name)
+        transport.run(test_run['id'], conf)
+        return test_run
 
     def get_info(self, test_run_name, test_run_id, test_id=None, meta=True):
         return self._storage.get_test_results(test_run_id)
 
     def kill(self, test_run, test_run_id):
         transport = get_transport(test_run)
-        stored_id = '{}:{}'.format(test_run, test_run_id)
-        return transport.kill(stored_id)
+        return transport.kill(test_run_id)
 
     def flush_storage(self):
         self._storage.flush_db()
 
 api = API()
+cfg.CONF([], project='testing_adapter',
+             default_config_files=['/etc/testing_adapter.conf'])

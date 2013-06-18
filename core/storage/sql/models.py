@@ -21,7 +21,7 @@ class Test(Base):
     __tablename__ = 'tests'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(128))
+    name = sa.Column(sa.String(512))
     status = sa.Column(sa.String(128))
     taken = sa.Column(sa.Float())
     data = sa.Column(sa.Text())

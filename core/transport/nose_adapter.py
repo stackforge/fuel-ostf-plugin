@@ -6,7 +6,6 @@ from gevent import pool
 from time import time
 import sys
 from StringIO import StringIO
-from oslo.config import cfg
 
 
 TESTS_PROCESS = {}
@@ -41,7 +40,7 @@ class StoragePlugin(plugins.Plugin):
         data = {'name': test.id(),
                 'taken': self.taken}
         data.update(kwargs)
-        # self.storage.add_test_result(self.test_run_id, test.id(), data)
+        self.storage.add_test_result(self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
         self.stats['passes'] += 1
@@ -58,7 +57,7 @@ class StoragePlugin(plugins.Plugin):
     def report(self, stream):
         stats_values = sum(self.stats.values())
         self.stats['total'] = stats_values
-        # self.storage.add_test_result(self.test_run_id, 'stats', self.stats)
+        self.storage.add_test_result(self.test_run_id, 'stats', self.stats)
         pass
 
     def _start_capture(self):
@@ -113,7 +112,6 @@ g_pool = pool.Pool(10)
 
 class NoseDriver(object):
 
-
     def run(self, test_run, conf):
         gev = g_pool.spawn(self._run_tests, test_run, [conf['working_directory']])
         TESTS_PROCESS[test_run] = gev
@@ -123,7 +121,7 @@ class NoseDriver(object):
             main(defaultTest=None,
                  addplugins=[StoragePlugin(test_run)],
                  exit=True,
-                 argv=[test_run]+argv_add)
+                 argv=['tests']+argv_add)
         finally:
             # del TESTS_PROCESS[test_run]
             raise gevent.GreenletExit

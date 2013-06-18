@@ -18,9 +18,9 @@ class SqlStorageTests(unittest.TestCase):
         models.Base.metadata.create_all(self.storage._engine)
         self.storage.add_test_run('test')
         self.storage.add_test_result(
-            1, self.fixture['id'], self.fixture)
+            '1', self.fixture['id'], self.fixture)
         self.storage.add_test_result(
-            1, 'stats', self.stats)
+            '1', 'stats', self.stats)
 
     def test_create_session(self):
         self.storage.session

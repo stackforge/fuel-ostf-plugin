@@ -23,9 +23,9 @@ def upgrade():
     )
     op.create_table('tests',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=128), nullable=True),
+    sa.Column('name', sa.String(length=512), nullable=True),
     sa.Column('status', sa.String(length=128), nullable=True),
-    sa.Column('taken', sa.Time(), nullable=True),
+    sa.Column('taken', sa.Float(), nullable=True),
     sa.Column('data', sa.Text(), nullable=True),
     sa.Column('test_run_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['test_run_id'], ['test_runs.id'], ),

@@ -31,7 +31,9 @@ class SqlStorage(object):
 
     def get_test_results(self, test_run_id):
         with self.session.begin(subtransactions=True):
-            test_run = self.session.query(models.TestRun).options(joinedload(models.TestRun.tests)).filter_by(id=test_run_id).first()
+            test_run = self.session.query(models.TestRun).\
+                options(joinedload('tests')).\
+                filter_by(id=test_run_id).first()
         tests = {test.name: json.loads(test.data) for test in test_run.tests}
         return {'type': test_run.type, 'id': test_run.id, 'tests': tests}
 

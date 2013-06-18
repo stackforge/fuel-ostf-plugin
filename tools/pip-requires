@@ -5,3 +5,7 @@ gevent
 redis
 hiredis
 oslo.config
+psycopg2
+psycogreen
+sqlalchemy
+simplejson
