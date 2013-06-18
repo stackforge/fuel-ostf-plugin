@@ -3,6 +3,9 @@ from core.transport import get_transport
 from oslo.config import cfg
 
 
+cfg.CONF(project='testing_adapter')
+
+
 class API(object):
 
     def __init__(self):
