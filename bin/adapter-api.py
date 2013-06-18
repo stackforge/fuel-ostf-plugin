@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import sys
 import os
 from gevent import wsgi
 from core.wsgi import app
@@ -23,7 +24,6 @@ from oslo.config import cfg
 if __name__ == '__main__':
     # Parse OpenStack config file and command line options, then
     # configure logging.
-
     # Build the WSGI app
     root = app.setup_app()
     # Create the WSGI server and start it

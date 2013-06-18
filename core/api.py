@@ -25,5 +25,3 @@ class API(object):
         self._storage.flush_db()
 
 api = API()
-cfg.CONF([], project='testing_adapter',
-             default_config_files=['/etc/testing_adapter.conf'])

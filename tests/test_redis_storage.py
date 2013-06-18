@@ -1,9 +1,10 @@
 from core.storage import redis_storage
 import unittest
 import json
-from nose import tools
+from nose.tools import nottest
 
 
+@nottest
 class TestRedisStorage(unittest.TestCase):
 
     def setUp(self):

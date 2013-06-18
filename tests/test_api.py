@@ -26,12 +26,12 @@ class TestApi(unittest.TestCase):
     def test_run(self, get_transport_mock, get_storage_mock):
         get_storage_mock.return_value = self.storage
         get_transport_mock.return_value = self.transport
-        self.storage.add_test_run.return_value = TEST_RUN_ID
+        self.storage.add_test_run.return_value = {'type': TEST_RUN_NAME, 'id':TEST_RUN_ID}
         api = API()
         res = api.run(TEST_RUN_NAME, CONF)
         self.storage.add_test_run.assert_called_once_with(TEST_RUN_NAME)
         self.transport.run.assert_called_once_with(TEST_RUN_ID, CONF)
-        self.assertEqual(res, {TEST_RUN_NAME: TEST_RUN_ID})
+        self.assertEqual(res, {'type': TEST_RUN_NAME, 'id':TEST_RUN_ID})
 
     @patch('core.api.get_storage')
     def test_get_info(self, get_storage_mock):
