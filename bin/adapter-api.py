@@ -21,6 +21,8 @@ import os
 from gevent import wsgi
 from core.wsgi import app
 from core.wsgi import config
+from core.common import logger
+import logging
 
 
 
@@ -28,17 +30,18 @@ if __name__ == '__main__':
     # Parse OpenStack config file and command line options, then
     # configure logging.
     # Build the WSGI app
+    logger.setup()
+    log = logging.getLogger(__name__)
     root = app.setup_app()
     # Create the WSGI server and start it
     host, port = config.server.values()
     srv = wsgi.WSGIServer((host, int(port)), root)
-    print 'Starting server in PID %s' % os.getpid()
+    log.info('Starting server in PID %s' % os.getpid())
 
     if host == '0.0.0.0':
-        print 'serving on 0.0.0.0:%s, view at http://127.0.0.1:%s' % \
-            (port, port)
+        log.info('serving on 0.0.0.0:%s, view at http://127.0.0.1:%s' % (port, port))
     else:
-        print "serving on http://%s:%s" % (host, port)
+        log.info("serving on http://%s:%s" % (host, port))
 
     try:
         srv.serve_forever()
