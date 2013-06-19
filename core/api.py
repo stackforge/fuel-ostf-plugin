@@ -1,9 +1,5 @@
 from core.storage import get_storage
 from core.transport import get_transport
-from oslo.config import cfg
-
-
-cfg.CONF(project='testing_adapter')
 
 
 class API(object):

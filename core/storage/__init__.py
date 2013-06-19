@@ -13,8 +13,5 @@ STORAGE_OPTS = [
 CONF.register_opts(STORAGE_OPTS)
 
 
-
-
 def get_storage():
-    print cfg.CONF.database_connection
     return sql_storage.SqlStorage(cfg.CONF.database_connection)
