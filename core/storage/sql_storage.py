@@ -1,16 +1,24 @@
 from gevent.monkey import patch_all
 patch_all()
+
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, joinedload
+
 from core.storage.sql import models
+
 import simplejson as json
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class SqlStorage(object):
 
     def __init__(self, engine_url):
+        log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(engine_url)
         self._engine.pool._use_threadlocal = True
         self._sessionmaker = sessionmaker(bind=self._engine,
@@ -24,6 +32,7 @@ class SqlStorage(object):
         return self._session
 
     def add_test_run(self, test_run):
+        log.info('Invoke test run - %s' % test_run)
         with self.session.begin(subtransactions=True):
             test_run = models.TestRun(type=test_run)
             self.session.add(test_run)
@@ -41,9 +50,13 @@ class SqlStorage(object):
         pass
 
     def add_test_result(self, test_run_id, test_name, data):
+        log.info('Add test result for: ID: %s\n'
+                 'TEST NAME: %s\n'
+                 'DATA: %s' % (test_run_id, test_name, data))
         with self.session.begin(subtransactions=True):
             test = models.Test(name=test_name, status=data.get('type', None),
-                               taken=data.get('taken', None), test_run_id=test_run_id,
+                               taken=data.get('taken', None),
+                               test_run_id=test_run_id,
                                data=json.dumps(data))
             self.session.add(test)
         return test

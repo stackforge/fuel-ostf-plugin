@@ -47,13 +47,15 @@ logging_config = {
     'version': 1,
     'disable_existing_loggers': True,
     'root': {
-        'level': 'INFO', 'handlers': ['streamlog', 'filelog']
+        'level': 'INFO',
+        'handlers': ['streamlog', 'filelog']
     },
     'loggers': {
         'adapter': {
             'level': 'DEBUG',
             'handlers': ['streamlog'],
-            'propagate': True},
+            'propagate': True
+        },
     },
     'handlers': {
         'streamlog': {
@@ -70,8 +72,8 @@ logging_config = {
     },
     'formatters': {
         'verbose': {
-            'fmt': _DEFAULT_LOG_FORMAT,
-            'datefmt': _DEFAULT_LOG_DATE_FORMAT,
+            'format': _DEFAULT_LOG_FORMAT,
+            'date_format': _DEFAULT_LOG_DATE_FORMAT,
         }
     },
 }

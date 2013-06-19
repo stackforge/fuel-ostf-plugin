@@ -1,2 +1,7 @@
 [DEFAULT]
 database_connection=sqlite://
+
+log_file=
+log_dir=
+log_format=
+log_date_format=

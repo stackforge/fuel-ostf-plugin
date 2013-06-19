@@ -6,10 +6,11 @@ from gevent import pool
 from time import time
 import sys
 from StringIO import StringIO
-
+import logging
 
 TESTS_PROCESS = {}
 
+log = logging.getLogger(__name__)
 
 class StoragePlugin(plugins.Plugin):
 
@@ -24,7 +25,8 @@ class StoragePlugin(plugins.Plugin):
         super(StoragePlugin, self).__init__()
         self._current_stderr = None
         self._current_stdout = None
-        # self._start_capture()
+        self._start_capture()
+        log.info('Storage Plugin initialized')
 
     def options(self, parser, env=os.environ):
         pass
@@ -43,22 +45,25 @@ class StoragePlugin(plugins.Plugin):
         self.storage.add_test_result(self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
+        log.info('SUCCESS for %s' % test)
         self.stats['passes'] += 1
         self.add_message(test, type='success')
 
     def addFailure(self, test, err, capt=None, tb_info=None):
+        log.info('FAILURE for %s' % test)
         self.stats['failures'] += 1
         self.add_message(test, type='failure')
 
     def addError(self, test, err, capt=None, tb_info=None):
+        log.info('ERROR for %s' % test)
         self.stats['errors'] += 1
         self.add_message(test, type='error')
 
     def report(self, stream):
+        log.info('REPORT')
         stats_values = sum(self.stats.values())
         self.stats['total'] = stats_values
         self.storage.add_test_result(self.test_run_id, 'stats', self.stats)
-        pass
 
     def _start_capture(self):
         if not self._capture:
@@ -74,7 +79,7 @@ class StoragePlugin(plugins.Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
-        # self._start_capture()
+        self._start_capture()
         pass
 
     def afterTest(self, test):
@@ -83,8 +88,7 @@ class StoragePlugin(plugins.Plugin):
         self._current_stderr = None
 
     def startContext(self, context):
-        # self._start_capture()
-        pass
+        self._start_capture()
 
     def finalize(self, test):
         while self._capture:
@@ -113,23 +117,31 @@ g_pool = pool.Pool(10)
 class NoseDriver(object):
 
     def run(self, test_run, conf):
-        gev = g_pool.spawn(self._run_tests, test_run, [conf['working_directory']])
+        gev = g_pool.spawn(self._run_tests, test_run,
+                           conf['working_directory'], [])
         TESTS_PROCESS[test_run] = gev
 
-    def _run_tests(self, test_run, argv_add):
+    def _run_tests(self, test_run, test_path, argv_add):
         try:
-            main(defaultTest=None,
+            log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
+                     'TEST PATH: %s\n'
+                     'ARGS: %s' % (test_run, test_path, argv_add))
+            main(defaultTest=test_path,
                  addplugins=[StoragePlugin(test_run)],
                  exit=True,
                  argv=['tests']+argv_add)
         finally:
-            # del TESTS_PROCESS[test_run]
+            log.info('Close green thread TEST_RUN: %s' % test_run)
+            del TESTS_PROCESS[test_run]
             raise gevent.GreenletExit
 
     def kill(self, test_run):
         if test_run in TESTS_PROCESS:
+            log.info('Kill green thread: %s' % test_run)
             TESTS_PROCESS[test_run].kill()
             del TESTS_PROCESS[test_run]
+            return True
+        return False
 
 
 

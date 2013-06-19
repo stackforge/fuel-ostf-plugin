@@ -16,22 +16,26 @@
 from oslo.config import cfg
 cfg.CONF(project='testing_adapter')
 
+from core.common import logger
+logger.setup()
+
 import sys
 import os
 from gevent import wsgi
 from core.wsgi import app
 from core.wsgi import config
-from core.common import logger
+
 import logging
 
-
+log = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     # Parse OpenStack config file and command line options, then
     # configure logging.
     # Build the WSGI app
-    logger.setup()
-    log = logging.getLogger(__name__)
+
+
+
     root = app.setup_app()
     # Create the WSGI server and start it
     host, port = config.server.values()
