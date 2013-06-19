@@ -7,10 +7,19 @@ from time import time
 import sys
 from StringIO import StringIO
 import logging
+from oslo.config import cfg
+import re
+
+test_runs_raw = cfg.ListOpt('test_runs_raw', default=[])
+
+CONF = cfg.CONF
+CONF.register_opt(test_runs_raw)
+
 
 TESTS_PROCESS = {}
 
 log = logging.getLogger(__name__)
+
 
 class StoragePlugin(plugins.Plugin):
 
@@ -114,11 +123,20 @@ class StoragePlugin(plugins.Plugin):
 g_pool = pool.Pool(10)
 
 
+def get_test_run_args(test_run_name):
+    for command in CONF.test_runs_raw:
+        name, args = command.split('=', 1)
+        if name == test_run_name:
+            return [args]
+    return []
+
+
 class NoseDriver(object):
 
     def run(self, test_run, conf):
+        argv_add = get_test_run_args(test_run)
         gev = g_pool.spawn(self._run_tests, test_run,
-                           conf['working_directory'], [])
+                           conf['working_directory'], argv_add)
         TESTS_PROCESS[test_run] = gev
 
     def _run_tests(self, test_run, test_path, argv_add):

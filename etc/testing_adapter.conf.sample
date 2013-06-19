@@ -5,3 +5,5 @@ log_file=
 log_dir=
 log_format=
 log_date_format=
+
+test_runs_raw=tempest=-A type == ["sanity", "fuel"],
