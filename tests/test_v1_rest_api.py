@@ -17,7 +17,7 @@ class ApiV1Tests(unittest2.TestCase):
         resp = self.app.get('/v1/tempest?test_run_id=1')
 
         request_mock.api.get_info.assert_called_once_with(
-            'tempest', '1', None, False)
+            'tempest', '1')
 
         self.assertEqual(resp.status, '200 OK')
         self.assertEqual(json.loads(resp.text), info)
