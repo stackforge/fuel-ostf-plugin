@@ -22,9 +22,9 @@ class TestNoseAdapters(unittest.TestCase):
 
     @patch.object(nose_adapter, 'CONF')
     def test_parse_test_runs(self, conf_mock):
-        conf_mock.test_runs_raw = ['tempest=-A type == ["sanity", "fuel"]']
+        conf_mock.test_runs_raw = ['tempest=-A "type == ["sanity", "fuel"]"']
         res = nose_adapter.get_test_run_args('tempest')
-        self.assertEqual(res, ['-A type == ["sanity", "fuel"]'])
+        self.assertEqual(res, ['-A "type == ["sanity", "fuel"]"'])
 
     @patch('core.transport.nose_adapter.io.open')
     @patch.object(nose_adapter, 'CONF')
