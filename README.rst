@@ -3,10 +3,9 @@ SETUP:
 1. System packages:
     1.1. Postgres server
     1.2. libpq-dev
-    1.3. libevent-dev
 2. Install pip-requirements
-    2.1. tools/pip-requires
-    2.1. For tests tools/test-requires
+    2.1. pip install -r tools/pip-requires
+    2.1. For tests --- pip install -r tools/test-requires
 3. Migrate postgres database
         python bin/adapter-db.py --config-file /etc/testing_adapter.conf upgrade head
      TO REMOVE APPLIED MIGRATION USE:

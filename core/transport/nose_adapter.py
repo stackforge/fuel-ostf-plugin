@@ -8,12 +8,19 @@ import sys
 from StringIO import StringIO
 import logging
 from oslo.config import cfg
-import re
+import io
 
 test_runs_raw = cfg.ListOpt('test_runs_raw', default=[])
+test_conf = cfg.StrOpt('test_conf', default='test.conf')
+test_conf_dir = cfg.StrOpt('test_conf_dir', default='etc/')
+overwrite_test_conf = cfg.BoolOpt('overwrite_test_conf', default=False)
 
 CONF = cfg.CONF
+
 CONF.register_opt(test_runs_raw)
+CONF.register_opt(test_conf)
+CONF.register_opt(test_conf_dir)
+CONF.register_opt(overwrite_test_conf)
 
 
 TESTS_PROCESS = {}
@@ -135,8 +142,10 @@ class NoseDriver(object):
 
     def run(self, test_run, conf):
         argv_add = get_test_run_args(test_run)
-        gev = g_pool.spawn(self._run_tests, test_run,
-                           conf['working_directory'], argv_add)
+        working_directory = conf.pop('working_directory')
+        self.prepare_config(conf, working_directory)
+        gev = g_pool.spawn(self._run_tests, test_run, working_directory,
+                           argv_add)
         TESTS_PROCESS[test_run] = gev
 
     def _run_tests(self, test_run, test_path, argv_add):
@@ -160,6 +169,14 @@ class NoseDriver(object):
             del TESTS_PROCESS[test_run]
             return True
         return False
+
+    def prepare_config(self, conf, working_directory='/'):
+        if CONF.overwrite_test_conf:
+            conf_path = os.path.join(working_directory,
+                                     CONF.test_conf_dir, CONF.test_conf)
+            with io.open(conf_path, 'w', encoding='utf-8') as f:
+                for key, value in conf.iteritems():
+                    f.write(u'%s = %s\n' % (key, value))
 
 
 
