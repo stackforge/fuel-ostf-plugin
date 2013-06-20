@@ -4,8 +4,10 @@ from core import api
 
 class APIHook(pecan.hooks.PecanHook):
 
+    rest_api = api.API()
+
     def before(self, state):
-        state.request.api = api.api
+        state.request.api = self.rest_api
 
 
 # class StorageHook(hooks.PecanHook):

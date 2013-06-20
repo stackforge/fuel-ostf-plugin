@@ -23,5 +23,3 @@ class API(object):
     def kill(self, test_run, test_run_id):
         transport = get_transport(test_run)
         return transport.kill(test_run_id)
-
-api = API()
