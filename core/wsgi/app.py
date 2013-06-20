@@ -17,7 +17,6 @@ def setup_app(pecan_config=None, extra_hooks=None):
 
     app = pecan.make_app(
         pecan_config.app.root,
-        logging=getattr(pecan_config, 'logging', {}),
         debug=getattr(pecan_config.app, 'debug', False),
         force_canonical=getattr(pecan_config.app, 'force_canonical', True),
         hooks=app_hooks

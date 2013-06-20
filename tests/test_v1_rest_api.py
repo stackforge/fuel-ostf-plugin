@@ -14,7 +14,7 @@ class ApiV1Tests(unittest2.TestCase):
     def test_get_call(self, request_mock):
         info = {'tempest:1': {'passed': 10}}
         request_mock.api.get_info.return_value = info
-        resp = self.app.get('/v1/tempest?test_run_id=1')
+        resp = self.app.get('/v1/tempest/1')
 
         request_mock.api.get_info.assert_called_once_with(
             'tempest', '1')
@@ -43,6 +43,37 @@ class ApiV1Tests(unittest2.TestCase):
 
     def test_get_call_without_id(self):
         resp = self.app.get('/v1/tempest', expect_errors=True)
+        self.assertEqual(resp.status, '400 Bad Request')
+        self.assertEqual(json.loads(resp.text),
+                         {'message': 'Please provide ID of test run'})
+
+    @patch('core.wsgi.controllers.v1.request')
+    def test_delete_call_kill_success(self, request_mock):
+        request_mock.api.kill.return_value = True
+
+        resp = self.app.delete('/v1/tempest/1')
+
+        request_mock.api.kill.assert_called_once_with('tempest', '1')
+
+        self.assertEqual(resp.status, '200 OK')
+        self.assertEqual(json.loads(resp.text),
+                         {'message': 'Killed test run with ID 1'})
+
+    @patch('core.wsgi.controllers.v1.request')
+    def test_delete_call_kill_failure(self, request_mock):
+        request_mock.api.kill.return_value = False
+
+        resp = self.app.delete('/v1/tempest/1')
+
+        request_mock.api.kill.assert_called_once_with('tempest', '1')
+
+        self.assertEqual(resp.status, '200 OK')
+        self.assertEqual(json.loads(resp.text),
+                         {'message': 'Test run 1 already finished'})
+
+    def test_delete_call_without_id(self):
+        resp = self.app.delete('/v1/tempest', expect_errors=True)
+
         self.assertEqual(resp.status, '400 Bad Request')
         self.assertEqual(json.loads(resp.text),
                          {'message': 'Please provide ID of test run'})
