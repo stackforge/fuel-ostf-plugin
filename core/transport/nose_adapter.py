@@ -55,8 +55,7 @@ class StoragePlugin(plugins.Plugin):
                       'skipped': 0}
 
     def add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
-        data = {'name': test.id(),
-                'taken': self.taken}
+        data = {'taken': self.taken}
         data.update(kwargs)
         self.storage.add_test_result(self.test_run_id, test.id(), data)
 

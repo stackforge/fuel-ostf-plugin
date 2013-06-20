@@ -1,5 +1,5 @@
 from pecan import rest, expose, request, response
-import json
+import simplejson as json
 import logging
 
 log = logging.getLogger(__name__)
@@ -12,7 +12,8 @@ class V1Controller(rest.RestController):
         if request.body:
             conf = json.loads(request.body)
         else:
-            conf = {}
+            response.status = 400
+            return {'message': 'Config is expected'}
         log.info('POST REQUEST - %s\n'
                  'WITH CONF - %s' %(test_service, conf))
         return request.api.run(test_service, conf)

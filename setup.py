@@ -9,7 +9,6 @@ setuptools.setup(
     description='cloud computing testing',
 
 
-
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Setuptools Plugin',
@@ -41,8 +40,8 @@ setuptools.setup(
     zip_safe=False,
 
     entry_points={
-    'plugins': [
-        'nose = core.transport.nose_adapter:NoseDriver'
-    ]
+        'plugins': [
+            'nose = core.transport.nose_adapter:NoseDriver'
+        ]
     },
 )
