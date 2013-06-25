@@ -1,4 +1,4 @@
-from core.storage import redis_storage, sql_storage
+from core.storage import sql_storage
 from oslo.config import cfg
 import logging
 

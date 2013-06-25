@@ -1,10 +1,7 @@
 cython
 -e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
 pecan
-requests
 stevedore
-redis
-hiredis
 oslo.config
 psycopg2
 psycogreen

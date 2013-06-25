@@ -1,6 +1,6 @@
 import unittest
 from mock import patch, MagicMock
-from core.api import API
+from core.api import API, parse_commands_file
 
 
 TEST_RUN_NAME = 'tempest'
@@ -39,4 +39,16 @@ class TestApi(unittest.TestCase):
         api = API()
         res = api.get_info(TEST_RUN_NAME, TEST_RUN_ID)
         self.storage.get_test_results.assert_called_once_with(TEST_RUN_ID)
+
+    def test_parse_commands_file(self):
+        res = parse_commands_file()
+        expected = {'tempest': {
+                    'argv': '-A "type == [\'sanity\', \'smoke\']"',
+                      'driver': 'nose',
+                      'test_path': '/root/ostf/ostf-tests'},
+            'tests': {'driver': 'nose',
+                   'test_path': '/home/dshulyak/projects/ostf-tests'}
+        }
+        self.assertEqual(res, expected)
+
 

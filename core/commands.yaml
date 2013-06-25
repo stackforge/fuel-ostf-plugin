@@ -1,0 +1,7 @@
+tempest:
+  test_path: /root/ostf/ostf-tests
+  driver: nose
+  argv: -A "type == ['sanity', 'smoke']"
+tests:
+  test_path: /home/dshulyak/projects/ostf-tests
+  driver: nose

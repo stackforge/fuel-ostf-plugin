@@ -1,13 +1,3 @@
 [DEFAULT]
 #database_connection=sqlite://
-
 #log_file=
-#log_dir=
-#log_format=
-#log_date_format=
-
-#test_runs_raw=tempest=-A "type == ["sanity", "fuel"]",
-
-#test_conf=test.conf
-#test_conf_dir=/etc/
-#overwrite_test_conf=True

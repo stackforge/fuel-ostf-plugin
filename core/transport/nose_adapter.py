@@ -10,17 +10,6 @@ import logging
 from oslo.config import cfg
 import io
 
-test_runs_raw = cfg.ListOpt('test_runs_raw', default=[])
-test_conf = cfg.StrOpt('test_conf', default='test.conf')
-test_conf_dir = cfg.StrOpt('test_conf_dir', default='etc/')
-overwrite_test_conf = cfg.BoolOpt('overwrite_test_conf', default=False)
-
-CONF = cfg.CONF
-
-CONF.register_opt(test_runs_raw)
-CONF.register_opt(test_conf)
-CONF.register_opt(test_conf_dir)
-CONF.register_opt(overwrite_test_conf)
 
 
 TESTS_PROCESS = {}
@@ -129,21 +118,14 @@ class StoragePlugin(plugins.Plugin):
 g_pool = pool.Pool(10)
 
 
-def get_test_run_args(test_run_name):
-    for command in CONF.test_runs_raw:
-        name, args = command.split('=', 1)
-        if name == test_run_name:
-            return [args]
-    return []
-
 
 class NoseDriver(object):
 
-    def run(self, test_run, conf):
-        argv_add = get_test_run_args(test_run)
-        working_directory = conf.pop('working_directory')
-        self.prepare_config(conf, working_directory)
-        gev = g_pool.spawn(self._run_tests, test_run, working_directory,
+    def run(self, test_run, conf, **kwargs):
+        if 'config_path' in kwargs:
+            self.prepare_config(conf, kwargs['config_path'])
+        argv_add = [kwargs['argv']] if 'argv' in kwargs else []
+        gev = g_pool.spawn(self._run_tests, test_run, kwargs['test_path'],
                            argv_add)
         TESTS_PROCESS[test_run] = gev
 
@@ -169,10 +151,8 @@ class NoseDriver(object):
             return True
         return False
 
-    def prepare_config(self, conf, working_directory='/'):
-        if CONF.overwrite_test_conf:
-            conf_path = os.path.join(working_directory,
-                                     CONF.test_conf_dir, CONF.test_conf)
+    def prepare_config(self, conf, testing_config_path):
+            conf_path = os.path.abspath(testing_config_path)
             with io.open(conf_path, 'w', encoding='utf-8') as f:
                 for key, value in conf.iteritems():
                     f.write(u'%s = %s\n' % (key, value))
