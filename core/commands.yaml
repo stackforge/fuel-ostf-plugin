@@ -1,7 +1,14 @@
-tempest:
-  test_path: /root/ostf/ostf-tests
+fuel_smoke:
+  test_path: /root/anaboikina/ostf_tests/ostf/ostf-tests/fuel/tests
   driver: nose
-  argv: -A "type == ['sanity', 'smoke']"
+  argv: smoke
+fuel_sanity:
+  test_path: /root/slyopka-test-debug/ostf-tests/fuel/tests
+  driver: nose
+  argv: sanity
+five_min:
+  test_path: /root/ostf-tests/fuel
+  driver: nose
 tests:
   test_path: /home/dshulyak/projects/ostf-tests
   driver: nose

@@ -3,7 +3,7 @@ from mock import patch, MagicMock
 from core.api import API, parse_commands_file
 
 
-TEST_RUN_NAME = 'tempest'
+TEST_RUN_NAME = 'tests'
 TEST_RUN_ID = 1
 TEST_ID = 'simple.TestSimple'
 CONF = {'config': True}
@@ -31,7 +31,7 @@ class TestApi(unittest.TestCase):
         res = api.run(TEST_RUN_NAME, CONF)
         self.storage.add_test_run.assert_called_once_with(TEST_RUN_NAME)
         self.transport.run.assert_called_once_with(TEST_RUN_ID, CONF)
-        self.assertEqual(res, {'type': TEST_RUN_NAME, 'id':TEST_RUN_ID})
+        self.assertEqual(res, {'type': TEST_RUN_NAME, 'id': TEST_RUN_ID})
 
     @patch('core.api.get_storage')
     def test_get_info(self, get_storage_mock):
@@ -42,8 +42,8 @@ class TestApi(unittest.TestCase):
 
     def test_parse_commands_file(self):
         res = parse_commands_file()
-        expected = {'tempest': {
-                    'argv': '-A "type == [\'sanity\', \'smoke\']"',
+        expected = {'fuel_smoke': {
+                    'argv': '-A "type == ["fuel", "smoke"]"',
                       'driver': 'nose',
                       'test_path': '/root/ostf/ostf-tests'},
             'tests': {'driver': 'nose',

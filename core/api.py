@@ -24,10 +24,10 @@ class API(object):
 
     def run(self, test_run_name, conf):
         log.info('Looking for %s in %s' % (test_run_name, self._commands))
-        commands_keys = self._commands.get(test_run_name, {})
-        transport = get_transport(commands_keys['driver'])
+        command = self._commands.get(test_run_name, {})
+        transport = get_transport(command['driver'])
         test_run = self._storage.add_test_run(test_run_name)
-        transport.run(test_run['id'], conf, **commands_keys)
+        transport.run(test_run['id'], conf, **command)
         return test_run
 
     def get_info(self, test_run_name, test_run_id):

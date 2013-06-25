@@ -59,7 +59,7 @@ class StoragePlugin(plugins.Plugin):
         self.add_message(test, type='failure')
 
     def addError(self, test, err, capt=None, tb_info=None):
-        log.info('ERROR for %s' % test)
+        log.info('ERROR for %s\n%s' % (test, err))
         self.stats['errors'] += 1
         self.add_message(test, type='error')
 
@@ -124,7 +124,10 @@ class NoseDriver(object):
     def run(self, test_run, conf, **kwargs):
         if 'config_path' in kwargs:
             self.prepare_config(conf, kwargs['config_path'])
-        argv_add = [kwargs['argv']] if 'argv' in kwargs else []
+        argv_add = []
+        if 'argv' in kwargs:
+            argv_add = [kwargs['argv']]
+        log.info('Additional args: %s' % argv_add)
         gev = g_pool.spawn(self._run_tests, test_run, kwargs['test_path'],
                            argv_add)
         TESTS_PROCESS[test_run] = gev
@@ -144,10 +147,11 @@ class NoseDriver(object):
             raise gevent.GreenletExit
 
     def kill(self, test_run):
-        if test_run in TESTS_PROCESS:
+        log.info('Trying to stop process %s\n'
+                 '%s' % (test_run, TESTS_PROCESS))
+        if int(test_run) in TESTS_PROCESS:
             log.info('Kill green thread: %s' % test_run)
-            TESTS_PROCESS[test_run].kill()
-            del TESTS_PROCESS[test_run]
+            TESTS_PROCESS[int(test_run)].kill()
             return True
         return False
 

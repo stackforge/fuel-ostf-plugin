@@ -17,11 +17,13 @@ class TestNoseAdapters(unittest.TestCase):
         self.nose_driver = nose_adapter.NoseDriver()
 
     def test_get_nose_transport(self):
-        driver = get_transport('tempest')
+        driver = get_transport('nose')
         self.assertIsInstance(driver, nose_adapter.NoseDriver)
 
     @patch('core.transport.nose_adapter.io.open')
     def test_create_tempest_conf(self, io_mock):
+        """Test verified
+        """
         string_io = DummyStringIO()
         io_mock.return_value = string_io
         conf = {'param1': 'test',
