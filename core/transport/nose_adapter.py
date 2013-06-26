@@ -7,7 +7,17 @@ from time import time
 import sys
 import logging
 import io
+from oslo.config import cfg
+import traceback
+from nose.case import Test
 
+CONF = cfg.CONF
+
+nose_driver_opts = [
+    cfg.BoolOpt('capture_tests_output', default=False)
+]
+
+CONF.register_opts(nose_driver_opts)
 
 TESTS_PROCESS = {}
 
@@ -26,6 +36,11 @@ class StoragePlugin(plugins.Plugin):
         self.storage = get_storage()
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
+        if CONF.capture_tests_output:
+            if not self._capture:
+                self._capture.append((sys.stdout, sys.stderr))
+            sys.stdout = io.StringIO()
+            sys.stderr = io.StringIO()
 
     def options(self, parser, env=os.environ):
         pass
@@ -39,6 +54,15 @@ class StoragePlugin(plugins.Plugin):
 
     def _add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
         data = {'taken': self.taken}
+        if err:
+            exc_type, exc_value, exc_traceback = err
+            data['exc_type'] = exc_type.__name__
+            data['exc_message'] = exc_value.message
+            data['exc_traceback'] = u"".join(
+                traceback.format_tb(exc_traceback))
+        doc = test.test.shortDescription()
+        if doc:
+            data['description'] = doc
         data.update(kwargs)
         self.storage.add_test_result(self.test_run_id, test.id(), data)
 
@@ -66,12 +90,6 @@ class StoragePlugin(plugins.Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
-
-    def startContext(self, context):
-        if not self._capture:
-            self._capture.append((sys.stdout, sys.stderr))
-        sys.stdout = io.StringIO()
-        sys.stderr = io.StringIO()
 
     def finalize(self, test):
         while self._capture:
