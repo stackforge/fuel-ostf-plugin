@@ -14,30 +14,27 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 from oslo.config import cfg
-cfg.CONF(project='testing_adapter')
-
 from core.common import logger
+
+
+cfg.CONF(project='testing_adapter')
 logger.setup()
+
 
 import sys
 import os
 from gevent import wsgi
 from core.wsgi import app
 from core.wsgi import config
-
 import logging
+
+
 
 log = logging.getLogger(__name__)
 
+
 if __name__ == '__main__':
-    # Parse OpenStack config file and command line options, then
-    # configure logging.
-    # Build the WSGI app
-
-
-
     root = app.setup_app()
-    # Create the WSGI server and start it
     host, port = config.server.values()
     srv = wsgi.WSGIServer((host, int(port)), root)
     log.info('Starting server in PID %s' % os.getpid())

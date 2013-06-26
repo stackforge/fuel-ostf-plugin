@@ -12,3 +12,9 @@ five_min:
 tests:
   test_path: /home/dshulyak/projects/ostf-tests
   driver: nose
+cliff:
+  test_path: /home/dshulyak/projects/cliff
+  driver: nose
+wait:
+  test_path: /home/dshulyak/test_demo
+  driver: nose

@@ -1,7 +1,6 @@
 import pecan
 from core.wsgi import config
 from core.wsgi import hooks
-from oslo.config import cfg
 
 
 def get_pecan_config():

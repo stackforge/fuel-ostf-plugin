@@ -7,9 +7,7 @@ from time import time
 import sys
 from StringIO import StringIO
 import logging
-from oslo.config import cfg
 import io
-
 
 
 TESTS_PROCESS = {}
@@ -20,7 +18,7 @@ log = logging.getLogger(__name__)
 class StoragePlugin(plugins.Plugin):
 
     enabled = True
-    name = 'redis'
+    name = 'storage'
     score = 15000
 
     def __init__(self, test_run_id):
@@ -83,13 +81,13 @@ class StoragePlugin(plugins.Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
-        self._start_capture()
+        # self._start_capture()
         pass
 
-    def afterTest(self, test):
-        self._end_capture()
-        self._current_stdout = None
-        self._current_stderr = None
+    # def afterTest(self, test):
+    #     self._end_capture()
+    #     self._current_stdout = None
+    #     self._current_stderr = None
 
     def startContext(self, context):
         self._start_capture()
@@ -115,51 +113,56 @@ class StoragePlugin(plugins.Plugin):
         return time() - self._start_time
 
 
-g_pool = pool.Pool(10)
-
-
-
 class NoseDriver(object):
 
-    def run(self, test_run, conf, **kwargs):
+    def __init__(self):
+        log.info('NoseDriver initialized')
+        self._pool = pool.Pool(10)
+        self._named_threads = {}
+
+    def run(self, test_run_id, conf, **kwargs):
         if 'config_path' in kwargs:
             self.prepare_config(conf, kwargs['config_path'])
         argv_add = []
         if 'argv' in kwargs:
             argv_add = [kwargs['argv']]
         log.info('Additional args: %s' % argv_add)
-        gev = g_pool.spawn(self._run_tests, test_run, kwargs['test_path'],
-                           argv_add)
-        TESTS_PROCESS[test_run] = gev
+        gev = self._pool.spawn(
+            self._run_tests, test_run_id, kwargs['test_path'], argv_add)
+        self._named_threads[test_run_id] = gev
 
-    def _run_tests(self, test_run, test_path, argv_add):
+    def _run_tests(self, test_run_id, test_path, argv_add):
         try:
             log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
                      'TEST PATH: %s\n'
-                     'ARGS: %s' % (test_run, test_path, argv_add))
+                     'ARGS: %s' % (test_run_id, test_path, argv_add))
             main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(test_run)],
+                 addplugins=[StoragePlugin(test_run_id)],
                  exit=True,
                  argv=['tests']+argv_add)
-        finally:
-            log.info('Close green thread TEST_RUN: %s' % test_run)
-            del TESTS_PROCESS[test_run]
+        #To close thread we need to catch any exception
+        except BaseException, e:
+            log.info('Close green thread TEST_RUN: %s\n'
+                     'Thread closed with exception: %s' % (test_run_id,
+                                                           e.message))
+            del self._named_threads[test_run_id]
             raise gevent.GreenletExit
 
     def kill(self, test_run):
         log.info('Trying to stop process %s\n'
-                 '%s' % (test_run, TESTS_PROCESS))
-        if int(test_run) in TESTS_PROCESS:
+                 '%s' % (test_run, self._named_threads))
+        if int(test_run) in self._named_threads:
             log.info('Kill green thread: %s' % test_run)
-            TESTS_PROCESS[int(test_run)].kill()
+            self._named_threads[int(test_run)].kill()
             return True
         return False
 
     def prepare_config(self, conf, testing_config_path):
-            conf_path = os.path.abspath(testing_config_path)
-            with io.open(conf_path, 'w', encoding='utf-8') as f:
-                for key, value in conf.iteritems():
-                    f.write(u'%s = %s\n' % (key, value))
+
+        conf_path = os.path.abspath(testing_config_path)
+        with io.open(conf_path, 'w', encoding='utf-8') as f:
+            for key, value in conf.iteritems():
+                f.write(u'%s = %s\n' % (key, value))
 
 
 
