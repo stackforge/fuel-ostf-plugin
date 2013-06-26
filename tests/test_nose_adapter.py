@@ -1,4 +1,4 @@
-import unittest
+import unittest2 as unittest
 from core.transport import nose_adapter
 import io
 from mock import patch, MagicMock
@@ -97,4 +97,7 @@ class TestNoseAdapters(unittest.TestCase):
 class TestNoseStoragePlugin(unittest.TestCase):
 
 
-    def test
+    def test_storage_plugin_properties(self):
+        self.assertEqual(nose_adapter.StoragePlugin.enabled, True)
+        self.assertEqual(nose_adapter.StoragePlugin.score, 15000)
+        self.assertEqual(nose_adapter.StoragePlugin.name, 'storage')

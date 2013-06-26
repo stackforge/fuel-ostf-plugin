@@ -25,9 +25,7 @@ import sys
 import os
 from gevent import wsgi
 from core.wsgi import app
-from core.wsgi import config
 import logging
-
 
 
 log = logging.getLogger(__name__)
@@ -35,7 +33,7 @@ log = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     root = app.setup_app()
-    host, port = config.server.values()
+    host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)
     log.info('Starting server in PID %s' % os.getpid())
 
