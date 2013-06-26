@@ -62,3 +62,6 @@ class SqlStorage(object):
                                data=json.dumps(data))
             self.session.add(test)
         return test
+
+    def update_test_run(self, test_run_id, data):
+        pass

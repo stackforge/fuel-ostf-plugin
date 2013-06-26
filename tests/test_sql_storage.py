@@ -43,3 +43,6 @@ class SqlStorageTests(unittest.TestCase):
                               'stats': self.stats}}
         self.assertEqual(test_run_result, expected)
 
+    def test_update_test_run(self):
+        self.fail('write code for this method')
+
