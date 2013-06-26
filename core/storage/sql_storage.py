@@ -46,7 +46,12 @@ class SqlStorage(object):
         tests = {}
         for test in test_run.tests:
             tests[test.name] = json.loads(test.data)
-        return {'type': test_run.type, 'id': test_run.id, 'tests': tests}
+        res = {'type': test_run.type,
+                'id': test_run.id,
+                'tests': tests}
+        if test_run.data:
+            res['stats'] = json.loads(test_run.data)
+        return res
 
     def get_test_result(self, test_run_id, test_id, stats=False):
         pass
@@ -64,4 +69,8 @@ class SqlStorage(object):
         return test
 
     def update_test_run(self, test_run_id, data):
-        pass
+        with self.session.begin(subtransactions=True):
+            test_run = self.session.query(models.TestRun).\
+                filter(models.TestRun.id == test_run_id).\
+                update({'data': json.dumps(data)})
+        return test_run

@@ -12,6 +12,7 @@ class TestRun(Base):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     type = sa.Column(sa.String(128))
+    data = sa.Column(sa.Text())
 
     tests = relationship('Test', backref='test_run')
 

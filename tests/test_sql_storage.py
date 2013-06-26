@@ -1,8 +1,6 @@
 import unittest
-import mock
 from core.storage.sql_storage import SqlStorage
 from core.storage.sql import models
-from time import time
 
 
 class SqlStorageTests(unittest.TestCase):
@@ -19,8 +17,8 @@ class SqlStorageTests(unittest.TestCase):
         self.storage.add_test_run('test')
         self.storage.add_test_result(
             '1', self.fixture['id'], self.fixture)
-        self.storage.add_test_result(
-            '1', 'stats', self.stats)
+        self.storage.update_test_run(
+            '1', self.stats)
 
     def test_create_session(self):
         self.storage.session
@@ -38,11 +36,12 @@ class SqlStorageTests(unittest.TestCase):
 
     def test_get_test_results(self):
         test_run_result = self.storage.get_test_results(1)
-        expected = {'type': 'test', 'id': 1,
+        expected = {'type': 'test', 'id': 1, 'stats': self.stats,
                     'tests': {self.fixture['id']: self.fixture,
-                              'stats': self.stats}}
+                    }}
         self.assertEqual(test_run_result, expected)
 
     def test_update_test_run(self):
-        self.fail('write code for this method')
+        res = self.storage.update_test_run(1, {'passes': 1})
+        self.assertEqual(res, 1)
 
