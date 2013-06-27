@@ -42,9 +42,9 @@ setuptools.setup(
 
     tests_require=load_requirements('tools/test-requires'),
 
-    dependency_links = [
-        'https://github.com/Mirantis/fuel-ostf-tests.git@feature/package#egg=ostf-tests==0.1'
-    ],
+    # dependency_links = [
+    #     'https://github.com/Mirantis/fuel-ostf-tests.git@feature/package#egg=ostf-tests==0.1'
+    # ],
 
     entry_points={
         'plugins': [
