@@ -19,14 +19,14 @@ class TestApi(unittest.TestCase):
         self.transport = MagicMock()
         self.storage = MagicMock()
 
-    @patch('core.api.get_storage')
+    @patch('ostf_adapter.api.get_storage')
     def test_init_api(self, get_storage_mock):
         get_storage_mock.return_value = 'TEST STORAGE'
         api = API()
         self.assertEqual(api._storage, 'TEST STORAGE')
 
-    @patch('core.api.get_storage')
-    @patch('core.api.parse_commands_file')
+    @patch('ostf_adapter.api.get_storage')
+    @patch('ostf_adapter.api.parse_commands_file')
     def test_run(self, commands_mock, get_storage_mock):
         commands_mock.return_value = TEST_COMMANDS
         get_storage_mock.return_value = self.storage
@@ -42,14 +42,14 @@ class TestApi(unittest.TestCase):
         self.storage.add_test_run.assert_called_once_with(TEST_RUN_NAME)
         self.assertEqual(res, {'type': TEST_RUN_NAME, 'id': TEST_RUN_ID})
 
-    @patch('core.api.get_storage')
+    @patch('ostf_adapter.api.get_storage')
     def test_get_info(self, get_storage_mock):
         get_storage_mock.return_value = self.storage
         api = API()
         res = api.get_info(TEST_RUN_NAME, TEST_RUN_ID)
         self.storage.get_test_results.assert_called_once_with(TEST_RUN_ID)
 
-    @patch('core.api.io.open')
+    @patch('ostf_adapter.api.io.open')
     def test_parse_commands_file(self, file_mock):
         json_example = u"""
             {
@@ -89,7 +89,7 @@ class TestApi(unittest.TestCase):
         }
         self.assertEqual(res, expected)
 
-    @patch('core.api.parse_commands_file')
+    @patch('ostf_adapter.api.parse_commands_file')
     def test_kill_test_run(self, commands_mock):
         commands_mock.return_value = TEST_COMMANDS
         self.transport.obj.kill.return_value = True

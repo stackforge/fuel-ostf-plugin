@@ -10,7 +10,7 @@ class ApiV1Tests(unittest.TestCase):
     def setUp(self):
         self.app = TestApp(app.setup_app())
 
-    @patch('core.wsgi.controllers.v1.request')
+    @patch('ostf_adapter.wsgi.controllers.v1.request')
     def test_get_call(self, request_mock):
         info = {'tempest:1': {'passed': 10}}
         request_mock.api.get_info.return_value = info
@@ -22,7 +22,7 @@ class ApiV1Tests(unittest.TestCase):
         self.assertEqual(resp.status, '200 OK')
         self.assertEqual(json.loads(resp.text), info)
 
-    @patch('core.wsgi.controllers.v1.request')
+    @patch('ostf_adapter.wsgi.controllers.v1.request')
     def test_post_call(self, request_mock):
         info = {'tempest': 1}
         conf = {'tempest_working_dir': '/opt/stack'}
@@ -41,7 +41,7 @@ class ApiV1Tests(unittest.TestCase):
         self.assertEqual(json.loads(resp.text),
                          {'message': 'Please provide ID of test run'})
 
-    @patch('core.wsgi.controllers.v1.request')
+    @patch('ostf_adapter.wsgi.controllers.v1.request')
     def test_delete_call_kill_success(self, request_mock):
         request_mock.api.kill.return_value = True
 
@@ -53,7 +53,7 @@ class ApiV1Tests(unittest.TestCase):
         self.assertEqual(json.loads(resp.text),
                          {'message': 'Killed test run with ID 1'})
 
-    @patch('core.wsgi.controllers.v1.request')
+    @patch('ostf_adapter.wsgi.controllers.v1.request')
     def test_delete_call_kill_failure(self, request_mock):
         request_mock.api.kill.return_value = False
 

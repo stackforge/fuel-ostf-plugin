@@ -61,6 +61,6 @@ def main():
         os.path.join(os.path.dirname(__file__), 'alembic.ini')
     )
     CONF()
-    conf.set_main_option('script_location', 'core.storage.sql:migrations')
+    conf.set_main_option('script_location', 'ostf_adapter.storage.sql:migrations')
     conf.set_main_option('sqlalchemy.url', CONF.database_connection)
     CONF.command.func(conf, CONF.command.name)

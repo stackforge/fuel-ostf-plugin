@@ -12,7 +12,7 @@ TEST_RUN_ID = 1
 CONF = {'keys': 'values'}
 
 
-@patch('core.transport.nose_adapter.pool')
+@patch('ostf_adapter.transport.nose_adapter.pool')
 class TestNoseAdapters(unittest.TestCase):
 
     def setUp(self):
@@ -20,7 +20,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.thread_mock = MagicMock()
 
 
-    @patch('core.transport.nose_adapter.io.open')
+    @patch('ostf_adapter.transport.nose_adapter.io.open')
     def test_prepare_config_conf(self, io_mock, pool_module):
 
         class DummyStringIO(io.StringIO):
@@ -69,7 +69,7 @@ class TestNoseAdapters(unittest.TestCase):
         res = nose_driver.kill(2)
         self.assertFalse(res)
 
-    @patch('core.transport.nose_adapter.main')
+    @patch('ostf_adapter.transport.nose_adapter.main')
     def test_run_tests_raise_system_exit(
             self, nose_test_program_mock, pool_module):
         def raise_system_exit(*args, **kwargs):
@@ -83,7 +83,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.assertRaises(gevent.GreenletExit, nose_driver._run_tests,
                           TEST_RUN_ID, '/home/tests', ['sanity'])
 
-    @patch('core.transport.nose_adapter.main')
+    @patch('ostf_adapter.transport.nose_adapter.main')
     def test_run_tests_raise_greelet_exit(
             self, nose_test_program_mock, pool_module):
 
@@ -99,7 +99,7 @@ class TestNoseAdapters(unittest.TestCase):
                           TEST_RUN_ID, '/home/tests', ['sanity'])
 
 
-@patch('core.transport.nose_adapter.get_storage')
+@patch('ostf_adapter.transport.nose_adapter.get_storage')
 class TestNoseStoragePlugin(unittest.TestCase):
 
     def setUp(self):
@@ -172,7 +172,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
         self.storage_mock.update_test_run.assert_called_once_with(
             TEST_RUN_ID, stats_expected)
 
-    @patch('core.transport.nose_adapter.time')
+    @patch('ostf_adapter.transport.nose_adapter.time')
     def test_before_test(self, time_mock, storage_fabric_mock):
         test_start_time = time()
         storage_fabric_mock.return_value = self.storage_mock
@@ -191,7 +191,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
     #     self.assertEqual(plugin._capture, [('STDOUT', 'STDERR')])
     #     self.assertEqual(io_mock.call_count, 2)
 
-    @patch('core.transport.nose_adapter.sys')
+    @patch('ostf_adapter.transport.nose_adapter.sys')
     def test_finalize(self, sys_mock, storage_fabric_mock):
         storage_fabric_mock.return_value = self.storage_mock
         plugin = nose_adapter.StoragePlugin(TEST_RUN_ID)
@@ -199,7 +199,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
         plugin.finalize('test')
         self.assertEqual(plugin._capture, [])
 
-    @patch('core.transport.nose_adapter.time')
+    @patch('ostf_adapter.transport.nose_adapter.time')
     def test_taken_property(self, time_mock, storage_fabric_mock):
         storage_fabric_mock.return_value = self.storage_mock
         plugin = nose_adapter.StoragePlugin(TEST_RUN_ID)

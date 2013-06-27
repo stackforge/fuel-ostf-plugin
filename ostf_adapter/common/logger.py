@@ -19,7 +19,7 @@ logging_opts = [
 
 
 CONF = cfg.CONF
-CONF.register_opts(logging_opts)
+CONF.register_cli_opts(logging_opts)
 
 
 def setup():
