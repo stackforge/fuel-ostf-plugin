@@ -1,7 +1,7 @@
 import unittest
 from mock import patch
 from webtest import TestApp
-from core.wsgi import app
+from ostf_adapter.wsgi import app
 import simplejson as json
 
 

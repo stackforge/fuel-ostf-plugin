@@ -1,5 +1,5 @@
 import pecan
-from core import api
+from ostf_adapter import api
 
 
 class APIHook(pecan.hooks.PecanHook):

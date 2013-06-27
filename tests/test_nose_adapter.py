@@ -1,6 +1,6 @@
 import sys
 import unittest
-from core.transport import nose_adapter
+from ostf_adapter.transport import nose_adapter
 import io
 from mock import patch, MagicMock
 import gevent

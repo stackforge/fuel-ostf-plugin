@@ -1,5 +1,5 @@
 import os
-from core.storage import get_storage
+from ostf_adapter.storage import get_storage
 import logging
 import simplejson as json
 from stevedore import extension

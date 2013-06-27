@@ -1,6 +1,6 @@
 from nose import main, plugins
 import os
-from core.storage import get_storage
+from ostf_adapter.storage import get_storage
 import gevent
 from gevent import pool
 from time import time

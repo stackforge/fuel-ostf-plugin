@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 from oslo.config import cfg
-from core.common import logger
+from ostf_adapter.common import logger
 
 
 cfg.CONF(project='testing_adapter')
@@ -23,7 +23,7 @@ logger.setup()
 import sys
 import os
 from gevent import wsgi
-from core.wsgi import app
+from ostf_adapter.wsgi import app
 import logging
 
 

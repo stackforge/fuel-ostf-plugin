@@ -1,6 +1,6 @@
 import pecan
 from oslo.config import cfg
-from core.wsgi import hooks
+from ostf_adapter.wsgi import hooks
 
 CONF = cfg.CONF
 
@@ -19,8 +19,8 @@ pecan_config_dict = {
         'port': CONF.server_port
     },
     'app': {
-        'root': 'core.wsgi.controllers.root.RootController',
-        'modules': ['core.wsgi'],
+        'root': 'ostf_adapter.wsgi.controllers.root.RootController',
+        'modules': ['ostf_adapter.wsgi'],
         'debug': False,
     }
 }

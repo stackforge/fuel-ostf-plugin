@@ -1,5 +1,5 @@
 import pecan
-from core.wsgi.controllers import v1
+from ostf_adapter.wsgi.controllers import v1
 
 
 class RootController(object):

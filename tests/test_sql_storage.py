@@ -1,6 +1,6 @@
 import unittest
-from core.storage.sql_storage import SqlStorage
-from core.storage.sql import models
+from ostf_adapter.storage.sql_storage import SqlStorage
+from ostf_adapter.storage.sql import models
 
 
 class SqlStorageTests(unittest.TestCase):

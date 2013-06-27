@@ -7,7 +7,7 @@ patch_psycopg()
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, joinedload
 
-from core.storage.sql import models
+from ostf_adapter.storage.sql import models
 
 import simplejson as json
 import logging

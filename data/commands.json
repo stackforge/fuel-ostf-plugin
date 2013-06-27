@@ -1,15 +1,15 @@
 {
     "five_min": {
-        "test_path": "/fuel/tests",
+        "test_path": "fuel/tests",
         "driver": "nose"
     },
     "fuel_smoke": {
-        "test_path": "/fuel/tests",
+        "test_path": "fuel/tests",
         "driver": "nose",
         "argv": "smoke"
     },
     "fuel_sanity": {
-        "test_path": "/fuel/tests",
+        "test_path": "fuel/tests",
         "driver": "nose",
         "argv": "sanity"
     }

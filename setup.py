@@ -3,15 +3,15 @@ import setuptools
 import io
 
 
-
 def load_requirements(requirements_path):
     with io.open(requirements_path, 'r') as reqs:
-        return reqs.read()
+
+        return reqs.read().split('\n')
 
 
 setuptools.setup(
 
-    name='testing-adapter',
+    name='testing_adapter',
     version='0.2',
 
     description='cloud computing testing',
@@ -34,7 +34,7 @@ setuptools.setup(
         'Topic :: System :: Testing',
     ],
 
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['tests', 'bin']),
 
     include_package_data=True,
 
@@ -42,9 +42,13 @@ setuptools.setup(
 
     tests_require=load_requirements('tools/test-requires'),
 
+    dependency_links = [
+        'https://github.com/Mirantis/fuel-ostf-tests.git@feature/package#egg=ostf-tests==0.1'
+    ],
+
     entry_points={
         'plugins': [
-            'nose = core.transport.nose_adapter:NoseDriver'
+            'nose = ostf_adapter.transport.nose_adapter:NoseDriver'
         ],
         'console_scripts': [
             'ostf-server = bin.adapter_api:main',

@@ -1,6 +1,6 @@
 import unittest
 from mock import patch, MagicMock
-from core.api import API, parse_commands_file
+from ostf_adapter.api import API, parse_commands_file
 import io
 
 TEST_RUN_NAME = 'tests'
