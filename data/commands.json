@@ -1,0 +1,16 @@
+{
+    "five_min": {
+        "test_path": "/ostf-tests/fuel/tests",
+        "driver": "nose"
+    },
+    "fuel_smoke": {
+        "test_path": "/ostf-tests/fuel/tests",
+        "driver": "nose",
+        "argv": "smoke"
+    },
+    "fuel_sanity": {
+        "test_path": "/ostf-tests/fuel/tests",
+        "driver": "nose",
+        "argv": "sanity"
+    }
+}

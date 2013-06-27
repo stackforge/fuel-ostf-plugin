@@ -51,27 +51,41 @@ class TestApi(unittest.TestCase):
 
     @patch('core.api.io.open')
     def test_parse_commands_file(self, file_mock):
-        yaml = u"""
-            fuel_smoke:
-              test_path: /root/ostf-tests/fuel/tests
-              driver: nose
-              argv: smoke
-            fuel_sanity:
-              test_path: /root/ostf-tests/fuel/tests
-              driver: nose
-              argv: sanity
+        json_example = u"""
+            {
+                "five_min": {
+                    "test_path": "/ostf-tests/fuel/tests",
+                    "driver": "nose"
+                },
+                "fuel_smoke": {
+                    "test_path": "/ostf-tests/fuel/tests",
+                    "driver": "nose",
+                    "argv": "smoke"
+                },
+                "fuel_sanity": {
+                    "test_path": "/ostf-tests/fuel/tests",
+                    "driver": "nose",
+                    "argv": "sanity"
+                }
+            }
         """
-        file_mock.return_value = io.StringIO(yaml)
+        file_mock.return_value = io.StringIO(json_example)
         res = parse_commands_file()
         expected = {
-            'fuel_smoke': {
-                'test_path': '/root/ostf-tests/fuel/tests',
-                'driver': 'nose',
-                'argv': 'smoke'},
-            'fuel_sanity': {
-                'test_path': '/root/ostf-tests/fuel/tests',
-                'driver': 'nose',
-                'argv': 'sanity'}
+            "five_min": {
+                "test_path": "/ostf-tests/fuel/tests",
+                "driver": "nose"
+            },
+            "fuel_smoke": {
+                "test_path": "/ostf-tests/fuel/tests",
+                "driver": "nose",
+                "argv": "smoke"
+            },
+            "fuel_sanity": {
+                "test_path": "/ostf-tests/fuel/tests",
+                "driver": "nose",
+                "argv": "sanity"
+            }
         }
         self.assertEqual(res, expected)
 

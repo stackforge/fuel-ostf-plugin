@@ -1,7 +1,7 @@
 import os
 from core.storage import get_storage
 import logging
-import yaml
+import simplejson as json
 from stevedore import extension
 import io
 
@@ -13,9 +13,10 @@ PLUGINS_NAMESPACE = 'plugins'
 
 def parse_commands_file():
     current_directory = os.path.dirname(os.path.realpath(__file__))
-    commands_path = os.path.join(current_directory, 'commands.yaml')
+    commands_path = os.path.join(
+        current_directory, os.path.pardir, 'data/commands.json')
     with io.open(commands_path, 'r') as f:
-        return yaml.load(f)
+        return json.load(f)
 
 
 class API(object):
