@@ -1,5 +1,7 @@
+import multiprocessing
 import setuptools
 import io
+
 
 
 def load_requirements(requirements_path):
@@ -14,6 +16,9 @@ setuptools.setup(
 
     description='cloud computing testing',
 
+    zip_safe = False,
+
+    test_suite = 'tests',
 
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -37,19 +42,13 @@ setuptools.setup(
 
     tests_require=load_requirements('tools/test-requires'),
 
-    scripts=['bin/adapter-api.py', 'bin/adapter-db.py'],
-
-    package_data={
-        '' : ['data/*.json', '*.ini']
-    },
-
     entry_points={
         'plugins': [
             'nose = core.transport.nose_adapter:NoseDriver'
         ],
         'console_scripts': [
-            'ostf-server = adapter-api:main',
-            'ostf-db = adapter-db:main'
+            'ostf-server = bin.adapter_api:main',
+            'ostf-db = bin.adapter_db:main'
         ]
     },
 )

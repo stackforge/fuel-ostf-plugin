@@ -1,5 +1,5 @@
 from gevent.monkey import patch_all
-patch_all()
+patch_all(thread=False)
 
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()

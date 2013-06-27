@@ -1,5 +1,5 @@
 cython
--e git://github.com/surfly/gevent.git@1.0rc2#egg=gevent
+gevent
 pecan
 stevedore
 oslo.config
@@ -8,4 +8,4 @@ psycogreen
 sqlalchemy
 simplejson
 alembic
-pyyaml
+nose

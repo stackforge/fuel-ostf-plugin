@@ -1,5 +1,5 @@
 import sys
-import unittest2 as unittest
+import unittest
 from core.transport import nose_adapter
 import io
 from mock import patch, MagicMock

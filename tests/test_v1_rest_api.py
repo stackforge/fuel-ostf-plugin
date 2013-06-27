@@ -1,11 +1,11 @@
-import unittest2
+import unittest
 from mock import patch
 from webtest import TestApp
 from core.wsgi import app
 import simplejson as json
 
 
-class ApiV1Tests(unittest2.TestCase):
+class ApiV1Tests(unittest.TestCase):
 
     def setUp(self):
         self.app = TestApp(app.setup_app())
@@ -34,12 +34,6 @@ class ApiV1Tests(unittest2.TestCase):
 
         self.assertEqual(resp.status, '200 OK')
         self.assertEqual(json.loads(resp.text), info)
-
-    def test_post_call_without_conf(self):
-        resp = self.app.post('/v1/tempest', expect_errors=True)
-        self.assertEqual(resp.status, '400 Bad Request')
-        self.assertEqual(json.loads(resp.text),
-                         {'message': 'Config is expected'})
 
     def test_get_call_without_id(self):
         resp = self.app.get('/v1/tempest', expect_errors=True)

@@ -9,7 +9,6 @@ import logging
 import io
 from oslo.config import cfg
 import traceback
-from nose.case import Test
 
 CONF = cfg.CONF
 

@@ -4,13 +4,15 @@ SETUP:
     1.1. Postgres server
     1.2. libpq-dev
 2. Install pip-requirements
-    2.1. pip install -r tools/pip-requires
-    2.1. For tests --- pip install -r tools/test-requires
+    2.1. python setup.py develop
+        Will install python dependencies, and two scripts
+        ostf-server
+        ostf-db
 3. Migrate postgres database
-        python bin/adapter-db.py --config-file /etc/testing_adapter.conf upgrade head
+        ostf-db --config-file /etc/testing_adapter.conf upgrade head
      TO REMOVE APPLIED MIGRATION USE:
-        python bin/adapter-db.py --config-file /etc/testing_adapter.conf downgrade -1
-4. python bin/adapter-api.py --config-file /etc/testing_adapter.conf
+        ostf-db --config-file /etc/testing_adapter.conf downgrade -1
+4. ostf-server --config-file /etc/testing_adapter.conf
      config-file should be in format of ./etc/testing_adapter.conf.sample
      where database_connection just usual sqlalchemy url
 
@@ -20,7 +22,7 @@ USE:
 
 working_directory - absolute path of the tests
 
-1. curl -H "Content-Type: application/json" -X POST -d '{"working_directory":"/home/dshulyak/projects/cliff"}' http://localhost:8777/v1/tests
+1. curl -H "Content-Type: application/json" -X POST -d  http://localhost:8777/v1/tests
 RESPONSE: {"type": "tests", "id": 7}
 
 Application expecting working_directory of tests that should be runed

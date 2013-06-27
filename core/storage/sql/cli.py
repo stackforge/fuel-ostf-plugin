@@ -6,7 +6,8 @@ from oslo.config import cfg
 
 STORAGE_OPTS = [
     cfg.StrOpt('database_connection',
-               default='sqlite://',
+               default=
+               'postgresql+psycopg2://adapter:demo@localhost/testing_adapter',
                help='Database connection string',
                ),
 ]

@@ -12,8 +12,9 @@ class V1Controller(rest.RestController):
         if request.body:
             conf = json.loads(request.body)
         else:
-            response.status = 400
-            return {'message': 'Config is expected'}
+            # response.status = 400
+            # return {'message': 'Config is expected'}
+            conf = {}
         log.info('POST REQUEST - %s\n'
                  'WITH CONF - %s' %(test_service, conf))
         return request.api.run(test_service, conf)

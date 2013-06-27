@@ -1,2 +1,0 @@
-[plugins]
-nose = core.transport.nose_adapter:NoseDriver

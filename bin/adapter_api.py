@@ -20,7 +20,6 @@ from core.common import logger
 cfg.CONF(project='testing_adapter')
 logger.setup()
 
-
 import sys
 import os
 from gevent import wsgi
@@ -31,7 +30,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-if __name__ == '__main__':
+def main():
     root = app.setup_app()
     host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)
@@ -47,3 +46,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         # allow CTRL+C to shutdown without an error
         pass
+
+
+if __name__ == '__main__':
+    main()

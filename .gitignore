@@ -2,3 +2,5 @@
 *.pyc
 *.log
 nosetests.xml
+*.egg-info
+*.egg
