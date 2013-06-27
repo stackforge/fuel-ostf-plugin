@@ -1,0 +1,10 @@
+gevent
+pecan
+stevedore
+oslo.config
+psycopg2
+psycogreen
+sqlalchemy
+simplejson
+alembic
+nose

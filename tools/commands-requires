@@ -1,0 +1,1 @@
+-e git+ssh://git@github.com/Mirantis/fuel-ostf-tests.git@feature/package#egg=ostf-tests==0.1
