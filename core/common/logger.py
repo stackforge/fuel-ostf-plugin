@@ -10,7 +10,7 @@ _DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 logging_opts = [
     cfg.StrOpt('log_file',
-               default='',
+               default=None,
                metavar='PATH',
                deprecated_name='logfile',
                help='(Optional) Name of log file to output to. '
@@ -28,8 +28,8 @@ def setup():
     stream_handler.setLevel(logging.INFO)
     log.addHandler(stream_handler)
 
-    log_file = os.path.abspath(CONF.log_file)
-    if log_file:
+    if CONF.log_file:
+        log_file = os.path.abspath(CONF.log_file)
         file_handler = logging.handlers.WatchedFileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         mode = int('0644', 8)
