@@ -1,24 +1,29 @@
 from pecan import rest, expose, request, response
 import simplejson as json
 import logging
-from ostf_adapter.api import API
+from ostf_adapter.api import API, parse_json_file
 
 log = logging.getLogger(__name__)
+
+V1_DESCRIPTION = 'data/v1_description.json'
 
 
 class V1Controller(rest.RestController):
 
     def __init__(self, *args, **kwargs):
         self.api = API()
+        self._api_description = parse_json_file(V1_DESCRIPTION)
         super(V1Controller, self).__init__(*args, **kwargs)
+
+    @expose('json')
+    def index(self):
+        return self._api_description
 
     @expose('json')
     def post(self, test_service):
         if request.body:
             conf = json.loads(request.body)
         else:
-            # response.status = 400
-            # return {'message': 'Config is expected'}
             conf = {}
         log.info('POST REQUEST - %s\n'
                  'WITH CONF - %s' %(test_service, conf))

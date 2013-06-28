@@ -1,6 +1,6 @@
 import unittest
 from mock import patch, MagicMock
-from ostf_adapter.api import API, parse_commands_file
+from ostf_adapter.api import API, parse_json_file, COMMANDS_FILE_PATH
 import io
 
 TEST_RUN_NAME = 'tests'
@@ -26,7 +26,7 @@ class TestApi(unittest.TestCase):
         self.assertEqual(api._storage, 'TEST STORAGE')
 
     @patch('ostf_adapter.api.get_storage')
-    @patch('ostf_adapter.api.parse_commands_file')
+    @patch('ostf_adapter.api.parse_json_file')
     def test_run(self, commands_mock, get_storage_mock):
         commands_mock.return_value = TEST_COMMANDS
         get_storage_mock.return_value = self.storage
@@ -70,7 +70,7 @@ class TestApi(unittest.TestCase):
             }
         """
         file_mock.return_value = io.StringIO(json_example)
-        res = parse_commands_file()
+        res = parse_json_file(COMMANDS_FILE_PATH)
         expected = {
             "five_min": {
                 "test_path": "/ostf-tests/fuel/tests",
@@ -89,7 +89,7 @@ class TestApi(unittest.TestCase):
         }
         self.assertEqual(res, expected)
 
-    @patch('ostf_adapter.api.parse_commands_file')
+    @patch('ostf_adapter.api.parse_json_file')
     def test_kill_test_run(self, commands_mock):
         commands_mock.return_value = TEST_COMMANDS
         self.transport.obj.kill.return_value = True

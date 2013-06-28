@@ -9,11 +9,12 @@ log = logging.getLogger(__name__)
 
 PLUGINS_NAMESPACE = 'plugins'
 
+COMMANDS_FILE_PATH = 'data/commands.json'
 
-def parse_commands_file():
+def parse_json_file(file_path):
     current_directory = os.path.dirname(os.path.realpath(__file__))
     commands_path = os.path.join(
-        current_directory, os.path.pardir, 'data/commands.json')
+        current_directory, os.path.pardir, file_path)
     with open(commands_path, 'r') as f:
         return json.load(f)
 
@@ -22,7 +23,7 @@ class API(object):
 
     def __init__(self):
         log.info('Initialized API')
-        self._commands = parse_commands_file()
+        self._commands = parse_json_file(COMMANDS_FILE_PATH)
         log.info('Parsed commands %s' % self._commands)
         self._storage = get_storage()
         self._transport_manager = extension.ExtensionManager(

@@ -27,7 +27,7 @@ pecan_config_dict = {
 
 
 def setup_app(pecan_config=None, extra_hooks=None):
-    app_hooks = []
+    app_hooks = [hooks.ExceptionHandlingHook()]
     if not pecan_config:
         pecan_config = pecan.configuration.conf_from_dict(pecan_config_dict)
 

@@ -1,9 +1,11 @@
-import pecan
+from pecan import hooks, response
 from ostf_adapter import api
+import logging
+
+log = logging.getLogger(__name__)
+
+class ExceptionHandlingHook(hooks.PecanHook):
 
 
-class APIHook(pecan.hooks.PecanHook):
-
-
-    def before(self, state):
-        state.request.api = api.API()
+    def on_error(self, state, e):
+    	log.exception('Got an %s.' % e)
