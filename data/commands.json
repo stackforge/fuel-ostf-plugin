@@ -15,7 +15,11 @@
     },
     "simple": {
         "test_path": "/home/u/projects/some_tests",
+        "driver": "nose"        
+    },
+    "simple_conf": {
+        "test_path": "/home/u/projects/some_tests",
         "driver": "nose",
-        "argv": ["--with-xunit"]
+        "config_path": "/home/u/projects/some_tests/testing.conf"        
     }
 }

@@ -95,7 +95,7 @@ class NoseDriver(object):
 
     def __init__(self):
         log.info('NoseDriver initialized')
-        self._pool = pool.Pool(100)
+        self._pool = pool.Pool(1000)
         self._named_threads = {}
 
     def run(self, test_run_id, conf, **kwargs):
@@ -136,7 +136,7 @@ class NoseDriver(object):
     def prepare_config(self, conf, testing_config_path):
 
         conf_path = os.path.abspath(testing_config_path)
-        with open(conf_path, 'w', encoding='utf-8') as f:
+        with open(conf_path, 'w') as f:
             for key, value in conf.iteritems():
                 f.write(u'%s = %s\n' % (key, value))
 
