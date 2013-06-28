@@ -1,7 +1,6 @@
 import os
 import logging
 import logging.handlers
-
 from oslo.config import cfg
 
 

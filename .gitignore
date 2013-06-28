@@ -3,4 +3,4 @@
 *.log
 nosetests.xml
 *.egg-info
-*.egg
+/*.egg

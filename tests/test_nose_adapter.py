@@ -3,9 +3,8 @@ import unittest
 from ostf_adapter.transport import nose_adapter
 import io
 from mock import patch, MagicMock
-import gevent
 from time import time
-from oslo.config import cfg
+from gevent import GreenletExit
 
 
 TEST_RUN_ID = 1
@@ -80,7 +79,7 @@ class TestNoseAdapters(unittest.TestCase):
         nose_driver._named_threads[TEST_RUN_ID] = 'VALUE'
         nose_test_program_mock.side_effect = raise_system_exit
 
-        self.assertRaises(gevent.GreenletExit, nose_driver._run_tests,
+        self.assertRaises(GreenletExit, nose_driver._run_tests,
                           TEST_RUN_ID, '/home/tests', ['sanity'])
 
     @patch('ostf_adapter.transport.nose_adapter.main')
@@ -88,14 +87,14 @@ class TestNoseAdapters(unittest.TestCase):
             self, nose_test_program_mock, pool_module):
 
         def raise_greenlet_exit(*args, **kwargs):
-            raise gevent.GreenletExit
+            raise GreenletExit
 
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
         nose_driver._named_threads[TEST_RUN_ID] = 'VALUE'
         nose_test_program_mock.side_effect = raise_greenlet_exit
 
-        self.assertRaises(gevent.GreenletExit, nose_driver._run_tests,
+        self.assertRaises(GreenletExit, nose_driver._run_tests,
                           TEST_RUN_ID, '/home/tests', ['sanity'])
 
 

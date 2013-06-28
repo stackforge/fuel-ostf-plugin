@@ -1,9 +1,11 @@
 from pecan import rest, expose, request, response
 import simplejson as json
-import logging
 from ostf_adapter.api import API, parse_json_file
+import logging
+
 
 log = logging.getLogger(__name__)
+
 
 V1_DESCRIPTION = 'data/v1_description.json'
 

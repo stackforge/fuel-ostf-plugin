@@ -1,10 +1,9 @@
 import multiprocessing
 import setuptools
-import io
 
 
 def load_requirements(requirements_path):
-    with io.open(requirements_path, 'r') as reqs:
+    with open(requirements_path, 'r') as reqs:
 
         return reqs.read().split('\n')
 

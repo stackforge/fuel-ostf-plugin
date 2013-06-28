@@ -1,4 +1,4 @@
-from pecan import expose, response
+from pecan import expose
 from ostf_adapter.wsgi.controllers import v1
 
 
@@ -10,7 +10,3 @@ class RootController(object):
     def index(self): 
         return {'versions': {'v1': '/v1/'},
         		'message': 'Use specific version request'}
-
-    @expose('json'):
-    def error(self, status):
-    	return {'message': ''}

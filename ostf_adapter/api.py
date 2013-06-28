@@ -1,15 +1,18 @@
 import os
 from ostf_adapter.storage import get_storage
-import logging
 import simplejson as json
 from stevedore import extension
-from oslo.config import cfg
+import logging
+
 
 log = logging.getLogger(__name__)
 
+
 PLUGINS_NAMESPACE = 'plugins'
 
+
 COMMANDS_FILE_PATH = 'data/commands.json'
+
 
 def parse_json_file(file_path):
     current_directory = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +34,7 @@ class API(object):
 
     def run(self, test_run_name, conf):
         log.info('Looking for %s in %s' % (test_run_name, self._commands))
-        command = self._commands.get(test_run_name, {})
+        command = self._commands.get(test_run_name)
         transport = self._transport_manager[command['driver']]
         test_run = self._storage.add_test_run(test_run_name)
         transport.obj.run(test_run['id'], conf, **command)

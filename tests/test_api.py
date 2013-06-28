@@ -3,6 +3,7 @@ from mock import patch, MagicMock
 from ostf_adapter.api import API, parse_json_file, COMMANDS_FILE_PATH
 import io
 
+
 TEST_RUN_NAME = 'tests'
 TEST_RUN_ID = 1
 TEST_ID = 'simple.TestSimple'
