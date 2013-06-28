@@ -49,7 +49,7 @@ class TestApi(unittest.TestCase):
         res = api.get_info(TEST_RUN_NAME, TEST_RUN_ID)
         self.storage.get_test_results.assert_called_once_with(TEST_RUN_ID)
 
-    @patch('ostf_adapter.api.io.open')
+    @patch('__builtin__.open')
     def test_parse_commands_file(self, file_mock):
         json_example = u"""
             {

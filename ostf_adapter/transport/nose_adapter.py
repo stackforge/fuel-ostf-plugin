@@ -28,10 +28,10 @@ class StoragePlugin(Plugin):
         self.storage = get_storage()
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
-        if not self._capture:
-            self._capture.append((sys.stdout, sys.stderr))
-        sys.stdout = StringIO()
-        sys.stderr = StringIO()
+        # if not self._capture:
+        #     self._capture.append((sys.stdout, sys.stderr))
+        # sys.stdout = StringIO()
+        # sys.stderr = StringIO()
 
     def options(self, parser, env=os.environ):
         pass

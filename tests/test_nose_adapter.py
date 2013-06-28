@@ -20,7 +20,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.thread_mock = MagicMock()
 
 
-    @patch('ostf_adapter.transport.nose_adapter.io.open')
+    @patch('__builtin__.open')
     def test_prepare_config_conf(self, io_mock, pool_module):
 
         class DummyStringIO(io.StringIO):
@@ -180,16 +180,6 @@ class TestNoseStoragePlugin(unittest.TestCase):
         plugin = nose_adapter.StoragePlugin(TEST_RUN_ID)
         plugin.beforeTest('test')
         self.assertEqual(plugin._start_time, test_start_time)
-
-    # @patch('core.transport.nose_adapter.sys')
-    # @patch('core.transport.nose_adapter.io.StringIO')
-    # def test_start_context(self, io_mock, sys_mock, storage_fabric_mock):
-    #     sys_mock.stdout, sys_mock.stderr = 'STDOUT', 'STDERR'
-    #     storage_fabric_mock.return_value = self.storage_mock
-    #     plugin = nose_adapter.StoragePlugin(TEST_RUN_ID)
-    #     plugin.startContext('CONTEXT')
-    #     self.assertEqual(plugin._capture, [('STDOUT', 'STDERR')])
-    #     self.assertEqual(io_mock.call_count, 2)
 
     @patch('ostf_adapter.transport.nose_adapter.sys')
     def test_finalize(self, sys_mock, storage_fabric_mock):

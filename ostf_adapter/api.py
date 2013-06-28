@@ -4,15 +4,6 @@ import logging
 import simplejson as json
 from stevedore import extension
 from oslo.config import cfg
-import io
-
-CONF = cfg.CONF
-
-common_opts = [
-    cfg.BoolOpt('debug', metavar='DEBUG', default=False)
-]
-
-CONF.register_cli_opts(common_opts)
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +14,7 @@ def parse_commands_file():
     current_directory = os.path.dirname(os.path.realpath(__file__))
     commands_path = os.path.join(
         current_directory, os.path.pardir, 'data/commands.json')
-    with io.open(commands_path, 'r') as f:
+    with open(commands_path, 'r') as f:
         return json.load(f)
 
 
