@@ -15,11 +15,6 @@
 # under the License.
 from oslo.config import cfg
 from ostf_adapter.common import logger
-
-
-cfg.CONF(project='testing_adapter')
-logger.setup()
-
 import sys
 import os
 from gevent import wsgi
@@ -27,10 +22,14 @@ from ostf_adapter.wsgi import app
 import logging
 
 
+cfg.CONF(project='testing_adapter')
+logger.setup()
+
 log = logging.getLogger(__name__)
 
 
 def main():
+    log.info('STARTING SETUP')
     root = app.setup_app()
     host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)

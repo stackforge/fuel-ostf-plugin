@@ -1,4 +1,5 @@
-from nose import main, plugins
+from nose import main
+from nose.plugins import Plugin, xunit
 import os
 from ostf_adapter.storage import get_storage
 import gevent
@@ -6,24 +7,16 @@ from gevent import pool
 from time import time
 import sys
 import logging
-import io
-from oslo.config import cfg
+from cStringIO import StringIO
 import traceback
 
-CONF = cfg.CONF
-
-nose_driver_opts = [
-    cfg.BoolOpt('capture_tests_output', default=False)
-]
-
-CONF.register_opts(nose_driver_opts)
 
 TESTS_PROCESS = {}
 
 log = logging.getLogger(__name__)
 
 
-class StoragePlugin(plugins.Plugin):
+class StoragePlugin(Plugin):
 
     enabled = True
     name = 'storage'
@@ -35,11 +28,10 @@ class StoragePlugin(plugins.Plugin):
         self.storage = get_storage()
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
-        if CONF.capture_tests_output:
-            if not self._capture:
-                self._capture.append((sys.stdout, sys.stderr))
-            sys.stdout = io.StringIO()
-            sys.stderr = io.StringIO()
+        if not self._capture:
+            self._capture.append((sys.stdout, sys.stderr))
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
 
     def options(self, parser, env=os.environ):
         pass
@@ -103,15 +95,13 @@ class NoseDriver(object):
 
     def __init__(self):
         log.info('NoseDriver initialized')
-        self._pool = pool.Pool(10)
+        self._pool = pool.Pool(100)
         self._named_threads = {}
 
     def run(self, test_run_id, conf, **kwargs):
         if 'config_path' in kwargs:
             self.prepare_config(conf, kwargs['config_path'])
-        argv_add = []
-        if 'argv' in kwargs:
-            argv_add = [kwargs['argv']]
+        argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
         gev = self._pool.spawn(
             self._run_tests, test_run_id, kwargs['test_path'], argv_add)
@@ -146,7 +136,7 @@ class NoseDriver(object):
     def prepare_config(self, conf, testing_config_path):
 
         conf_path = os.path.abspath(testing_config_path)
-        with io.open(conf_path, 'w', encoding='utf-8') as f:
+        with open(conf_path, 'w', encoding='utf-8') as f:
             for key, value in conf.iteritems():
                 f.write(u'%s = %s\n' % (key, value))
 

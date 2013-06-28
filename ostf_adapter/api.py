@@ -3,10 +3,18 @@ from ostf_adapter.storage import get_storage
 import logging
 import simplejson as json
 from stevedore import extension
+from oslo.config import cfg
 import io
 
-log = logging.getLogger(__name__)
+CONF = cfg.CONF
 
+common_opts = [
+    cfg.BoolOpt('debug', metavar='DEBUG', default=False)
+]
+
+CONF.register_cli_opts(common_opts)
+
+log = logging.getLogger(__name__)
 
 PLUGINS_NAMESPACE = 'plugins'
 

@@ -6,11 +6,16 @@
     "fuel_smoke": {
         "test_path": "fuel/tests",
         "driver": "nose",
-        "argv": "smoke"
+        "argv": ["smoke"]
     },
     "fuel_sanity": {
         "test_path": "fuel/tests",
         "driver": "nose",
-        "argv": "sanity"
+        "argv": ["sanity"]
+    },
+    "simple": {
+        "test_path": "/home/u/projects/some_tests",
+        "driver": "nose",
+        "argv": ["--with-xunit"]
     }
 }

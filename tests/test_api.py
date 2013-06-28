@@ -60,12 +60,12 @@ class TestApi(unittest.TestCase):
                 "fuel_smoke": {
                     "test_path": "/ostf-tests/fuel/tests",
                     "driver": "nose",
-                    "argv": "smoke"
+                    "argv": ["smoke"]
                 },
                 "fuel_sanity": {
                     "test_path": "/ostf-tests/fuel/tests",
                     "driver": "nose",
-                    "argv": "sanity"
+                    "argv": ["sanity"]
                 }
             }
         """
@@ -79,12 +79,12 @@ class TestApi(unittest.TestCase):
             "fuel_smoke": {
                 "test_path": "/ostf-tests/fuel/tests",
                 "driver": "nose",
-                "argv": "smoke"
+                "argv": ["smoke"]
             },
             "fuel_sanity": {
                 "test_path": "/ostf-tests/fuel/tests",
                 "driver": "nose",
-                "argv": "sanity"
+                "argv": ["sanity"]
             }
         }
         self.assertEqual(res, expected)

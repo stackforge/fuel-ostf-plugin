@@ -45,7 +45,7 @@ class TestNoseAdapters(unittest.TestCase):
         with patch.object(nose_driver, 'prepare_config')\
             as prepare_config_mock:
             res = nose_driver.run(
-                TEST_RUN_ID, CONF, config_path='/etc/test.conf', argv='sanity',
+                TEST_RUN_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
                 test_path='/home/tests')
         prepare_config_mock.assert_called_once_with(CONF, '/etc/test.conf')
         self.pool_mock.spawn.assert_called_once_with(
