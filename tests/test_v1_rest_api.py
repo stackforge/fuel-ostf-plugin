@@ -73,5 +73,26 @@ class ApiV1Tests(unittest.TestCase):
         self.assertEqual(json.loads(resp.text),
                          {'message': 'Please provide ID of test run'})
 
-    # def tearDown(self):
-    #     self.patcher.stop()
+    def test_get_all_call(self):
+        self.api.commands = {'test': {'test_path': '/some/path'}}
+        resp = self.app.get('/v1/')
+
+        self.assertEqual(resp.status, '200 OK')
+        self.assertEqual(json.loads(resp.text), 
+                        {'test': {'test_path': '/some/path'}})
+
+    def test_head_root_call(self):
+        resp = self.app.head('/v1/')
+
+        self.assertEqual(resp.status, '200 OK')
+
+    def test_post_root_call(self):
+        resp = self.app.post('/v1/')
+
+        self.assertEqual(resp.status, '200 OK')
+        self.assertTrue(resp.text)
+
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher.stop()

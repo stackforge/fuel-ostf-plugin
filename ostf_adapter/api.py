@@ -26,15 +26,15 @@ class API(object):
 
     def __init__(self):
         log.info('Initialized API')
-        self._commands = parse_json_file(COMMANDS_FILE_PATH)
-        log.info('Parsed commands %s' % self._commands)
+        self.commands = parse_json_file(COMMANDS_FILE_PATH)
+        log.info('Parsed commands %s' % self.commands)
         self._storage = get_storage()
         self._transport_manager = extension.ExtensionManager(
             PLUGINS_NAMESPACE, invoke_on_load=True)
 
     def run(self, test_run_name, conf):
-        log.info('Looking for %s in %s' % (test_run_name, self._commands))
-        command = self._commands.get(test_run_name)
+        log.info('Looking for %s in %s' % (test_run_name, self.commands))
+        command = self.commands.get(test_run_name)
         transport = self._transport_manager[command['driver']]
         test_run = self._storage.add_test_run(test_run_name)
         transport.obj.run(test_run['id'], conf, **command)
@@ -44,7 +44,7 @@ class API(object):
         return self._storage.get_test_results(test_run_id)
 
     def kill(self, test_run_name, test_run_id):
-        log.info('Looking for %s in %s' % (test_run_name, self._commands))
-        command = self._commands.get(test_run_name, {})
+        log.info('Looking for %s in %s' % (test_run_name, self.commands))
+        command = self.commands.get(test_run_name, {})
         transport = self._transport_manager[command['driver']]
         return transport.obj.kill(test_run_id)

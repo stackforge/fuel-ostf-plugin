@@ -1,4 +1,5 @@
 from pecan import rest, expose, request, response
+from pecan.core import abort
 import simplejson as json
 from ostf_adapter.api import API, parse_json_file
 import logging
@@ -18,7 +19,7 @@ class V1Controller(rest.RestController):
         super(V1Controller, self).__init__(*args, **kwargs)
 
     @expose('json')
-    def index(self):
+    def _default(self):
         return self._api_description
 
     @expose('json')
@@ -30,6 +31,10 @@ class V1Controller(rest.RestController):
         log.info('POST REQUEST - %s\n'
                  'WITH CONF - %s' %(test_service, conf))
         return self.api.run(test_service, conf)
+
+    @expose('json')
+    def get_all(self):
+        return self.api.commands
 
     @expose('json')
     def get(self, test_run, test_run_id=None):
@@ -49,3 +54,12 @@ class V1Controller(rest.RestController):
         if result:
             return {'message': 'Killed test run with ID %s' % test_run_id}
         return {'message': 'Test run %s already finished' % test_run_id}
+
+    def _handle_post(self, method, remainder):
+        if not remainder or remainder == ['']:
+            controller = self._find_controller('_default')
+            if controller:
+                return controller, []
+        return super(V1Controller, self)._handle_post(method, remainder)
+
+    
