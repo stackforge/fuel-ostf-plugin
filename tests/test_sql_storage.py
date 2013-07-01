@@ -20,9 +20,6 @@ class SqlStorageTests(unittest.TestCase):
         self.storage.update_test_run(
             '1', self.stats)
 
-    def test_create_session(self):
-        self.storage.session
-
     def test_add_test_run(self):
         res = self.storage.add_test_run('test')
         self.assertEqual(res, {'type': 'test', 'id': 2})
