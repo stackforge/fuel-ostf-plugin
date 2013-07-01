@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+from oslo.config import cfg
 from ostf_adapter import cli_config
 from ostf_adapter.common import logger
 import os
@@ -27,7 +28,11 @@ log = logging.getLogger(__name__)
 
 def main():
     log.info('STARTING SETUP')
-    root = app.setup_app()
+
+    root = app.setup_app({'server': {
+                            'host': cfg.CONF.host,
+                            'port': cfg.CONF.port
+                        }})
 
     host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)

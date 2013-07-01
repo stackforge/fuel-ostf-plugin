@@ -1,7 +1,6 @@
 from oslo.config import cfg
 
 
-
 cli_opts = [
     cfg.StrOpt('host',
                default='127.0.0.1'),
@@ -25,6 +24,6 @@ cli_opts = [
                default='3232')
 ]
 
-cfg.CONF.register_cli_opts(cli_opts)
 
+cfg.CONF.register_cli_opts(cli_opts)
 cfg.CONF(project='testing_adapter')

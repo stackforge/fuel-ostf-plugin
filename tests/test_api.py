@@ -90,8 +90,10 @@ class TestApi(unittest.TestCase):
         }
         self.assertEqual(res, expected)
 
+    @patch('ostf_adapter.api.get_storage')
     @patch('ostf_adapter.api.parse_json_file')
-    def test_kill_test_run(self, commands_mock):
+    def test_kill_test_run(self, commands_mock, get_storage_mock):
+        get_storage_mock.return_value = self.storage
         commands_mock.return_value = TEST_COMMANDS
         self.transport.obj.kill.return_value = True
         api = API()
