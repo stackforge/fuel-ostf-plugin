@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, joinedload
 
 from ostf_adapter.storage.sql import models
+from ostf_adapter import exceptions as exc
 
 import simplejson as json
 import logging
@@ -43,6 +44,11 @@ class SqlStorage(object):
             test_run = self.session.query(models.TestRun).\
                 options(joinedload('tests')).\
                 filter_by(id=test_run_id).first()
+        if not test_run:
+            msg = 'Database does not contains ' \
+                  'Test Run with ID %s' % test_run_id
+            log.warning(msg)
+            raise exc.OstfDBException(message=msg)
         tests = {}
         for test in test_run.tests:
             tests[test.name] = json.loads(test.data)
