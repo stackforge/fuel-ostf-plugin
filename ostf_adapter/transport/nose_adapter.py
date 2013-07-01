@@ -22,10 +22,10 @@ class StoragePlugin(Plugin):
     name = 'storage'
     score = 15000
 
-    def __init__(self, test_run_id):
+    def __init__(self, test_run_id, storage):
         self._capture = []
         self.test_run_id = test_run_id
-        self.storage = get_storage()
+        self.storage = storage
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
         # if not self._capture:
@@ -96,6 +96,7 @@ class NoseDriver(object):
     def __init__(self):
         log.info('NoseDriver initialized')
         self._pool = pool.Pool(1000)
+        self.storage = get_storage()
         self._named_threads = {}
 
     def run(self, test_run_id, conf, **kwargs):
@@ -104,16 +105,16 @@ class NoseDriver(object):
         argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
         gev = self._pool.spawn(
-            self._run_tests, test_run_id, kwargs['test_path'], argv_add)
+            self._run_tests, test_run_id, kwargs['test_path'], argv_add, self.storage)
         self._named_threads[test_run_id] = gev
 
-    def _run_tests(self, test_run_id, test_path, argv_add):
+    def _run_tests(self, test_run_id, test_path, argv_add, storage):
         try:
             log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
                      'TEST PATH: %s\n'
                      'ARGS: %s' % (test_run_id, test_path, argv_add))
             main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(test_run_id)],
+                 addplugins=[StoragePlugin(test_run_id, self.storage)],
                  exit=True,
                  argv=['tests']+argv_add)
         #To close thread we need to catch any exception

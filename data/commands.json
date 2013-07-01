@@ -12,5 +12,9 @@
         "test_path": "fuel/tests",
         "driver": "nose",
         "argv": ["sanity"]
+    },
+    "simple": {
+        "test_path": "/home/u/projects/some_tests",
+        "driver": "nose"
     }
 }
