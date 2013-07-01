@@ -1,10 +1,12 @@
 import multiprocessing
+import os
 import subprocess
 import setuptools
 
 
 def load_requirements(requirements_path):
-    with open(requirements_path, 'r') as reqs:
+    root = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(root, requirements_path), 'r') as reqs:
         return reqs.read().split('\n')
 
 def run_setup():
@@ -41,6 +43,8 @@ def run_setup():
         install_requires=load_requirements('tools/pip-requires'),
 
         tests_require=load_requirements('tools/test-requires'),
+
+        setup_requires = ['setuptools_git>=0.4'],
 
         entry_points={
             'plugins': [

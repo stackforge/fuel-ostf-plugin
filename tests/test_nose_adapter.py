@@ -50,7 +50,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.pool_mock.spawn.assert_called_once_with(
             nose_driver._run_tests, TEST_RUN_ID, '/home/tests', ['sanity']
         )
-        self.assertIn(1, nose_driver._named_threads)
+        self.assertTrue(1 in nose_driver._named_threads)
 
     def test_kill_test_run_success(self, pool_module):
         pool_module.Pool.return_value = self.pool_mock

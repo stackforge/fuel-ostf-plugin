@@ -1,3 +1,4 @@
 mock
 webtest
-nose
+tox
+pep8
