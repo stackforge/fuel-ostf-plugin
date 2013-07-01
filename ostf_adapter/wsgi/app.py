@@ -4,19 +4,10 @@ from ostf_adapter.wsgi import hooks
 
 CONF = cfg.CONF
 
-server_opts = [
-    cfg.StrOpt('server_host',
-               default='0.0.0.0'),
-    cfg.StrOpt('server_port',
-               default='8777')
-]
-
-CONF.register_opts(server_opts)
-
 pecan_config_dict = {
     'server': {
-        'host': CONF.server_host,
-        'port': CONF.server_port
+        'host': CONF.host,
+        'port': CONF.port
     },
     'app': {
         'root': 'ostf_adapter.wsgi.controllers.root.RootController',
