@@ -176,13 +176,6 @@ class TestNoseStoragePlugin(unittest.TestCase):
         plugin.beforeTest('test')
         self.assertEqual(plugin._start_time, test_start_time)
 
-    @patch('ostf_adapter.transport.nose_adapter.sys')
-    def test_finalize(self, sys_mock):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin._capture = [('STDOUT', 'STDERR')]
-        plugin.finalize('test')
-        self.assertEqual(plugin._capture, [])
-
     @patch('ostf_adapter.transport.nose_adapter.time')
     def test_taken_property(self, time_mock):
         plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)

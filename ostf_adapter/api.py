@@ -54,8 +54,9 @@ class API(object):
                   % (test_run_name, self.commands)
             log.warning(msg)
             raise exc.OstfNoseException(message=msg)
-        transport = self._transport_manager.get(command['driver'])
-        if not transport:
+        try:
+            transport = self._transport_manager[command['driver']]
+        except KeyError:
             msg = 'No transport for driver %s' % command['driver']
             log.warning(msg)
             raise exc.OstfNoseException(message=msg)

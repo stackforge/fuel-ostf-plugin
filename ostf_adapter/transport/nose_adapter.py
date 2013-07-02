@@ -29,10 +29,6 @@ class StoragePlugin(Plugin):
         self.storage = storage
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
-        # if not self._capture:
-        #     self._capture.append((sys.stdout, sys.stderr))
-        # sys.stdout = StringIO()
-        # sys.stderr = StringIO()
 
     def options(self, parser, env=os.environ):
         pass
@@ -82,10 +78,6 @@ class StoragePlugin(Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
-
-    def finalize(self, test):
-        while self._capture:
-            sys.stdout, sys.stderr = self._capture.pop()
 
     @property
     def taken(self):
