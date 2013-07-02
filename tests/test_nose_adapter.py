@@ -12,6 +12,7 @@ CONF = {'keys': 'values'}
 
 
 @patch('ostf_adapter.transport.nose_adapter.pool')
+@patch('ostf_adapter.transport.nose_adapter.get_storage')
 class TestNoseAdapters(unittest.TestCase):
 
     def setUp(self):
@@ -21,7 +22,7 @@ class TestNoseAdapters(unittest.TestCase):
 
 
     @patch('__builtin__.open')
-    def test_prepare_config_conf(self, io_mock, pool_module):
+    def test_prepare_config_conf(self, io_mock, get_storage_mock, pool_module):
 
         class DummyStringIO(io.StringIO):
 
@@ -39,7 +40,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.assertEqual(string_io.getvalue(),
                          u'param2 = test\nparam1 = test\n')
 
-    @patch('ostf_adapter.transport.nose_adapter.get_storage')
+    
     def test_run_with_config_path_with_argv(self, get_storage_mock, pool_module):
         get_storage_mock.return_value = self.storage_mock
         pool_module.Pool.return_value = self.pool_mock
@@ -56,7 +57,7 @@ class TestNoseAdapters(unittest.TestCase):
         )
         self.assertTrue(1 in nose_driver._named_threads)
 
-    def test_kill_test_run_success(self, pool_module):
+    def test_kill_test_run_success(self, get_storage_mock, pool_module):
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
         nose_driver._named_threads[TEST_RUN_ID] = self.thread_mock
@@ -65,7 +66,7 @@ class TestNoseAdapters(unittest.TestCase):
         self.thread_mock.kill.assert_called_once_with()
         self.assertTrue(res)
 
-    def test_kill_test_run_fail(self, pool_module):
+    def test_kill_test_run_fail(self, get_storage_mock, pool_module):
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
 
@@ -74,7 +75,7 @@ class TestNoseAdapters(unittest.TestCase):
 
     @patch('ostf_adapter.transport.nose_adapter.main')
     def test_run_tests_raise_system_exit(
-            self, nose_test_program_mock, pool_module):
+            self, nose_test_program_mock, get_storage_mock, pool_module):
         def raise_system_exit(*args, **kwargs):
             raise SystemExit
 
@@ -88,7 +89,7 @@ class TestNoseAdapters(unittest.TestCase):
 
     @patch('ostf_adapter.transport.nose_adapter.main')
     def test_run_tests_raise_greelet_exit(
-            self, nose_test_program_mock, pool_module):
+            self, nose_test_program_mock, get_storage_mock, pool_module):
 
         def raise_greenlet_exit(*args, **kwargs):
             raise GreenletExit

@@ -5,7 +5,7 @@ from oslo.config import cfg
 
 
 STORAGE_OPTS = [
-    cfg.StrOpt('database_connection',
+    cfg.StrOpt('dp_path',
                default=
                'postgresql+psycopg2://adapter:demo@localhost/testing_adapter',
                help='Database connection string',
@@ -14,7 +14,7 @@ STORAGE_OPTS = [
 
 CONF = cfg.ConfigOpts()
 
-CONF.register_opts(STORAGE_OPTS)
+CONF.register_cli_opts(STORAGE_OPTS)
 
 
 def do_alembic_command(config, cmd, *args, **kwargs):
@@ -62,5 +62,5 @@ def main():
     )
     CONF()
     conf.set_main_option('script_location', 'ostf_adapter.storage.sql:migrations')
-    conf.set_main_option('sqlalchemy.url', CONF.database_connection)
+    conf.set_main_option('sqlalchemy.url', CONF.db_path)
     CONF.command.func(conf, CONF.command.name)

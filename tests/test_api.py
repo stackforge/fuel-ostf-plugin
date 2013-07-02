@@ -18,6 +18,7 @@ class TestApi(unittest.TestCase):
 
     def setUp(self):
         self.transport = MagicMock()
+        self.command = TEST_COMMANDS['tests']
         self.storage = MagicMock()
 
     @patch('ostf_adapter.api.get_storage')
@@ -34,9 +35,8 @@ class TestApi(unittest.TestCase):
         self.storage.add_test_run.return_value = {'type': TEST_RUN_NAME,
                                                   'id': TEST_RUN_ID}
         api = API()
-        with patch.object(api, '_transport_manager') as transport_manager_mock:
-            transport_manager_mock.__getitem__.side_effect = \
-                lambda test_run: self.transport
+        with patch.object(api, '_find_command') as find_command_mock:
+            find_command_mock.return_value = self.command, self.transport
             res = api.run(TEST_RUN_NAME, CONF)
         self.transport.obj.run.assert_called_once_with(
             TEST_RUN_ID, CONF, driver='nose', test_path='/home/tests')
@@ -90,14 +90,15 @@ class TestApi(unittest.TestCase):
         }
         self.assertEqual(res, expected)
 
+    @patch('ostf_adapter.api.get_storage')
     @patch('ostf_adapter.api.parse_json_file')
-    def test_kill_test_run(self, commands_mock):
+    def test_kill_test_run(self, commands_mock, get_storage_mock):
+        get_storage_mock.return_value = self.storage
         commands_mock.return_value = TEST_COMMANDS
         self.transport.obj.kill.return_value = True
         api = API()
-        with patch.object(api, '_transport_manager') as transport_manager_mock:
-            transport_manager_mock.__getitem__.side_effect = \
-                lambda test_run: self.transport
+        with patch.object(api, '_find_command') as find_command_mock:
+            find_command_mock.return_value = self.command, self.transport
             res = api.kill(TEST_RUN_NAME, TEST_RUN_ID)
         self.transport.obj.kill.assert_called_once_with(TEST_RUN_ID)
         self.assertTrue(res)

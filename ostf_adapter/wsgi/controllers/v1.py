@@ -3,6 +3,7 @@ from pecan.core import abort
 import simplejson as json
 from ostf_adapter.api import API, parse_json_file
 import logging
+from ostf_adapter import exceptions as exc
 
 
 log = logging.getLogger(__name__)
@@ -30,7 +31,12 @@ class V1Controller(rest.RestController):
             conf = {}
         log.info('POST REQUEST - %s\n'
                  'WITH CONF - %s' %(test_service, conf))
-        return self.api.run(test_service, conf)
+        try:
+            return self.api.run(test_service, conf)
+        except exc.OstfException, e:
+            response.status = e.code
+            return {'message': e.message}
+
 
     @expose('json')
     def get_all(self):
@@ -42,7 +48,11 @@ class V1Controller(rest.RestController):
         if not test_run_id:
             response.status = 400
             return {'message': 'Please provide ID of test run'}
-        return self.api.get_info(test_run, test_run_id)
+        try:
+            return self.api.get_info(test_run, test_run_id)
+        except exc.OstfException, e:
+            response.status = e.code
+            return {'message': e.message}
 
     @expose('json')
     def delete(self, test_run, test_run_id=None):
@@ -50,7 +60,11 @@ class V1Controller(rest.RestController):
         if not test_run_id:
             response.status = 400
             return {'message': 'Please provide ID of test run'}
-        result = self.api.kill(test_run, test_run_id)
+        try:
+            result = self.api.kill(test_run, test_run_id)
+        except exc.OstfException, e:
+            response.status = e.code
+            return {'message': e.message}
         if result:
             return {'message': 'Killed test run with ID %s' % test_run_id}
         return {'message': 'Test run %s already finished' % test_run_id}

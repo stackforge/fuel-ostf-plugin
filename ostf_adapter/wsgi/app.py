@@ -4,20 +4,7 @@ from ostf_adapter.wsgi import hooks
 
 CONF = cfg.CONF
 
-server_opts = [
-    cfg.StrOpt('server_host',
-               default='0.0.0.0'),
-    cfg.StrOpt('server_port',
-               default='8777')
-]
-
-CONF.register_opts(server_opts)
-
 pecan_config_dict = {
-    'server': {
-        'host': CONF.server_host,
-        'port': CONF.server_port
-    },
     'app': {
         'root': 'ostf_adapter.wsgi.controllers.root.RootController',
         'modules': ['ostf_adapter.wsgi'],
@@ -28,8 +15,9 @@ pecan_config_dict = {
 
 def setup_app(pecan_config=None, extra_hooks=None):
     app_hooks = [hooks.ExceptionHandlingHook()]
-    if not pecan_config:
-        pecan_config = pecan.configuration.conf_from_dict(pecan_config_dict)
+    if pecan_config:
+        pecan_config_dict.update(pecan_config)
+    pecan_config = pecan.configuration.conf_from_dict(pecan_config_dict)
 
     app = pecan.make_app(
         pecan_config.app.root,

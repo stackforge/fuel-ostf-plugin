@@ -1,5 +1,6 @@
 import os
 from ostf_adapter.storage import get_storage
+from ostf_adapter import exceptions as exc
 import simplejson as json
 from stevedore import extension
 import logging
@@ -33,9 +34,7 @@ class API(object):
             PLUGINS_NAMESPACE, invoke_on_load=True)
 
     def run(self, test_run_name, conf):
-        log.info('Looking for %s in %s' % (test_run_name, self.commands))
-        command = self.commands.get(test_run_name)
-        transport = self._transport_manager[command['driver']]
+        command, transport = self._find_command(test_run_name)
         test_run = self._storage.add_test_run(test_run_name)
         transport.obj.run(test_run['id'], conf, **command)
         return test_run
@@ -44,7 +43,20 @@ class API(object):
         return self._storage.get_test_results(test_run_id)
 
     def kill(self, test_run_name, test_run_id):
-        log.info('Looking for %s in %s' % (test_run_name, self.commands))
-        command = self.commands.get(test_run_name, {})
-        transport = self._transport_manager[command['driver']]
+        command, transport = self._find_command(test_run_name)
         return transport.obj.kill(test_run_id)
+
+    def _find_command(self, test_run_name):
+        log.info('Looking for %s in %s' % (test_run_name, self.commands))
+        command = self.commands.get(test_run_name)
+        if not command:
+            msg = 'No command for %s in config %s'\
+                  % (test_run_name, self.commands)
+            log.warning(msg)
+            raise exc.OstfNoseException(message=msg)
+        transport = self._transport_manager.get(command['driver'])
+        if not transport:
+            msg = 'No transport for driver %s' % command['driver']
+            log.warning(msg)
+            raise exc.OstfNoseException(message=msg)
+        return command, transport

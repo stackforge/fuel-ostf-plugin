@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 
 from ostf_adapter.storage.sql import models
+from ostf_adapter import exceptions as exc
 
 import simplejson as json
 import logging
@@ -24,18 +25,11 @@ class SqlStorage(object):
         self._engine.pool._use_threadlocal = True
         self._session = sessionmaker(bind=self._engine)
 
-    # @property
-    # def session(self):
-    #     if not self._session:
-    #         self._session = self._session()
-    #     return self._session
-
     def get_session(self):
         return self._session()
 
     def add_test_run(self, test_run):
         log.info('Invoke test run - %s' % test_run)
-        # with self.session.begin(subtransactions=True):
         session = self.get_session()
         test_run = models.TestRun(type=test_run)
         session.add(test_run)
@@ -43,12 +37,16 @@ class SqlStorage(object):
         return {'type': test_run.type, 'id': test_run.id}
 
     def get_test_results(self, test_run_id):
-        # with self.session.begin(subtransactions=True):
         session = self.get_session()
         test_run = session.query(models.TestRun).\
             options(joinedload('tests')).\
             filter_by(id=test_run_id).first()
         session.commit()
+        if not test_run:
+            msg = 'Database does not contains ' \
+                  'Test Run with ID %s' % test_run_id
+            log.warning(msg)
+            raise exc.OstfDBException(message=msg)
         tests = {}
         for test in test_run.tests:
             tests[test.name] = json.loads(test.data)
@@ -66,7 +64,6 @@ class SqlStorage(object):
         log.info('Add test result for: ID: %s\n'
                  'TEST NAME: %s\n'
                  'DATA: %s' % (test_run_id, test_name, data))
-        # with self.session.begin(subtransactions=True):
         session = self.get_session()
         test = models.Test(name=test_name, status=data.get('type', None),
                            taken=data.get('taken', None),
@@ -78,7 +75,6 @@ class SqlStorage(object):
 
     def update_test_run(self, test_run_id, data):
         session = self.get_session()
-        # with self.session.begin(subtransactions=True):
         test_run = session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
             update({'data': json.dumps(data)})

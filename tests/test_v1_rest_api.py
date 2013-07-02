@@ -11,7 +11,9 @@ class ApiV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.patcher = patch('ostf_adapter.wsgi.controllers.v1.API')
+        cls.conf_patcher = patch('ostf_adapter.wsgi.app.cfg')
         cls.api = MagicMock(name='api_instance')
+        cls.conf_patcher.start()
         api_mock = cls.patcher.start()
         api_mock.return_value = cls.api
         cls.app = TestApp(app.setup_app())
