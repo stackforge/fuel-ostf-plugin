@@ -23,6 +23,9 @@ postgresql+psycopg2://adapter:demo@localhost/testing_adapter
 
 If you want logging to file : 
 ostf-server --log_file testing.log
+
+After installation hook
+ostf-server --after-initialization-environment-hook --dbpath=postgresql+psycopg2://postgres:demo@localhost/testing_adapter
 -------------------------------------------------------------------------------------------------------------------------------------
 
 USE:

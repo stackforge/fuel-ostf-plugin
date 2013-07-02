@@ -18,9 +18,9 @@ def run_setup():
 
         description='cloud computing testing',
 
-        zip_safe = False,
+        zip_safe=False,
 
-        test_suite = 'tests',
+        test_suite='tests',
 
         classifiers=[
             'Development Status :: 3 - Alpha',
@@ -44,15 +44,14 @@ def run_setup():
 
         tests_require=load_requirements('tools/test-requires'),
 
-        setup_requires = ['setuptools_git>=0.4'],
+        setup_requires=['setuptools_git>=0.4'],
 
         entry_points={
             'plugins': [
                 'nose = ostf_adapter.transport.nose_adapter:NoseDriver'
             ],
             'console_scripts': [
-                'ostf-server = bin.adapter_api:main',
-                'ostf-db = bin.adapter_db:main'
+                'ostf-server = bin.adapter_api:main'
             ]
         },
     )

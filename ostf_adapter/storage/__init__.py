@@ -8,5 +8,5 @@ CONF = cfg.CONF
 
 
 def get_storage():
-    log.info('GET STORAGE FOR - %s' % cfg.CONF.dp_path)
-    return sql_storage.SqlStorage(cfg.CONF.dp_path)
+    log.info('GET STORAGE FOR - %s' % cfg.CONF.dbpath)
+    return sql_storage.SqlStorage(cfg.CONF.dbpath)
