@@ -4,7 +4,7 @@ patch_all()
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 
@@ -35,6 +35,25 @@ class SqlStorage(object):
         session.add(test_run)
         session.commit()
         return {'type': test_run.type, 'id': test_run.id}
+
+    def add_test_set(self, test_set, test_set_data):
+        log.info('Inserting test set %s' % test_set)
+        session = self.get_session()
+        description = test_set_data.pop("description", "")
+        test_set_obj = models.TestSet(
+            id=test_set, description=description, data=json.dumps(test_set_data))
+        session.add(test_set_obj)
+        try:
+            session.commit()
+        except Exception:
+            log.info('Test set %s already there' % test_set)
+        return True
+
+    def get_test_sets(self):
+        session = self.get_session()
+        test_sets = session.query(models.TestSet).all()
+        session.commit()
+        return test_sets
 
     def get_test_results(self, test_run_id):
         session = self.get_session()

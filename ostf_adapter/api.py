@@ -32,6 +32,7 @@ class API(object):
         self._storage = get_storage()
         self._transport_manager = extension.ExtensionManager(
             PLUGINS_NAMESPACE, invoke_on_load=True)
+        self._discovery()
 
     def run(self, test_run_name, conf):
         command, transport = self._find_command(test_run_name)
@@ -45,6 +46,20 @@ class API(object):
     def kill(self, test_run_name, test_run_id):
         command, transport = self._find_command(test_run_name)
         return transport.obj.kill(test_run_id)
+
+    def get_test_sets(self):
+        test_sets = self._storage.get_test_sets()
+        return [{'id': ts.id, 'name': ts.description} for ts in test_sets]
+
+    def _discovery(self):
+        log.info('Started general tests discovery')
+        for test_set in self.commands:
+            command, transport = self._find_command(test_set)
+            argv_add = command.get('argv', [])
+            self._storage.add_test_set(test_set, command)
+            transport.obj.tests_discovery(test_set, command['test_path'], argv_add)
+        log.info('Finished general test discovery')
+
 
     def _find_command(self, test_run_name):
         log.info('Looking for %s in %s' % (test_run_name, self.commands))

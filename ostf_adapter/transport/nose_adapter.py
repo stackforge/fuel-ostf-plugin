@@ -23,10 +23,11 @@ class StoragePlugin(Plugin):
     name = 'storage'
     score = 15000
 
-    def __init__(self, test_run_id, storage):
+    def __init__(self, test_run_id, storage, discovery=True):
         self._capture = []
         self.test_run_id = test_run_id
         self.storage = storage
+        self.discovery = discovery
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
         self._start_time = None
@@ -57,8 +58,9 @@ class StoragePlugin(Plugin):
 
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
-        self.stats['passes'] += 1
-        self._add_message(test, type='success', taken=self.taken)
+        if not self.discovery:
+            self.stats['passes'] += 1
+            self._add_message(test, type='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)
@@ -73,9 +75,10 @@ class StoragePlugin(Plugin):
 
     def report(self, stream):
         log.info('REPORT')
-        stats_values = sum(self.stats.values())
-        self.stats['total'] = stats_values
-        self.storage.update_test_run(self.test_run_id, self.stats)
+        if not self.discovery:
+            stats_values = sum(self.stats.values())
+            self.stats['total'] = stats_values
+            self.storage.update_test_run(self.test_run_id, self.stats)
 
     def beforeTest(self, test):
         self._start_time = time()
@@ -102,10 +105,21 @@ class NoseDriver(object):
         argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
         gev = self._pool.spawn(
-            self._run_tests, test_run_id, kwargs['test_path'], argv_add, self.storage)
+            self._run_tests, test_run_id, kwargs['test_path'], argv_add)
         self._named_threads[test_run_id] = gev
 
-    def _run_tests(self, test_run_id, test_path, argv_add, storage):
+
+    def tests_discovery(self, test_set, test_path, argv_add):
+        try:
+            log.info('Started test discovery %s' % test_set)
+            main(defaultTest=test_path,
+                 addplugins=[StoragePlugin(test_set, self.storage, discovery=True)],
+                 exit=True,
+                 argv=['tests', '--collect-only']+argv_add)
+        except SystemExit:
+            log.info('Finished tests discovery %s' % test_set)
+
+    def _run_tests(self, test_run_id, test_path, argv_add):
         try:
             log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
                      'TEST PATH: %s\n'
@@ -122,12 +136,12 @@ class NoseDriver(object):
             del self._named_threads[test_run_id]
             raise gevent.GreenletExit
 
-    def kill(self, test_run):
+    def kill(self, test_run_id):
         log.info('Trying to stop process %s\n'
                  '%s' % (test_run, self._named_threads))
-        if int(test_run) in self._named_threads:
-            log.info('Kill green thread: %s' % test_run)
-            self._named_threads[int(test_run)].kill()
+        if int(test_run_id) in self._named_threads:
+            log.info('Kill green thread: %s' % test_run_id)
+            self._named_threads[int(test_run_id)].kill()
             return True
         return False
 
