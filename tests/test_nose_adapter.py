@@ -107,6 +107,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
 
     def setUp(self):
         self.storage_mock = MagicMock()
+        self.test_mock = MagicMock()
 
     def test_storage_plugin_properties(self):
         self.assertEqual(nose_adapter.StoragePlugin.enabled, True)
@@ -133,7 +134,8 @@ class TestNoseStoragePlugin(unittest.TestCase):
         plugin.stats = {'passes': 0}
         with patch.object(plugin, '_add_message') as add_message_mock:
             plugin.addSuccess('test')
-        add_message_mock.assert_called_once_with('test', type='success')
+        add_message_mock.assert_called_once_with(
+            'test', type='success', taken=0)
         self.assertEqual(plugin.stats, {'passes': 1})
 
     def test_add_failure(self):
@@ -142,7 +144,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
         with patch.object(plugin, '_add_message') as add_message_mock:
             plugin.addFailure('test', 'failure')
         add_message_mock.assert_called_once_with(
-            'test', err='failure', type='failure')
+            'test', err='failure', type='failure', taken=0)
         self.assertEqual(plugin.stats, {'failures': 1})
 
     def test_add_error(self):
@@ -151,7 +153,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
         with patch.object(plugin, '_add_message') as add_message_mock:
             plugin.addError('test', 'error')
         add_message_mock.assert_called_once_with(
-            'test', err='error', type='error')
+            'test', err='error', type='error', taken=0)
         self.assertEqual(plugin.stats, {'errors': 1})
 
     def test_report(self):
@@ -173,7 +175,10 @@ class TestNoseStoragePlugin(unittest.TestCase):
         test_start_time = time()
         time_mock.return_value = test_start_time
         plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.beforeTest('test')
+        with patch.object(plugin, '_add_message') as add_message_mock:
+            plugin.beforeTest(self.test_mock)
+        add_message_mock.assert_called_once_with(
+            self.test_mock, type='running')
         self.assertEqual(plugin._start_time, test_start_time)
 
     @patch('ostf_adapter.transport.nose_adapter.time')

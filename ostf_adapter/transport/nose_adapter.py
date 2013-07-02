@@ -29,6 +29,7 @@ class StoragePlugin(Plugin):
         self.storage = storage
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
+        self._start_time = None
 
     def options(self, parser, env=os.environ):
         pass
@@ -41,7 +42,7 @@ class StoragePlugin(Plugin):
                       'skipped': 0}
 
     def _add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
-        data = {'taken': self.taken}
+        data = {}
         if err:
             exc_type, exc_value, exc_traceback = err
             data['exc_type'] = exc_type.__name__
@@ -57,18 +58,18 @@ class StoragePlugin(Plugin):
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
         self.stats['passes'] += 1
-        self._add_message(test, type='success')
+        self._add_message(test, type='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)
         self.stats['failures'] += 1
-        self._add_message(test, err=err, type='failure')
+        self._add_message(test, err=err, type='failure', taken=self.taken)
 
     def addError(self, test, err, capt=None, tb_info=None):
         log.info('TEST NAME: %s\n'
                  'ERROR: %s' % (test, err))
         self.stats['errors'] += 1
-        self._add_message(test, err=err, type='error')
+        self._add_message(test, err=err, type='error', taken=self.taken)
 
     def report(self, stream):
         log.info('REPORT')
@@ -78,10 +79,13 @@ class StoragePlugin(Plugin):
 
     def beforeTest(self, test):
         self._start_time = time()
+        self._add_message(test, type='running')
 
     @property
     def taken(self):
-        return time() - self._start_time
+        if self._start_time:
+            return time() - self._start_time
+        return 0
 
 
 class NoseDriver(object):
