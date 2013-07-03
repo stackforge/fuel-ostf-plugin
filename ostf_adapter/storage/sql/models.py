@@ -13,6 +13,7 @@ class TestRun(Base):
     id = sa.Column(sa.Integer(), primary_key=True)
     external_id = sa.Column(sa.String(128))
     type = sa.Column(sa.String(128))
+    status = sa.Column(sa.String(128))
     stats = sa.Column(sa.Text())
     data = sa.Column(sa.Text())
 
