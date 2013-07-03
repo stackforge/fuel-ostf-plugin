@@ -34,19 +34,18 @@ class SqlStorage(object):
         test_run = models.TestRun(type=test_run, external_id=external_id)
         session.add(test_run)
         session.commit()
-        return test_run.id
+        return test_run
 
     def add_test_set(self, test_set, test_set_data):
         log.info('Inserting test set %s' % test_set)
         session = self.get_session()
         description = test_set_data.pop("description", "")
+
         test_set_obj = models.TestSet(
             id=test_set, description=description, data=json.dumps(test_set_data))
-        session.add(test_set_obj)
-        try:
-            session.commit()
-        except Exception:
-            log.info('Test set %s already there' % test_set)
+        new_obj = session.merge(test_set_obj)
+        session.add(new_obj)
+        session.commit()
         return True
 
     def get_test_sets(self):
@@ -58,7 +57,7 @@ class SqlStorage(object):
     def get_tests(self):
         session = self.get_session()
         tests = session.query(models.Test).filter_by(test_run_id=None)
-        log.info('Tests received %s' % tests)
+        log.info('Tests received %s' % tests.count())
         session.commit()
         return [{'id': t.name, 'test_set': t.test_set_id,
                  'name': json.loads(t.data).get('description', "")} for t in tests]
@@ -66,34 +65,48 @@ class SqlStorage(object):
     def add_sets_test(self, test_set, test_name, data):
         log.info('Data received %s' % data)
         session = self.get_session()
-        test_obj = models.Test(
-            name=test_name, data=json.dumps(data), test_set_id=test_set)
-        session.add(test_obj)
+        old_test_obj = session.query(models.Test).filter_by(
+            name=test_name, test_set_id=test_set).first()
+        if old_test_obj:
+            old_test_obj.data = json.dumps(data)
+            session.add(old_test_obj)
+        else:
+            test_obj = models.Test(
+                name=test_name, data=json.dumps(data), test_set_id=test_set)
+            session.add(test_obj)
         session.commit()
 
-    def get_test_results(self, test_run_name, external_id):
+    def get_last_test_run(self, external_id):
+        session = self.get_session()
+        test_run = session.query(models.TestRun).\
+            filter_by(external_id=external_id).\
+            order_by(desc(models.TestRun.id)).first()
+        session.commit()
+        return test_run
+
+    def get_test_results(self):
+        session = self.get_session()
+        test_runs = session.query(models.TestRun).\
+            options(joinedload('tests')).\
+            order_by(desc(models.TestRun.id))
+        session.commit()
+        return test_runs
+
+    def get_last_test_results(self, external_id):
         session = self.get_session()
         test_run = session.query(models.TestRun).\
             options(joinedload('tests')).\
-            filter_by(external_id=external_id, type=test_run_name).\
+            filter_by(external_id=external_id).\
             order_by(desc(models.TestRun.id)).first()
         session.commit()
         if not test_run:
             msg = 'Database does not contains ' \
-                  'Test Run with ID %s' % test_run_id
+                  'Test Run with ID %s' % external_id
             log.warning(msg)
             raise exc.OstfDBException(message=msg)
-        tests = {}
-        for test in test_run.tests:
-            tests[test.name] = json.loads(test.data)
-        res = {'type': test_run.type,
-                'id': test_run.id,
-                'tests': tests}
-        if test_run.data:
-            res['stats'] = json.loads(test_run.data)
-        return res
+        return test_run
 
-    def get_test_result(self, test_run_id, test_id, stats=False):
+    def get_test_result(self, test_run_id):
         pass
 
     def add_test_result(self, test_run_id, test_name, data):

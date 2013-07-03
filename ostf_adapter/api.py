@@ -34,20 +34,57 @@ class API(object):
             PLUGINS_NAMESPACE, invoke_on_load=True)
         self._discovery()
 
-    def run(self, test_run_name, conf):
+    def run_multiple(self, test_runs):
+        for test_run in test_runs:
+            test_set = test_run['testset']
+            config = test_run['metadata']['config']
+            external_id = test_run['metadata']['cluster_id']
+            self.run(test_set, external_id, config)
+
+    def run(self, test_set, external_id, config):
         log.info('Starting test run with conf %s' %s)
-        command, transport = self._find_command(test_run_name)
-        external_id = conf.get('external_id', 1)
-        test_run_id = self._storage.add_test_run(test_run_name, external_id)
-        transport.obj.run(test_run_id, conf, **command)
-        return test_run
+        command, transport = self._find_command(test_set)
+        if not transport.obj.check_current_running(external_id):
+            test_run = self._storage.add_test_run(test_set, external_id)
+            transport.obj.run(test_run, config, **command)
+            return test_run
 
-    def get_last_test_run_info(self, test_run_name, external_id):
-        return self._storage.get_test_results(test_run_name, external_id)
+    def kill_multiple(self, test_runs):
+        for test_run in test_runs:
+            cluster_id = test_run['id']
+            status = test_run['status']
+            self.kill(cluster_id)
 
-    def kill(self, test_run_name, test_run_id):
-        command, transport = self._find_command(test_run_name)
-        return transport.obj.kill(test_run_id)
+    def kill(self, external_id, data=None):
+        test_run = self._storage.get_last_test_run(external_id)
+        command, transport = self._find_command(test_run.type)
+        if transport.obj.check_current_running(test_run.external_id):
+            transport.obj.kill(test_run.external_id)
+
+    def get_last_test_run(self, external_id):
+        test_run = self._storage.get_last_test_results(external_id)
+        return self._prepare_test_run(test_run)
+
+    def get_test_runs(self):
+        test_runs = self._storage.get_test_results()
+        response = []
+        for test_run in test_runs:
+            response.append(self._prepare_test_run(test_run))
+        return response
+
+    def _prepare_test_run(self, test_run):
+        test_run_data = {'id': test_run.id, 'testset': test_run.type,
+                             'metadata': {'stats': json.loads(test_run.stats)},
+                             }
+        tests = []
+        if test_run.tests:
+            for test in test_run.tests:
+                test_data = {'id': test.name}
+                if test_data:
+                    test_data.update(json.loads(test.data))
+                tests.append(test_data)
+            test_run_data['tests'] = tests
+        return test_run_data
 
     def get_test_sets(self):
         test_sets = self._storage.get_test_sets()
@@ -65,7 +102,6 @@ class API(object):
             self._storage.add_test_set(test_set, command)
             transport.obj.tests_discovery(test_set, command['test_path'], argv_add)
         log.info('Finished general test discovery')
-
 
     def _find_command(self, test_run_name):
         log.info('Looking for %s in %s' % (test_run_name, self.commands))

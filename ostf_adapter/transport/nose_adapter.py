@@ -1,15 +1,13 @@
 from nose import main
-from nose.plugins import Plugin, xunit
+from nose.plugins import Plugin
 import os
 from ostf_adapter.storage import get_storage
-
 import gevent
 from gevent import pool
 from time import time
-import sys
 import logging
-from cStringIO import StringIO
 import traceback
+from ostf_adapter import exceptions as exc
 
 
 TESTS_PROCESS = {}
@@ -46,29 +44,27 @@ class StoragePlugin(Plugin):
         data = {}
         if err:
             exc_type, exc_value, exc_traceback = err
-            data['exc_type'] = exc_type.__name__
-            data['exc_message'] = exc_value.message
-            data['exc_traceback'] = u"".join(
+            data['message'] = exc_value.message
+            data['traceback'] = u"".join(
                 traceback.format_tb(exc_traceback))
+        else:
+            data['message'] = u""
+            data['traceback'] = u""
         doc = test.test.shortDescription()
-        if doc:
-            data['description'] = doc
+        data['name'] = doc if doc else u""
         data.update(kwargs)
         self.storage.add_test_result(self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
-        if not self.discovery:
+        if self.discovery:
+            data = {}
+            doc = test.test.shortDescription()
+            data['name'] = doc if doc else ""
+            self.storage.add_sets_test(self.test_run_id, test.id(), data)
+        else:
             self.stats['passes'] += 1
             self._add_message(test, type='success', taken=self.taken)
-        else:
-            data= {}
-            doc = test.test.shortDescription()
-            if doc:
-                data['description'] = doc
-            else:
-                data['description'] = ""
-            self.storage.add_sets_test(self.test_run_id, test.id(), data)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)
@@ -107,21 +103,24 @@ class NoseDriver(object):
         self.storage = get_storage()
         self._named_threads = {}
 
-    def run(self, test_run_id, conf, **kwargs):
+    def check_current_running(self, external_id):
+        return external_id in self._named_threads
+
+    def run(self, test_run, conf, **kwargs):
         if 'config_path' in kwargs:
             self.prepare_config(conf, kwargs['config_path'])
         argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
         gev = self._pool.spawn(
-            self._run_tests, test_run_id, kwargs['test_path'], argv_add)
-        self._named_threads[test_run_id] = gev
-
+            self._run_tests, test_run.id, kwargs['test_path'], argv_add)
+        self._named_threads[test_run.external_id] = gev
 
     def tests_discovery(self, test_set, test_path, argv_add):
         try:
             log.info('Started test discovery %s' % test_set)
             main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(test_set, self.storage, discovery=True)],
+                 addplugins=[StoragePlugin(
+                     test_set, self.storage, discovery=True)],
                  exit=True,
                  argv=['tests', '--collect-only']+argv_add)
         except SystemExit:
@@ -144,12 +143,12 @@ class NoseDriver(object):
             del self._named_threads[test_run_id]
             raise gevent.GreenletExit
 
-    def kill(self, test_run_id):
+    def kill(self, external_id):
         log.info('Trying to stop process %s\n'
-                 '%s' % (test_run, self._named_threads))
-        if int(test_run_id) in self._named_threads:
-            log.info('Kill green thread: %s' % test_run_id)
-            self._named_threads[int(test_run_id)].kill()
+                 '%s' % (external_id, self._named_threads))
+        if int(external_id) in self._named_threads:
+            log.info('Kill green thread: %s' % external_id)
+            self._named_threads[int(external_id)].kill()
             return True
         return False
 

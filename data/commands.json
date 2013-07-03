@@ -1,23 +1,17 @@
 {
     "five_min": {
-        "test_path": "fuel.tests",
+        "test_path": "fuel_health.tests",
         "driver": "nose",
         "description": "Five min test run"
     },
     "fuel_smoke": {
-        "test_path": "fuel.tests.smoke",
+        "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
         "description": "Five min test run"
     },
     "fuel_sanity": {
-        "test_path": "fuel.tests",
+        "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
         "description": "Five min test run"
-    },
-    "simple": {
-        "test_path": "/home/u/projects/some_tests",
-        "driver": "nose",
-        "argv": ["--collect-only"],
-        "description": "For testing"
     }
 }

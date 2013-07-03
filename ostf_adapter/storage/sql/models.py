@@ -18,6 +18,7 @@ class TestRun(Base):
 
     tests = relationship('Test', backref='test_run')
 
+
 class TestSet(Base):
 
     __tablename__ = 'test_sets'

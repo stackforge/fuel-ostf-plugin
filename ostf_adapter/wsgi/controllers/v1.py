@@ -1,7 +1,7 @@
 from pecan import rest, expose, request, response
 from pecan.core import abort
 import simplejson as json
-from ostf_adapter.api import API, parse_json_file
+from ostf_adapter.api import API
 import logging
 from ostf_adapter import exceptions as exc
 
@@ -9,85 +9,66 @@ from ostf_adapter import exceptions as exc
 log = logging.getLogger(__name__)
 
 
-V1_DESCRIPTION = 'data/v1_description.json'
+class BaseRestController(rest.RestController):
 
+    def _handle_get(self, method, remainder):
+        if len(remainder) > 1:
+            method_name = '_'.join(remainder[:2])
+            if method.upper() in self._custom_actions.get(method_name, []):
+                controller = self._find_controller(
+                    'get_%s' % method_name,
+                    method_name
+                )
+                if controller:
+                    return controller, remainder[2:]
+        else:
+            method_name = remainder[0]
+            if method.upper() in self._custom_actions.get(method_name, []):
+                controller = self._find_controller(
+                    'get_%s' % method_name,
+                    method_name
+                )
+            if controller:
+                return controller, []
+        return super(BaseRestController, self)._handle_get(method, remainder)
 
-class V1Controller(rest.RestController):
+class V1Controller(BaseRestController):
 
     def __init__(self, *args, **kwargs):
         self.api = API()
-        self._api_description = parse_json_file(V1_DESCRIPTION)
         super(V1Controller, self).__init__(*args, **kwargs)
 
-    @expose('json')
-    def _default(self):
-        return self._api_description
+    _custom_actions = {
+        'testsets': ['GET'],
+        'tests': ['GET'],
+        'testruns': ['GET', 'POST', 'PUT'],
+        'testruns_last': ['GET']
+    }
 
     @expose('json')
-    def post(self, test_service):
-        if request.body:
-            conf = json.loads(request.body)
-        else:
-            conf = {}
-        log.info('POST REQUEST - %s\n'
-                 'WITH CONF - %s' %(test_service, conf))
-        try:
-            return self.api.run(test_service, conf)
-        except exc.OstfException, e:
-            response.status = e.code
-            return {'message': e.message}
+    def get_testsets(self):
+        return self.api.get_test_sets()
 
     @expose('json')
-    def get(self, args):
-        if 'testsets' in args:
-            return self.api.get_test_sets()
+    def get_tests(self):
         return self.api.get_tests()
 
     @expose('json')
-    def get_testsets(self, args):
-        return self.api.get_test_sets()
-
-
-    @expose('json')
-    def get_test(self, args):
-        return {}
-
-    # @expose('json')
-    # def get_all(self):
-    #     return self.api.commands
-
-    # @expose('json')
-    # def get(self, test_run, test_run_id=None):
-    #     log.info('GET REQUEST - %s - %s' % (test_run, test_run_id))
-    #     if not test_run_id:
-    #         response.status = 400
-    #         return {'message': 'Please provide ID of test run'}
-    #     try:
-    #         return self.api.get_info(test_run, test_run_id)
-    #     except exc.OstfException, e:
-    #         response.status = e.code
-    #         return {'message': e.message}
+    def get_testruns(self):
+        return self.api.get_test_runs()
 
     @expose('json')
-    def delete(self, test_run, test_run_id=None):
-        log.info('KILL REQUEST - %s - %s' % (test_run, test_run_id))
-        if not test_run_id:
-            response.status = 400
-            return {'message': 'Please provide ID of test run'}
-        try:
-            result = self.api.kill(test_run, test_run_id)
-        except exc.OstfException, e:
-            response.status = e.code
-            return {'message': e.message}
-        if result:
-            return {'message': 'Killed test run with ID %s' % test_run_id}
-        return {'message': 'Test run %s already finished' % test_run_id}
+    def get_testruns_last(self, external_id):
+        return self.api.get_last_test_run(external_id)
 
-    # def _handle_post(self, method, remainder):
-    #     if not remainder or remainder == ['']:
-    #         controller = self._find_controller('_default')
-    #         if controller:
-    #             return controller, []
-    #     return super(V1Controller, self)._handle_post(method, remainder)
+    @expose('json')
+    def post_testruns(self):
+        test_runs = json.loads(request.body)
+        self.api.run_multiple(test_runs)
+        return
 
-    
+    @expose('json')
+    def put_testruns(self):
+        test_runs = json.loads(request.body)
+        self.api.kill_multiple(test_runs)
+        return
