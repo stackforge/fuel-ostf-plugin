@@ -37,26 +37,28 @@ class API(object):
     def run_multiple(self, test_runs):
         for test_run in test_runs:
             test_set = test_run['testset']
-            config = test_run['metadata']['config']
-            external_id = test_run['metadata']['cluster_id']
-            self.run(test_set, external_id, config)
+            metadata = test_run['metadata']
+            self.run(test_set, metadata)
 
-    def run(self, test_set, external_id, config):
-        log.info('Starting test run with conf %s' %s)
+    def run(self, test_set, metadata):
+        log.info('Starting test run with metadata %s' % metadata)
+        external_id = metadata['cluster_id']
+        config = metadata['config']
         command, transport = self._find_command(test_set)
         if not transport.obj.check_current_running(external_id):
-            test_run = self._storage.add_test_run(test_set, external_id)
-            transport.obj.run(test_run, config, **command)
-            return test_run
+            test_run_id = self._storage.add_test_run(
+                test_set, external_id, metadata)
+            transport.obj.run(test_run_id, external_id, config, **command)
 
     def kill_multiple(self, test_runs):
+        log.info('Trying to stop tests %s' % test_runs)
         for test_run in test_runs:
             cluster_id = test_run['id']
             status = test_run['status']
             self.kill(cluster_id)
 
-    def kill(self, external_id, data=None):
-        test_run = self._storage.get_last_test_run(external_id)
+    def kill(self, test_run_id, data=None):
+        test_run = self._storage.get_test_run(test_run_id)
         command, transport = self._find_command(test_run.type)
         if transport.obj.check_current_running(test_run.external_id):
             transport.obj.kill(test_run.external_id)
@@ -74,8 +76,12 @@ class API(object):
 
     def _prepare_test_run(self, test_run):
         test_run_data = {'id': test_run.id, 'testset': test_run.type,
-                             'metadata': {'stats': json.loads(test_run.stats)},
+                             'metadata': json.loads(test_run.data),
                              }
+        if test_run.stats:
+            test_run_data['stats'] = json.loads(test_run.stats)
+        else:
+            test_run_data['stats'] = {}
         tests = []
         if test_run.tests:
             for test in test_run.tests:

@@ -8,6 +8,7 @@ from gevent import GreenletExit
 
 
 TEST_RUN_ID = 1
+EXTERNAL_ID = 1
 CONF = {'keys': 'values'}
 
 
@@ -40,20 +41,19 @@ class TestNoseAdapters(unittest.TestCase):
         self.assertEqual(string_io.getvalue(),
                          u'param2 = test\nparam1 = test\n')
 
-    
-    def test_run_with_config_path_with_argv(self, get_storage_mock, pool_module):
+    def test_run_with_config_path_with_argv(
+            self, get_storage_mock, pool_module):
         get_storage_mock.return_value = self.storage_mock
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
         with patch.object(nose_driver, 'prepare_config')\
             as prepare_config_mock:
             res = nose_driver.run(
-                TEST_RUN_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
+                TEST_RUN_ID, EXTERNAL_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
                 test_path='/home/tests')
         prepare_config_mock.assert_called_once_with(CONF, '/etc/test.conf')
         self.pool_mock.spawn.assert_called_once_with(
-            nose_driver._run_tests, TEST_RUN_ID, '/home/tests', ['sanity'],
-            self.storage_mock
+            nose_driver._run_tests, TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity']
         )
         self.assertTrue(1 in nose_driver._named_threads)
 
@@ -81,11 +81,11 @@ class TestNoseAdapters(unittest.TestCase):
 
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
-        nose_driver._named_threads[TEST_RUN_ID] = 'VALUE'
+        nose_driver._named_threads[EXTERNAL_ID] = 'VALUE'
         nose_test_program_mock.side_effect = raise_system_exit
 
         self.assertRaises(GreenletExit, nose_driver._run_tests,
-                          TEST_RUN_ID, '/home/tests', ['sanity'], self.storage_mock)
+                          TEST_RUN_ID, EXTERNAL_ID,'/home/tests', ['sanity'])
 
     @patch('ostf_adapter.transport.nose_adapter.main')
     def test_run_tests_raise_greelet_exit(
@@ -96,11 +96,11 @@ class TestNoseAdapters(unittest.TestCase):
 
         pool_module.Pool.return_value = self.pool_mock
         nose_driver = nose_adapter.NoseDriver()
-        nose_driver._named_threads[TEST_RUN_ID] = 'VALUE'
+        nose_driver._named_threads[EXTERNAL_ID] = 'VALUE'
         nose_test_program_mock.side_effect = raise_greenlet_exit
 
         self.assertRaises(GreenletExit, nose_driver._run_tests,
-                          TEST_RUN_ID, '/home/tests', ['sanity'], self.storage_mock)
+                          TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity'])
 
 
 class TestNoseStoragePlugin(unittest.TestCase):

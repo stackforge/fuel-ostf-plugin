@@ -28,13 +28,14 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_run, external_id):
+    def add_test_run(self, test_run, external_id, data):
         log.info('Invoke test run - %s' % test_run)
         session = self.get_session()
-        test_run = models.TestRun(type=test_run, external_id=external_id)
+        test_run = models.TestRun(type=test_run, external_id=external_id,
+                                  data=json.dumps(data))
         session.add(test_run)
         session.commit()
-        return test_run
+        return test_run.id
 
     def add_test_set(self, test_set, test_set_data):
         log.info('Inserting test set %s' % test_set)
@@ -106,8 +107,12 @@ class SqlStorage(object):
             raise exc.OstfDBException(message=msg)
         return test_run
 
-    def get_test_result(self, test_run_id):
-        pass
+    def get_test_run(self, test_run_id):
+        session = self.get_session()
+        test_run = session.query(models.TestRun).\
+            filter_by(id=test_run_id).first()
+        session.commit()
+        return test_run
 
     def add_test_result(self, test_run_id, test_name, data):
         log.info('Add test result for: ID: %s\n'
@@ -122,10 +127,11 @@ class SqlStorage(object):
         session.commit()
         return test
 
-    def update_test_run(self, test_run_id, data):
+    def update_test_run(self, test_run_id, stats):
+        log.info("Received stats %s" % stats)
         session = self.get_session()
         test_run = session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
-            update({'data': json.dumps(data)})
+            update({'stats': json.dumps(stats)})
         session.commit()
         return test_run

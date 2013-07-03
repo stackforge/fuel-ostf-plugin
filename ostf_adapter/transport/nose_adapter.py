@@ -21,7 +21,7 @@ class StoragePlugin(Plugin):
     name = 'storage'
     score = 15000
 
-    def __init__(self, test_run_id, storage, discovery=True):
+    def __init__(self, test_run_id, storage, discovery=False):
         self._capture = []
         self.test_run_id = test_run_id
         self.storage = storage
@@ -41,15 +41,17 @@ class StoragePlugin(Plugin):
                       'skipped': 0}
 
     def _add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
-        data = {}
+        data = dict()
+        data['message'] = u""
+        data['traceback'] = u""
         if err:
             exc_type, exc_value, exc_traceback = err
-            data['message'] = exc_value.message
+            log.info('Error %s' % exc_value)
+            if hasattr(exc_value, 'message'):
+                data['message'] = exc_value.message
             data['traceback'] = u"".join(
                 traceback.format_tb(exc_traceback))
-        else:
-            data['message'] = u""
-            data['traceback'] = u""
+
         doc = test.test.shortDescription()
         data['name'] = doc if doc else u""
         data.update(kwargs)
@@ -106,14 +108,15 @@ class NoseDriver(object):
     def check_current_running(self, external_id):
         return external_id in self._named_threads
 
-    def run(self, test_run, conf, **kwargs):
+    def run(self, test_run_id, external_id, conf, **kwargs):
         if 'config_path' in kwargs:
             self.prepare_config(conf, kwargs['config_path'])
         argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
         gev = self._pool.spawn(
-            self._run_tests, test_run.id, kwargs['test_path'], argv_add)
-        self._named_threads[test_run.external_id] = gev
+            self._run_tests, test_run_id, external_id,
+            kwargs['test_path'], argv_add)
+        self._named_threads[external_id] = gev
 
     def tests_discovery(self, test_set, test_path, argv_add):
         try:
@@ -126,7 +129,7 @@ class NoseDriver(object):
         except SystemExit:
             log.info('Finished tests discovery %s' % test_set)
 
-    def _run_tests(self, test_run_id, test_path, argv_add):
+    def _run_tests(self, test_run_id, external_id, test_path, argv_add):
         try:
             log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
                      'TEST PATH: %s\n'
@@ -140,15 +143,15 @@ class NoseDriver(object):
             log.info('Close green thread TEST_RUN: %s\n'
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
-            del self._named_threads[test_run_id]
+            del self._named_threads[external_id]
             raise gevent.GreenletExit
 
     def kill(self, external_id):
         log.info('Trying to stop process %s\n'
                  '%s' % (external_id, self._named_threads))
-        if int(external_id) in self._named_threads:
+        if external_id in self._named_threads:
             log.info('Kill green thread: %s' % external_id)
-            self._named_threads[int(external_id)].kill()
+            self._named_threads[external_id].kill()
             return True
         return False
 
