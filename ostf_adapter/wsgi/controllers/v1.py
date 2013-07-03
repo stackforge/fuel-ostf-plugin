@@ -38,6 +38,12 @@ class V1Controller(rest.RestController):
             return {'message': e.message}
 
     @expose('json')
+    def get(self, args):
+        if 'testsets' in args:
+            return self.api.get_test_sets()
+        return self.api.get_tests()
+
+    @expose('json')
     def get_testsets(self, args):
         return self.api.get_test_sets()
 

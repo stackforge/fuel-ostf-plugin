@@ -61,6 +61,14 @@ class StoragePlugin(Plugin):
         if not self.discovery:
             self.stats['passes'] += 1
             self._add_message(test, type='success', taken=self.taken)
+        else:
+            data= {}
+            doc = test.test.shortDescription()
+            if doc:
+                data['description'] = doc
+            else:
+                data['description'] = ""
+            self.storage.add_sets_test(self.test_run_id, test.id(), data)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)

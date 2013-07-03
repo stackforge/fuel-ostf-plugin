@@ -4,7 +4,7 @@ patch_all()
 from psycogreen.gevent import patch_psycopg
 patch_psycopg()
 
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, desc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 
@@ -28,13 +28,13 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_run):
+    def add_test_run(self, test_run, external_id):
         log.info('Invoke test run - %s' % test_run)
         session = self.get_session()
-        test_run = models.TestRun(type=test_run)
+        test_run = models.TestRun(type=test_run, external_id=external_id)
         session.add(test_run)
         session.commit()
-        return {'type': test_run.type, 'id': test_run.id}
+        return test_run.id
 
     def add_test_set(self, test_set, test_set_data):
         log.info('Inserting test set %s' % test_set)
@@ -55,11 +55,28 @@ class SqlStorage(object):
         session.commit()
         return test_sets
 
-    def get_test_results(self, test_run_id):
+    def get_tests(self):
+        session = self.get_session()
+        tests = session.query(models.Test).filter_by(test_run_id=None)
+        log.info('Tests received %s' % tests)
+        session.commit()
+        return [{'id': t.name, 'test_set': t.test_set_id,
+                 'name': json.loads(t.data).get('description', "")} for t in tests]
+
+    def add_sets_test(self, test_set, test_name, data):
+        log.info('Data received %s' % data)
+        session = self.get_session()
+        test_obj = models.Test(
+            name=test_name, data=json.dumps(data), test_set_id=test_set)
+        session.add(test_obj)
+        session.commit()
+
+    def get_test_results(self, test_run_name, external_id):
         session = self.get_session()
         test_run = session.query(models.TestRun).\
             options(joinedload('tests')).\
-            filter_by(id=test_run_id).first()
+            filter_by(external_id=external_id, type=test_run_name).\
+            order_by(desc(models.TestRun.id)).first()
         session.commit()
         if not test_run:
             msg = 'Database does not contains ' \

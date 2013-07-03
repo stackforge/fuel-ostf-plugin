@@ -35,13 +35,15 @@ class API(object):
         self._discovery()
 
     def run(self, test_run_name, conf):
+        log.info('Starting test run with conf %s' %s)
         command, transport = self._find_command(test_run_name)
-        test_run = self._storage.add_test_run(test_run_name)
-        transport.obj.run(test_run['id'], conf, **command)
+        external_id = conf.get('external_id', 1)
+        test_run_id = self._storage.add_test_run(test_run_name, external_id)
+        transport.obj.run(test_run_id, conf, **command)
         return test_run
 
-    def get_info(self, test_run_name, test_run_id):
-        return self._storage.get_test_results(test_run_id)
+    def get_last_test_run_info(self, test_run_name, external_id):
+        return self._storage.get_test_results(test_run_name, external_id)
 
     def kill(self, test_run_name, test_run_id):
         command, transport = self._find_command(test_run_name)
@@ -50,6 +52,10 @@ class API(object):
     def get_test_sets(self):
         test_sets = self._storage.get_test_sets()
         return [{'id': ts.id, 'name': ts.description} for ts in test_sets]
+
+    def get_tests(self):
+        tests = self._storage.get_tests()
+        return tests
 
     def _discovery(self):
         log.info('Started general tests discovery')
