@@ -84,7 +84,7 @@ class StoragePlugin(Plugin):
         if not self.discovery:
             stats_values = sum(self.stats.values())
             self.stats['total'] = stats_values
-            self.storage.update_test_run(self.test_run_id, self.stats)
+            self.storage.update_test_run(self.test_run_id, stats=self.stats)
 
     def beforeTest(self, test):
         self._start_time = time()
@@ -116,7 +116,7 @@ class NoseDriver(object):
         gev = self._pool.spawn(
             self._run_tests, test_run_id, external_id,
             kwargs['test_path'], argv_add)
-        self._named_threads[external_id] = gev
+        self._named_threads[test_run_id] = gev
 
     def tests_discovery(self, test_set, test_path, argv_add):
         try:
@@ -124,9 +124,9 @@ class NoseDriver(object):
             main(defaultTest=test_path,
                  addplugins=[StoragePlugin(
                      test_set, self.storage, discovery=True)],
-                 exit=True,
+                 exit=False,
                  argv=['tests', '--collect-only']+argv_add)
-        except SystemExit:
+        except Exception, e:
             log.info('Finished tests discovery %s' % test_set)
 
     def _run_tests(self, test_run_id, external_id, test_path, argv_add):
@@ -136,22 +136,30 @@ class NoseDriver(object):
                      'ARGS: %s' % (test_run_id, test_path, argv_add))
             main(defaultTest=test_path,
                  addplugins=[StoragePlugin(test_run_id, self.storage)],
-                 exit=True,
+                 exit=False,
                  argv=['tests']+argv_add)
+            log.info('Test run finished successfully')
+            if external_id in self._named_threads:
+                del self._named_threads[external_id]
+            self.storage.update_test_run(test_run_id, status='finished')
+            raise gevent.GreenletExit
         #To close thread we need to catch any exception
-        except BaseException, e:
+        except Exception, e:
             log.info('Close green thread TEST_RUN: %s\n'
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
-            del self._named_threads[external_id]
+            self.storage.update_test_run(test_run_id, status='error')
+            if external_id in self._named_threads:
+                del self._named_threads[external_id]
             raise gevent.GreenletExit
 
-    def kill(self, external_id):
+    def kill(self, test_run_id):
         log.info('Trying to stop process %s\n'
-                 '%s' % (external_id, self._named_threads))
-        if external_id in self._named_threads:
-            log.info('Kill green thread: %s' % external_id)
-            self._named_threads[external_id].kill()
+                 '%s' % (test_run_id, self._named_threads))
+        if test_run_id in self._named_threads:
+            log.info('Kill green thread: %s' % test_run_id)
+            self._named_threads[test_run_id].kill()
+            del self._named_threads[test_run_id]
             return True
         return False
 

@@ -30,14 +30,49 @@ ostf-server --after-initialization-environment-hook --dbpath=postgresql+psycopg2
 
 USE:
 
-1. curl -H "Content-Type: application/json" -X POST -d  http://localhost:8777/v1/tests
-RESPONSE: {"type": "tests", "id": 7}
+Design of OSTF REST API entities, urls and output format
+Testset
+GET /v1/testsets
+Response:
+[
+ {id: "testset-nova-1", name: "Tests for nova"},
+ {id: "testset-keystone-222", name: "Tests for keystone"},
+ ...
+]
+Test
+GET /v1/tests
+Response:
+[
+ {id: "test_for_adapter.TestSimple.test_first_without_sleep_1", name: "Some test #1", testset: "testset-nova-1"},
+ {id: "test_for_adapter.TestSimple.test_first_without_sleep_2", name: "Some test #2", testset: "testset-nova-1"},
+ {id: "test_for_keystone.TestSimple.fgsfds", name: "Another test", testset: "testset-keystone-222"},
+ ...
+]
+Testrun (history entry)
+GET /v1/testruns
+Response:
+[
+ {id: <autoincrement>, testset: "testset-keystone-222", metadata: {...}, tests: [
+  {id: "test_for_adapter.TestSimple.test_first_without_sleep_1", status: "running/success/error", message: "error message if error"},
+  ...
+ ]},
+ ...
+]
 
-2. curl -X GET http://localhost:8777/v1/tests/7
-RESPONSE:
-{"tests": {"test_for_adapter.TestSimple.test_first_sleep": {"taken": 0.9953169822692871, "type": "success", "name": "test_for_adapter.TestSimple.test_first_sleep"},
-"test_for_adapter.TestSimple.test_first_without_sleep": {"taken": 8.893013000488281e-05, "type": "success", "name": "test_for_adapter.TestSimple.test_first_without_sleep"}},
-"type": "tests", "id": 7}
+GET /v1/testruns/last/<cluster_id>
+Response format is the same, but response contains only last entries filtered by cluster_id
 
-3. curl -X DELETE http://localhost:8777/v1/tests/7
-Will kill test run
+POST /v1/testruns (run the tests)
+Request:
+[
+ {testset: "testset-keystone-222", metadata: {...}},
+ ...
+]
+Response format is like GET reponse format (i.e. with status and id)
+
+PUT /v1/testruns (stop the tests)
+Request:
+[
+ {id: <autoincrement>, status: "stopped"},
+ ...
+]

@@ -28,11 +28,11 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_run, external_id, data):
+    def add_test_run(self, test_run, external_id, data, status='started'):
         log.info('Invoke test run - %s' % test_run)
         session = self.get_session()
         test_run = models.TestRun(type=test_run, external_id=external_id,
-                                  data=json.dumps(data))
+                                  data=json.dumps(data), status='started')
         session.add(test_run)
         session.commit()
         return test_run.id
@@ -127,11 +127,15 @@ class SqlStorage(object):
         session.commit()
         return test
 
-    def update_test_run(self, test_run_id, stats):
-        log.info("Received stats %s" % stats)
+    def update_test_run(self, test_run_id, stats=None, status=None):
         session = self.get_session()
+        updated_data = dict()
+        if stats:
+            updated_data['stats'] = json.dumps(stats)
+        if status:
+            updated_data['status'] = status
         test_run = session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
-            update({'stats': json.dumps(stats)})
+            update(updated_data)
         session.commit()
         return test_run

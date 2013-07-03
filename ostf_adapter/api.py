@@ -50,18 +50,20 @@ class API(object):
                 test_set, external_id, metadata)
             transport.obj.run(test_run_id, external_id, config, **command)
 
+
     def kill_multiple(self, test_runs):
         log.info('Trying to stop tests %s' % test_runs)
         for test_run in test_runs:
             cluster_id = test_run['id']
             status = test_run['status']
-            self.kill(cluster_id)
+            self.kill(cluster_id, status)
 
-    def kill(self, test_run_id, data=None):
+    def kill(self, test_run_id, status):
         test_run = self._storage.get_test_run(test_run_id)
         command, transport = self._find_command(test_run.type)
-        if transport.obj.check_current_running(test_run.external_id):
-            transport.obj.kill(test_run.external_id)
+        if transport.obj.check_current_running(test_run.id):
+            transport.obj.kill(test_run.id)
+            self._storage.update_test_run(test_run_id, status=status)
 
     def get_last_test_run(self, external_id):
         test_run = self._storage.get_last_test_results(external_id)
@@ -75,9 +77,12 @@ class API(object):
         return response
 
     def _prepare_test_run(self, test_run):
-        test_run_data = {'id': test_run.id, 'testset': test_run.type,
-                             'metadata': json.loads(test_run.data),
-                             }
+        test_run_data = {
+            'id': test_run.id,
+            'testset': test_run.type,
+            'metadata': json.loads(test_run.data),
+            'status': test_run.status
+        }
         if test_run.stats:
             test_run_data['stats'] = json.loads(test_run.stats)
         else:
