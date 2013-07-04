@@ -28,12 +28,19 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_run, external_id, data, status='started'):
-        log.info('Invoke test run - %s' % test_run)
+    def add_test_run(self, test_set, external_id, data, status='started'):
+        log.info('Invoke test run - %s' % test_set)
         session = self.get_session()
-        test_run = models.TestRun(type=test_run, external_id=external_id,
+        tests = session.query(models.Test).filter_by(test_set_id=test_set)
+        test_run = models.TestRun(type=test_set, external_id=external_id,
                                   data=json.dumps(data), status='started')
         session.add(test_run)
+        for test in tests:
+            new_test = models.Test(test_run_id=test_run.id,
+                                   status='wait_running',
+                                   name=test.name,
+                                   data=test.data)
+            session.add(new_test)
         session.commit()
         return test_run.id
 
@@ -61,7 +68,7 @@ class SqlStorage(object):
         log.info('Tests received %s' % tests.count())
         session.commit()
         return [{'id': t.name, 'test_set': t.test_set_id,
-                 'name': json.loads(t.data).get('description', "")} for t in tests]
+                 'name': json.loads(t.data).get('name', "")} for t in tests]
 
     def add_sets_test(self, test_set, test_name, data):
         log.info('Data received %s' % data)
@@ -114,18 +121,20 @@ class SqlStorage(object):
         session.commit()
         return test_run
 
-    def add_test_result(self, test_run_id, test_name, data):
+    def add_test_result(
+            self, test_run_id, test_name, status, time_taken, data):
         log.info('Add test result for: ID: %s\n'
                  'TEST NAME: %s\n'
                  'DATA: %s' % (test_run_id, test_name, data))
         session = self.get_session()
-        test = models.Test(name=test_name, status=data.get('type', None),
-                           taken=data.get('taken', None),
-                           test_run_id=test_run_id,
-                           data=json.dumps(data))
-        session.add(test)
+        session.query(models.Test).\
+            filter_by(name=test_name, test_run_id=test_run_id).\
+            update({
+                'status': status,
+                'taken': time_taken,
+                'data': json.dumps(data)
+            })
         session.commit()
-        return test
 
     def update_test_run(self, test_run_id, stats=None, status=None):
         session = self.get_session()
@@ -139,3 +148,11 @@ class SqlStorage(object):
             update(updated_data)
         session.commit()
         return test_run
+
+    def update_running_tests(self, test_run_id, status='stopped'):
+        session = self.get_session()
+        session.query(models.Test).\
+            filter(models.Test.test_run_id == test_run_id,
+                   models.Test.status.in_(('running', 'wait_running'))).\
+            update({'status': status}, synchronize_session=False)
+        session.commit()

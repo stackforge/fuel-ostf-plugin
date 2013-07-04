@@ -64,6 +64,7 @@ class API(object):
         if transport.obj.check_current_running(test_run.id):
             transport.obj.kill(test_run.id)
             self._storage.update_test_run(test_run_id, status=status)
+            self._storage.update_running_tests(test_run_id, status='stopped')
 
     def get_last_test_run(self, external_id):
         test_run = self._storage.get_last_test_results(external_id)
@@ -90,7 +91,9 @@ class API(object):
         tests = []
         if test_run.tests:
             for test in test_run.tests:
-                test_data = {'id': test.name}
+                test_data = {'id': test.name,
+                             'taken': test.taken,
+                             'status': test.status}
                 if test_data:
                     test_data.update(json.loads(test.data))
                 tests.append(test_data)

@@ -21,9 +21,9 @@ class StoragePlugin(Plugin):
     name = 'storage'
     score = 15000
 
-    def __init__(self, test_run_id, storage, discovery=False):
+    def __init__(self, test_parent_id, storage, discovery=False):
         self._capture = []
-        self.test_run_id = test_run_id
+        self.test_parent_id = test_parent_id
         self.storage = storage
         self.discovery = discovery
         super(StoragePlugin, self).__init__()
@@ -40,7 +40,9 @@ class StoragePlugin(Plugin):
                       'passes': 0,
                       'skipped': 0}
 
-    def _add_message(self, test, err=None, capt=None, tb_info=None, **kwargs):
+    def _add_message(
+            self, test, err=None, capt=None,
+            tb_info=None, status=None, taken=0):
         data = dict()
         data['message'] = u""
         data['traceback'] = u""
@@ -54,41 +56,43 @@ class StoragePlugin(Plugin):
 
         doc = test.test.shortDescription()
         data['name'] = doc if doc else u""
-        data.update(kwargs)
-        self.storage.add_test_result(self.test_run_id, test.id(), data)
+        self.storage.add_test_result(
+            self.test_parent_id, test.id(), status, taken, data)
 
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
         if self.discovery:
             data = {}
             doc = test.test.shortDescription()
-            data['name'] = doc if doc else ""
-            self.storage.add_sets_test(self.test_run_id, test.id(), data)
+            data['name'] = doc if doc else u""
+            data['message'] = u""
+            data['traceback'] = u""
+            self.storage.add_sets_test(self.test_parent_id, test.id(), data)
         else:
             self.stats['passes'] += 1
-            self._add_message(test, type='success', taken=self.taken)
+            self._add_message(test, status='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)
         self.stats['failures'] += 1
-        self._add_message(test, err=err, type='failure', taken=self.taken)
+        self._add_message(test, err=err, status='failure', taken=self.taken)
 
     def addError(self, test, err, capt=None, tb_info=None):
         log.info('TEST NAME: %s\n'
                  'ERROR: %s' % (test, err))
         self.stats['errors'] += 1
-        self._add_message(test, err=err, type='error', taken=self.taken)
+        self._add_message(test, err=err, status='error', taken=self.taken)
 
     def report(self, stream):
         log.info('REPORT')
         if not self.discovery:
             stats_values = sum(self.stats.values())
             self.stats['total'] = stats_values
-            self.storage.update_test_run(self.test_run_id, stats=self.stats)
+            self.storage.update_test_run(self.test_parent_id, stats=self.stats)
 
     def beforeTest(self, test):
         self._start_time = time()
-        self._add_message(test, type='running')
+        self._add_message(test, status='running')
 
     @property
     def taken(self):
@@ -149,6 +153,7 @@ class NoseDriver(object):
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
             self.storage.update_test_run(test_run_id, status='error')
+            self.storage.update_running_tests(test_run_id, status='error')
             if external_id in self._named_threads:
                 del self._named_threads[external_id]
             raise gevent.GreenletExit
