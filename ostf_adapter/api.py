@@ -52,10 +52,10 @@ class API(object):
 
 
     def kill_multiple(self, test_runs):
-        log.info('Trying to stop tests %s' % test_runs)
+        log.info(u'Trying to stop tests %s' % test_runs)
         for test_run in test_runs:
             cluster_id = test_run['id']
-            status = test_run['status']
+            status = test_run.get('status', u'stopped')
             self.kill(cluster_id, status)
 
     def kill(self, test_run_id, status):
@@ -64,7 +64,7 @@ class API(object):
         if transport.obj.check_current_running(test_run.id):
             transport.obj.kill(test_run.id)
             self._storage.update_test_run(test_run_id, status=status)
-            self._storage.update_running_tests(test_run_id, status='stopped')
+            self._storage.update_running_tests(test_run_id, status=status)
 
     def get_last_test_run(self, external_id):
         test_run = self._storage.get_last_test_results(external_id)
@@ -82,7 +82,9 @@ class API(object):
             'id': test_run.id,
             'testset': test_run.type,
             'metadata': json.loads(test_run.data),
-            'status': test_run.status
+            'status': test_run.status,
+            'started_at': test_run.started_at,
+            'ended_at': test_run.ended_at
         }
         if test_run.stats:
             test_run_data['stats'] = json.loads(test_run.stats)

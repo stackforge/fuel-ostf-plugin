@@ -7,6 +7,7 @@ patch_psycopg()
 from sqlalchemy import create_engine, exc, desc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
+from datetime import datetime
 
 from ostf_adapter.storage.sql import models
 from ostf_adapter import exceptions as exc
@@ -138,7 +139,7 @@ class SqlStorage(object):
 
     def update_test_run(self, test_run_id, stats=None, status=None):
         session = self.get_session()
-        updated_data = dict()
+        updated_data = {'ended_at': datetime.utcnow()}
         if stats:
             updated_data['stats'] = json.dumps(stats)
         if status:

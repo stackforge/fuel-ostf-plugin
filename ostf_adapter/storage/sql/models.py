@@ -17,6 +17,8 @@ class TestRun(Base):
     status = sa.Column(sa.String(128))
     stats = sa.Column(sa.Text())
     data = sa.Column(sa.Text())
+    started_at = sa.Column(sa.DateTime, default=datetime.utcnow)
+    ended_at = sa.Column(sa.DateTime)
 
     tests = relationship('Test', backref='test_run')
 

@@ -142,7 +142,7 @@ class NoseDriver(object):
                  addplugins=[StoragePlugin(test_run_id, self.storage)],
                  exit=False,
                  argv=['tests']+argv_add)
-            log.info('Test run finished successfully')
+            log.info('Test run %s finished successfully' % test_run_id)
             if external_id in self._named_threads:
                 del self._named_threads[external_id]
             self.storage.update_test_run(test_run_id, status='finished')
