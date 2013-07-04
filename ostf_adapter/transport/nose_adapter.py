@@ -54,8 +54,8 @@ class StoragePlugin(Plugin):
                 data['message'] = exc_value.message
             data['traceback'] = u"".join(
                 traceback.format_tb(exc_traceback))
-        doc = test.shortDescription()
-        data['name'] = doc if doc else u""
+        if isinstance(test, Test):
+            data['name'] = test.test.__doc__
         self.storage.add_test_result(
             self.test_parent_id, test.id(), status, taken, data)
 
@@ -63,10 +63,7 @@ class StoragePlugin(Plugin):
         log.info('SUCCESS for %s' % test)
         if self.discovery:
             data = {}
-            doc = test.shortDescription()
-            data['name'] = doc if doc else u""
-            data['message'] = u""
-            data['traceback'] = u""
+            data['name'] = test.test.__doc__
             self.storage.add_sets_test(self.test_parent_id, test.id(), data)
         else:
             self.stats['passes'] += 1
@@ -105,7 +102,7 @@ class NoseDriver(object):
 
     def __init__(self):
         log.info('NoseDriver initialized')
-        self._pool = pool.Pool(1000)
+        self._pool = pool.Pool(100)
         self.storage = get_storage()
         self._named_threads = {}
 

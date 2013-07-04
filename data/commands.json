@@ -15,6 +15,6 @@
         "test_path": "",
         "driver": "nose",
         "description": "Five min test run",
-        "argv": ["fuel_health.tests.sanity", "--collect-only"]
+        "argv": ["fuel_health.tests.sanity"]
     }
 }
