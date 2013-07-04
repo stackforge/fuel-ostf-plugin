@@ -53,9 +53,11 @@ class StoragePlugin(Plugin):
                 data['message'] = exc_value.message
             data['traceback'] = u"".join(
                 traceback.format_tb(exc_traceback))
-
-        doc = test.test.shortDescription()
-        data['name'] = doc if doc else u""
+        if hasattr(test, 'test'):
+            doc = test.test.shortDescription()
+        else:
+            doc = u""
+        data['name'] = doc
         self.storage.add_test_result(
             self.test_parent_id, test.id(), status, taken, data)
 
