@@ -17,6 +17,16 @@ TESTS_PROCESS = {}
 log = logging.getLogger(__name__)
 
 
+def get_exc_message(exception_value):
+    """
+    @exception_value - Exception type object
+    """
+    _exc_long = str(exception_value)
+    if isinstance(_exc_long, basestring):
+        return _exc_long.split('\n')[0]
+    return u""
+
+
 class StoragePlugin(Plugin):
 
     enabled = True
@@ -52,13 +62,10 @@ class StoragePlugin(Plugin):
             log.info('TYPE OF EXCEPTION %s'
                      'EXCEPTION VALUE %s'
                      'WTF %s' % (exc_type, exc_value, dir(exc_value)))
-            if hasattr(exc_value, 'message'):
-                log.info('WTF EXC VALUE MESSAGE %s'
-                         'MESSAGE == %s'
-                         'MESSAGE AS STRING %s' % (dir(exc_value.message), exc_value.message, str(exc_value)))
-                data['message'] = exc_value.message
+            log.info('TRACEBACK %s' % exc_traceback)
+            data['message'] = get_exc_message(exc_value)
             data['traceback'] = u"".join(
-                traceback.format_tb(exc_traceback))
+                traceback.format_tb(exc_traceback) or traceback.format_exception(*err))
         else:
             data['message'] = u""
             data['traceback'] = u""

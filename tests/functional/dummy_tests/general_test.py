@@ -14,7 +14,7 @@ class Dummy_test(unittest.TestCase):
         self.assertTrue(True)
 
     def test_fast_fail(self):
-        self.assertTrue(False)
+        self.assertTrue(False, msg='Something goes wroooong')
 
     def test_fast_error(self):
         conn = httplib.HTTPSConnection('random.random/random')
