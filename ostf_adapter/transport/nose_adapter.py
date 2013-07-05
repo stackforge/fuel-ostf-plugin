@@ -13,6 +13,7 @@ from ostf_adapter import exceptions as exc
 
 TESTS_PROCESS = {}
 
+
 log = logging.getLogger(__name__)
 
 
@@ -45,16 +46,24 @@ class StoragePlugin(Plugin):
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
         data = dict()
-        data['message'] = u""
-        data['traceback'] = u""
         if err:
             exc_type, exc_value, exc_traceback = err
             log.info('Error %s' % exc_value)
+            log.info('TYPE OF EXCEPTION %s'
+                     'EXCEPTION VALUE %s'
+                     'WTF %s' % (exc_type, exc_value, dir(exc_value)))
             if hasattr(exc_value, 'message'):
+                log.info('WTF EXC VALUE MESSAGE %s'
+                         'MESSAGE == %s'
+                         'MESSAGE AS STRING %s' % (dir(exc_value.message), exc_value.message, str(exc_value)))
                 data['message'] = exc_value.message
             data['traceback'] = u"".join(
                 traceback.format_tb(exc_traceback))
+        else:
+            data['message'] = u""
+            data['traceback'] = u""
         if isinstance(test, Test):
+            log.info('DOCSTRING FOR TEST %s IS %s' % (test.id(), test.test.__doc__))
             data['name'] = test.test.__doc__
         self.storage.add_test_result(
             self.test_parent_id, test.id(), status, taken, data)
