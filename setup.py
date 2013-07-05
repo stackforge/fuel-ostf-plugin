@@ -49,7 +49,8 @@ setuptools.setup(
             'nose = ostf_adapter.transport.nose_adapter:NoseDriver'
         ],
         'console_scripts': [
-            'ostf-server = bin.adapter_api:main'
+            'ostf-server = bin.adapter_api:main',
+            'update-commands = tests.utils.update_commands:main'
         ]
     },
 )

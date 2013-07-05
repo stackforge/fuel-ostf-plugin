@@ -1,0 +1,33 @@
+{
+    "five_min": {
+        "test_path": "fuel/tests",
+        "driver": "nose"
+    },
+    "fuel_smoke": {
+        "test_path": "fuel/tests",
+        "driver": "nose",
+        "argv": ["smoke"]
+    },
+    "plugin-general": {
+        "test_path": "tests/functional/dummy_tests/general_test.py",
+        "driver": "nose"
+    },
+    "plugin-stopped": {
+        "test_path": "tests/functional/dummy_tests/stopped_test.py",
+        "driver": "nose"
+    },
+    "fuel_sanity": {
+        "test_path": "fuel/tests",
+        "driver": "nose",
+        "argv": ["sanity"]
+    },
+    "simple": {
+        "test_path": "/home/u/projects/some_tests",
+        "driver": "nose"        
+    },
+    "simple_conf": {
+        "test_path": "/home/u/projects/some_tests",
+        "driver": "nose",
+        "config_path": "/home/u/projects/some_tests/testing.conf"        
+    }
+}
