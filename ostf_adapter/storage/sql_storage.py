@@ -22,9 +22,10 @@ class SqlStorage(object):
 
     def __init__(self, engine_url):
         log.info('Create sqlalchemy engine - %s' % engine_url)
-        self._engine = create_engine(engine_url, pool_size=20, poolclass=QueuePool)
+        self._engine = create_engine(
+            engine_url, pool_size=10, poolclass=QueuePool)
         self._engine.pool._use_threadlocal = True
-        self._session = sessionmaker(bind=self._engine)
+        self._session = sessionmaker(bind=self._engine, expire_on_commit=False)
 
     def get_session(self):
         return self._session()
@@ -43,7 +44,7 @@ class SqlStorage(object):
                                    data=test.data)
             session.add(new_test)
         session.commit()
-        return test_run.id
+        return test_run, session
 
     def add_test_set(self, test_set, test_set_data):
         log.info('Inserting test set %s' % test_set)
@@ -55,12 +56,14 @@ class SqlStorage(object):
         new_obj = session.merge(test_set_obj)
         session.add(new_obj)
         session.commit()
+        session.close()
         return True
 
     def get_test_sets(self):
         session = self.get_session()
         test_sets = session.query(models.TestSet).all()
         session.commit()
+        session.close()
         return test_sets
 
     def get_tests(self):
@@ -68,6 +71,7 @@ class SqlStorage(object):
         tests = session.query(models.Test).filter_by(test_run_id=None)
         log.info('Tests received %s' % tests.count())
         session.commit()
+        session.close()
         return [{'id': t.name, 'test_set': t.test_set_id,
                  'name': json.loads(t.data)['name']} for t in tests]
 
@@ -84,6 +88,7 @@ class SqlStorage(object):
                 name=test_name, data=json.dumps(data), test_set_id=test_set)
             session.add(test_obj)
         session.commit()
+        session.close()
 
     def get_last_test_run(self, external_id):
         session = self.get_session()
@@ -91,6 +96,7 @@ class SqlStorage(object):
             filter_by(external_id=external_id).\
             order_by(desc(models.TestRun.id)).first()
         session.commit()
+        session.close()
         return test_run
 
     def get_test_results(self):
@@ -99,6 +105,7 @@ class SqlStorage(object):
             options(joinedload('tests')).\
             order_by(desc(models.TestRun.id))
         session.commit()
+        session.close()
         return test_runs
 
     def get_last_test_results(self, external_id):
@@ -108,6 +115,7 @@ class SqlStorage(object):
             filter_by(external_id=external_id).\
             order_by(desc(models.TestRun.id)).first()
         session.commit()
+        session.close()
         if not test_run:
             msg = 'Database does not contains ' \
                   'Test Run with ID %s' % external_id
@@ -120,6 +128,7 @@ class SqlStorage(object):
         test_run = session.query(models.TestRun).\
             filter_by(id=test_run_id).first()
         session.commit()
+        session.close()
         return test_run
 
     def add_test_result(
@@ -136,6 +145,7 @@ class SqlStorage(object):
                 'data': json.dumps(data)
             })
         session.commit()
+        session.close()
 
     def update_test_run(self, test_run_id, stats=None, status=None):
         session = self.get_session()
@@ -148,6 +158,7 @@ class SqlStorage(object):
             filter(models.TestRun.id == test_run_id).\
             update(updated_data)
         session.commit()
+        session.close()
         return test_run
 
     def update_running_tests(self, test_run_id, status='stopped'):
@@ -157,3 +168,4 @@ class SqlStorage(object):
                    models.Test.status.in_(('running', 'wait_running'))).\
             update({'status': status}, synchronize_session=False)
         session.commit()
+        session.close()

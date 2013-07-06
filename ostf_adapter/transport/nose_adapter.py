@@ -7,7 +7,6 @@ import gevent
 from gevent import pool
 from time import time
 import logging
-import traceback
 from ostf_adapter import exceptions as exc
 
 
@@ -47,10 +46,6 @@ class StoragePlugin(Plugin):
 
     def configure(self, options, conf):
         self.conf = conf
-        self.stats = {'errors': 0,
-                      'failures': 0,
-                      'passes': 0,
-                      'skipped': 0}
 
     def _add_message(
             self, test, err=None, capt=None,
@@ -59,19 +54,14 @@ class StoragePlugin(Plugin):
         if err:
             exc_type, exc_value, exc_traceback = err
             log.info('Error %s' % exc_value)
-            log.info('TYPE OF EXCEPTION %s'
-                     'EXCEPTION VALUE %s'
-                     'WTF %s' % (exc_type, exc_value, dir(exc_value)))
-            log.info('TRACEBACK %s' % exc_traceback)
             data['message'] = get_exc_message(exc_value)
-            data['traceback'] = u"".join(
-                traceback.format_tb(exc_traceback) or traceback.format_exception(*err))
         else:
-            data['message'] = u""
-            data['traceback'] = u""
+            data['message'] = u''
         if isinstance(test, Test):
             log.info('DOCSTRING FOR TEST %s IS %s' % (test.id(), test.test.__doc__))
-            data['name'] = test.test.__doc__
+            data['name'] = test.shortDescription()
+        else:
+            data['name'] = test.id()
         self.storage.add_test_result(
             self.test_parent_id, test.id(), status, taken, data)
 
@@ -79,29 +69,21 @@ class StoragePlugin(Plugin):
         log.info('SUCCESS for %s' % test)
         if self.discovery:
             data = {}
-            data['name'] = test.test.__doc__
+            data['name'] = test.shortDescription()
+            data['message'] = u''
+            log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
             self.storage.add_sets_test(self.test_parent_id, test.id(), data)
         else:
-            self.stats['passes'] += 1
             self._add_message(test, status='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         log.info('FAILURE for %s' % test)
-        self.stats['failures'] += 1
         self._add_message(test, err=err, status='failure', taken=self.taken)
 
     def addError(self, test, err, capt=None, tb_info=None):
         log.info('TEST NAME: %s\n'
                  'ERROR: %s' % (test, err))
-        self.stats['errors'] += 1
         self._add_message(test, err=err, status='error', taken=self.taken)
-
-    def report(self, stream):
-        log.info('REPORT')
-        if not self.discovery:
-            stats_values = sum(self.stats.values())
-            self.stats['total'] = stats_values
-            self.storage.update_test_run(self.test_parent_id, stats=self.stats)
 
     def beforeTest(self, test):
         self._start_time = time()

@@ -44,6 +44,8 @@ class ApiV1Tests(unittest.TestCase):
         self.assertEqual(json.loads(resp.text), expected)
 
     def test_get_test_runs(self):
+        """Simply get all test runs
+        """
         expected = [
              {'id': '1', 'testset': "testset-keystone-222", 'metadata':
                  {'stats':
@@ -96,6 +98,10 @@ class ApiV1Tests(unittest.TestCase):
         self.api.kill_multiple.assert_called_once_with(body)
         self.assertEqual(resp.status, '200 OK')
 
+
+    def test_index_v1(self):
+        resp = self.app.get('/v1/')
+        self.assertEqual(resp.status, '200 OK')
 
     @classmethod
     def tearDownClass(cls):
