@@ -143,13 +143,13 @@ class SqlStorage(object):
         session.commit()
         session.close()
 
-    def update_test_run(self, test_run_id, stats=None, status=None):
+    def update_test_run(self, test_run_id, status=None):
         session = self.get_session()
-        updated_data = {'ended_at': datetime.utcnow()}
-        if stats:
-            updated_data['stats'] = json.dumps(stats)
+        updated_data = {}
         if status:
             updated_data['status'] = status
+        if status in ['stopped', 'finished', 'error']:
+            updated_data['ended_at'] =  datetime.utcnow()
         test_run = session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
             update(updated_data)

@@ -27,7 +27,7 @@ class API(object):
 
     def __init__(self):
         log.info('Initialized API')
-        self.commands = parse_json_file(COMMANDS_FILE_PATH)
+        self.commands = {}
         log.info('Parsed commands %s' % self.commands)
         self._storage = get_storage()
         self._transport_manager = extension.ExtensionManager(
@@ -114,7 +114,9 @@ class API(object):
 
     def _discovery(self):
         log.info('Started general tests discovery')
+        self.commands = parse_json_file(COMMANDS_FILE_PATH)
         for test_set in self.commands:
+            log.info('PROCESSING %s' %test_set)
             command, transport = self._find_command(test_set)
             argv_add = command.get('argv', [])
             self._storage.add_test_set(test_set, command)

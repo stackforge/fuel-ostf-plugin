@@ -29,10 +29,10 @@ def get_exc_message(exception_value):
 
 
 def get_description(test_obj):
-    if isinstance(test, Test):
-        return test.shortDescription()
+    if isinstance(test_obj, Test):
+        return test_obj.shortDescription()
     else:
-        return test.id()
+        return test_obj.id()
 
 
 class StoragePlugin(Plugin):
@@ -49,6 +49,7 @@ class StoragePlugin(Plugin):
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
         self._start_time = None
+        self._started = False
 
     def options(self, parser, env=os.environ):
         pass
@@ -59,7 +60,10 @@ class StoragePlugin(Plugin):
     def _add_message(
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
-        data = dict()
+        if not self._started:
+            self.storage.update_test_run(self.test_parent_id, status='running')
+        self._started = True
+        data = {}
         data['name'] = get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
@@ -68,10 +72,10 @@ class StoragePlugin(Plugin):
         else:
             data['message'] = u''
         if isinstance(test, ContextSuite):
-            for test in test._tests:
-                data['name'] = get_description(test)
+            for sub_test in test._tests:
+                data['name'] = get_description(sub_test)
                 self.storage.add_test_result(
-                    self.test_parent_id, test.id(), status, taken, data)
+                    self.test_parent_id, sub_test.id(), status, taken, data)
         else:
             self.storage.add_test_result(
                 self.test_parent_id, test.id(), status, taken, data)
@@ -137,7 +141,7 @@ class NoseDriver(object):
             log.info('Started test discovery %s' % test_set)
             main(defaultTest=test_path,
                  addplugins=[StoragePlugin(
-                     test_set, self.storage, discovery=True)],
+                     test_set, discovery=True)],
                  exit=False,
                  argv=['tests', '--collect-only']+argv_add)
         except Exception, e:

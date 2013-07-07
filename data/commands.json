@@ -19,12 +19,12 @@
     },
     "plugin_general": {
         "driver": "nose",
-        "test_path": "tests/functional/dummy_tests/general_test.py",
+        "test_path": "functional/dummy_tests/general_test.py",
         "description": "General fake tests"
     },
     "plugin_stopped": {
         "driver": "nose",
-        "test_path": "tests/functional/dummy_tests/stopped_test.py",
+        "test_path": "functional/dummy_tests/stopped_test.py",
         "description": "Long running 25 secs fake tests"
     }
 }
