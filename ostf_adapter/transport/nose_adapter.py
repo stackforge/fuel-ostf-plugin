@@ -59,7 +59,6 @@ class StoragePlugin(Plugin):
         else:
             data['message'] = u''
         if isinstance(test, Test):
-            log.info('DOCSTRING FOR TEST %s IS %s' % (test.id(), test.test.__doc__))
             data['name'] = test.shortDescription()
         else:
             data['name'] = test.id()
@@ -89,6 +88,10 @@ class StoragePlugin(Plugin):
     def beforeTest(self, test):
         self._start_time = time()
         self._add_message(test, status='running')
+
+    def describeTest(self, test):
+        log.info('CALLED FOR TEST %s DESC %s' % (test.id(), test.test._testMethodDoc))
+        return test.test._testMethodDoc 
 
     @property
     def taken(self):
