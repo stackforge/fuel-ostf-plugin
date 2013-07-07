@@ -2,6 +2,7 @@ import multiprocessing
 from nose import main
 from nose.case import Test
 from nose.plugins import Plugin
+from nose.suite import ContextSuite
 import os
 from ostf_adapter.storage import get_storage
 import gevent
@@ -27,13 +28,20 @@ def get_exc_message(exception_value):
     return u""
 
 
+def get_description(test_obj):
+    if isinstance(test, Test):
+        return test.shortDescription()
+    else:
+        return test.id()
+
+
 class StoragePlugin(Plugin):
 
     enabled = True
     name = 'storage'
     score = 15000
 
-    def __init__(self, test_parent_id, storage, discovery=False):
+    def __init__(self, test_parent_id, discovery=False):
         self._capture = []
         self.test_parent_id = test_parent_id
         self.storage = get_storage()
@@ -52,18 +60,21 @@ class StoragePlugin(Plugin):
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
         data = dict()
+        data['name'] = get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
             log.info('Error %s' % exc_value)
             data['message'] = get_exc_message(exc_value)
         else:
             data['message'] = u''
-        if isinstance(test, Test):
-            data['name'] = test.shortDescription()
+        if isinstance(test, ContextSuite):
+            for test in test._tests:
+                data['name'] = get_description(test)
+                self.storage.add_test_result(
+                    self.test_parent_id, test.id(), status, taken, data)
         else:
-            data['name'] = test.id()
-        self.storage.add_test_result(
-            self.test_parent_id, test.id(), status, taken, data)
+            self.storage.add_test_result(
+                self.test_parent_id, test.id(), status, taken, data)
 
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
@@ -104,12 +115,11 @@ class NoseDriver(object):
 
     def __init__(self):
         log.info('NoseDriver initialized')
-        self._pool = pool.Pool(100)
         self.storage = get_storage()
         self._named_threads = {}
 
-    def check_current_running(self, external_id):
-        return external_id in self._named_threads
+    def check_current_running(self, unique_id):
+        return unique_id in self._named_threads
 
     def run(self, test_run_id, external_id, conf, **kwargs):
         if 'config_path' in kwargs:
@@ -120,9 +130,6 @@ class NoseDriver(object):
             kwargs['test_path'], argv_add))
         proc.daemon = True
         proc.start()
-        # gev = self._pool.spawn(
-        #     self._run_tests, test_run_id, external_id,
-        #     kwargs['test_path'], argv_add)
         self._named_threads[test_run_id] = proc
 
     def tests_discovery(self, test_set, test_path, argv_add):
@@ -142,7 +149,7 @@ class NoseDriver(object):
                      'TEST PATH: %s\n'
                      'ARGS: %s' % (test_run_id, test_path, argv_add))
             main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(test_run_id, self.storage)],
+                 addplugins=[StoragePlugin(test_run_id)],
                  exit=False,
                  argv=['tests']+argv_add)
             log.info('Test run %s finished successfully' % test_run_id)
@@ -163,7 +170,7 @@ class NoseDriver(object):
         log.info('Trying to stop process %s\n'
                  '%s' % (test_run_id, self._named_threads))
         if test_run_id in self._named_threads:
-            log.info('Kill green thread: %s' % test_run_id)
+            log.info('Terminating process: %s' % test_run_id)
             self._named_threads[test_run_id].terminate()
             del self._named_threads[test_run_id]
             return True
