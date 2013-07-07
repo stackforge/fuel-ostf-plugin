@@ -1,9 +1,3 @@
-from gevent.monkey import patch_all
-patch_all()
-
-from psycogreen.gevent import patch_psycopg
-patch_psycopg()
-
 from sqlalchemy import create_engine, exc, desc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
@@ -23,9 +17,11 @@ class SqlStorage(object):
     def __init__(self, engine_url):
         log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(
-            engine_url, pool_size=10, poolclass=QueuePool)
+            engine_url, pool_size=5, 
+            poolclass=QueuePool, max_overflow=2)
         self._engine.pool._use_threadlocal = True
-        self._session = sessionmaker(bind=self._engine, expire_on_commit=False)
+        self._session = sessionmaker(
+            bind=self._engine, expire_on_commit=False)
 
     def get_session(self):
         return self._session()

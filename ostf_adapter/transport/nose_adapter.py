@@ -1,3 +1,4 @@
+import multiprocessing
 from nose import main
 from nose.case import Test
 from nose.plugins import Plugin
@@ -35,7 +36,7 @@ class StoragePlugin(Plugin):
     def __init__(self, test_parent_id, storage, discovery=False):
         self._capture = []
         self.test_parent_id = test_parent_id
-        self.storage = storage
+        self.storage = get_storage()
         self.discovery = discovery
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
@@ -112,10 +113,14 @@ class NoseDriver(object):
             self.prepare_config(conf, kwargs['config_path'])
         argv_add = kwargs.get('argv', [])
         log.info('Additional args: %s' % argv_add)
-        gev = self._pool.spawn(
-            self._run_tests, test_run_id, external_id,
-            kwargs['test_path'], argv_add)
-        self._named_threads[test_run_id] = gev
+        proc = multiprocessing.Process(target=self._run_tests, args=(test_run_id, external_id,
+            kwargs['test_path'], argv_add))
+        proc.daemon = True
+        proc.start()
+        # gev = self._pool.spawn(
+        #     self._run_tests, test_run_id, external_id,
+        #     kwargs['test_path'], argv_add)
+        self._named_threads[test_run_id] = proc
 
     def tests_discovery(self, test_set, test_path, argv_add):
         try:
@@ -130,7 +135,7 @@ class NoseDriver(object):
 
     def _run_tests(self, test_run_id, external_id, test_path, argv_add):
         try:
-            log.info('Nose Driver spawn green thread for TEST RUN: %s\n'
+            log.info('Nose Driver spawn process for TEST RUN: %s\n'
                      'TEST PATH: %s\n'
                      'ARGS: %s' % (test_run_id, test_path, argv_add))
             main(defaultTest=test_path,
@@ -138,27 +143,25 @@ class NoseDriver(object):
                  exit=False,
                  argv=['tests']+argv_add)
             log.info('Test run %s finished successfully' % test_run_id)
-            if external_id in self._named_threads:
+            if test_run_id in self._named_threads:
                 del self._named_threads[external_id]
             self.storage.update_test_run(test_run_id, status='finished')
-            raise gevent.GreenletExit
         #To close thread we need to catch any exception
         except Exception, e:
-            log.info('Close green thread TEST_RUN: %s\n'
+            log.info('Close process TEST_RUN: %s\n'
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
             self.storage.update_test_run(test_run_id, status='error')
             self.storage.update_running_tests(test_run_id, status='error')
-            if external_id in self._named_threads:
+            if test_run_id in self._named_threads:
                 del self._named_threads[external_id]
-            raise gevent.GreenletExit
 
     def kill(self, test_run_id):
         log.info('Trying to stop process %s\n'
                  '%s' % (test_run_id, self._named_threads))
         if test_run_id in self._named_threads:
             log.info('Kill green thread: %s' % test_run_id)
-            self._named_threads[test_run_id].kill()
+            self._named_threads[test_run_id].terminate()
             del self._named_threads[test_run_id]
             return True
         return False
