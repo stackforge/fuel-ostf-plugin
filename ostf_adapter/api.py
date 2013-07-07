@@ -1,7 +1,7 @@
 import os
 from ostf_adapter.storage import get_storage
 from ostf_adapter import exceptions as exc
-import simplejson as json
+import json
 from stevedore import extension
 import logging
 

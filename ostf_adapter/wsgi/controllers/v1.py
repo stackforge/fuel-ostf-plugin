@@ -1,6 +1,6 @@
 from pecan import rest, expose, request, response
 from pecan.core import abort
-import simplejson as json
+import json
 from ostf_adapter.api import API
 import logging
 from ostf_adapter import exceptions as exc

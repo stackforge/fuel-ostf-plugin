@@ -6,7 +6,7 @@ from datetime import datetime
 from ostf_adapter.storage.sql import models
 from ostf_adapter import exceptions as exc
 
-import simplejson as json
+import json
 import logging
 
 log = logging.getLogger(__name__)
