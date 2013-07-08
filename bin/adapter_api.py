@@ -25,22 +25,27 @@ import logging
 
 
 def main():
+
     cli_args = cli_config.parse_cli()
 
-    logger.setup(log_file=cli_args.log_file)
-
-    log = logging.getLogger(__name__)
-    log.info('STARTING SETUP')
-    if getattr(cli_args, 'after_init_hook'):
-        return do_apply_migrations()
-    root = app.setup_app(
-        {'server': 
+    config = {'server':
             {
                 'host': cli_args.host,
                 'port': cli_args.port
             },
         'dbpath': cli_args.dbpath
-            })
+            }
+
+    logger.setup(log_file=cli_args.log_file)
+    app.setup_config(config)
+
+    log = logging.getLogger(__name__)
+    log.info('STARTING SETUP')
+
+    if getattr(cli_args, 'after_init_hook'):
+        return do_apply_migrations()
+
+    root = app.setup_app()
 
     host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)

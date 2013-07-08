@@ -34,7 +34,8 @@ setuptools.setup(
         'Topic :: System :: Testing',
     ],
 
-    packages=setuptools.find_packages(exclude=['tests', 'bin', 'utils', 'functional']),
+    packages=setuptools.find_packages(
+        exclude=['tests', 'bin', 'utils', 'functional', '*_tests']),
 
     include_package_data=True,
 

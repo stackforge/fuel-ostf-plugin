@@ -14,7 +14,7 @@ def setup(log_file=None):
     log.addHandler(stream_handler)
 
     if log_file:
-        log_file = os.path.abspath(cfg.CONF.log_file)
+        log_file = os.path.abspath(log_file)
         file_handler = logging.handlers.WatchedFileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         mode = int('0644', 8)

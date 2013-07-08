@@ -98,7 +98,6 @@ class ApiV1Tests(unittest.TestCase):
         self.api.kill_multiple.assert_called_once_with(body)
         self.assertEqual(resp.status, '200 OK')
 
-
     def test_index_v1(self):
         resp = self.app.get('/v1/')
         self.assertEqual(resp.status, '200 OK')

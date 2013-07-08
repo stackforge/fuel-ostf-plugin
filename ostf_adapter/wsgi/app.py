@@ -11,11 +11,14 @@ pecan_config_dict = {
 }
 
 
-def setup_app(pecan_config=None, extra_hooks=None):
-    app_hooks = [hooks.ExceptionHandlingHook()]
+def setup_config(pecan_config=None):
     if pecan_config:
         pecan_config_dict.update(pecan_config)
     pecan.conf.update(pecan_config_dict)
+
+
+def setup_app(pecan_config=None, extra_hooks=None):
+    app_hooks = [hooks.ExceptionHandlingHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
         debug=False,

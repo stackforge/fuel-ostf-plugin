@@ -12,13 +12,13 @@ log = logging.getLogger(__name__)
 PLUGINS_NAMESPACE = 'plugins'
 
 
-COMMANDS_FILE_PATH = 'data/commands.json'
+COMMANDS_FILE_PATH = 'commands.json'
 
 
 def parse_json_file(file_path):
     current_directory = os.path.dirname(os.path.realpath(__file__))
     commands_path = os.path.join(
-        current_directory, os.path.pardir, file_path)
+        current_directory, file_path)
     with open(commands_path, 'r') as f:
         return json.load(f)
 
