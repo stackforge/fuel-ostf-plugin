@@ -1,0 +1,6 @@
+{
+    "fuel_health": {
+        "DEFAULT": ["quantum"],
+        "identity": ["identity_endpoint"]
+    }
+}

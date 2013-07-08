@@ -148,8 +148,7 @@ class SqlStorage(object):
         updated_data = {}
         if status:
             updated_data['status'] = status
-        if status in ['stopped', 'finished', 'error']:
-            updated_data['ended_at'] =  datetime.utcnow()
+            updated_data['ended_at'] = datetime.utcnow()
         test_run = session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
             update(updated_data)

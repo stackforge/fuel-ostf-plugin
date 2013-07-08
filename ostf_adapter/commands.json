@@ -1,21 +1,10 @@
 {
-    "five_min": {
-        "test_path": "",
+    "fuel_health": {
+        "test_path": "fuel_health.tests",
         "driver": "nose",
         "description": "Full five min test run with sanity and fuel",
-        "argv": ["fuel_health.tests", "--with-xunit"]
-    },
-    "fuel_smoke": {
-        "test_path": "",
-        "driver": "nose",
-        "description": "Five min test run",
-        "argv": ["fuel_health.tests.smoke", "--with-xunit"]
-    },
-    "fuel_sanity": {
-        "test_path": "",
-        "driver": "nose",
-        "description": "Five min test run",
-        "argv": ["fuel_health.tests.sanity", "--with-xunit"]
+        "argv": ["fuel_health.tests", "--with-xunit"],
+        "cleanup": true
     },
     "plugin_general": {
         "driver": "nose",
