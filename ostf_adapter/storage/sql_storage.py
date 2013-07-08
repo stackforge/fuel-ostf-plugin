@@ -164,3 +164,11 @@ class SqlStorage(object):
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()
+
+
+    def flush_testsets(self):
+        session = self.get_session()
+        session.query(models.Test).filter_by(test_run_id=None).delete()
+        session.query(models.TestSet).delete()
+        session.commit()
+        session.close()

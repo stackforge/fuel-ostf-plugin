@@ -119,6 +119,7 @@ class API(object):
 
     def _discovery(self):
         log.info('Started general tests discovery')
+        self._storage.flush_testsets()
         self.commands = parse_json_file(COMMANDS_FILE_PATH)
         for test_set in self.commands:
             log.info('PROCESSING %s' %test_set)
