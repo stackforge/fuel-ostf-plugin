@@ -145,9 +145,9 @@ class NoseDriver(object):
 
     def run(self, test_run_id, external_id,
             conf, test_set, test_path=None, argv=None):
-        if test_set in self._configs and test_path:
+        if conf:
             test_conf_path = self.prepare_config(
-                conf, test_path, external_id, test_set)
+                conf, test_path, external_id, test_set, self._configs)
         else:
             test_conf_path = ''
         argv_add = argv or []
@@ -219,6 +219,7 @@ class NoseDriver(object):
                   test_run_id, external_id, test_set, test_path):
         stor = get_storage(conf.dbpath)
         try:
+            log.info("TRYING TO CLEAN")
             module_obj = __import__(test_path, ['cleanup'], -1)
 
             os.environ['OSTF_CONF_PATH'] = config_name_generator(
@@ -226,21 +227,24 @@ class NoseDriver(object):
             module_obj.cleanup.cleanup()
             stor.update_test_run(test_run_id, status='stopped')
         except BaseException:
-            stor.update_test_run(test_run_id, status='error_or_cleanup')
+            stor.update_test_run(test_run_id, status='error_on_cleanup')
 
-    def prepare_config(self, config, test_path, external_id, test_set):
-        groups = self._configs[test_set]
+    def prepare_config(self, config, test_path, external_id, test_set, groups):
         template = []
         for group_name, group_items in groups.iteritems():
-            template.append('[{}]'.format(group_name))
+            template_group = []
             for group_item in group_items:
                 if group_item in config:
-                    template.append('{} = {}'.format(
+                    if not template_group:
+                        template_group.append('[{}]'.format(group_name))
+                    template_group.append('{} = {}'.format(
                         group_item, config[group_item]))
-        conf_path = config_name_generator(test_path, test_set, external_id)
-        with open(conf_path, 'w') as f:
-            f.write('\n'.join(template))
-        return conf_path
+                template.extend(template_group)
+        if template:
+            conf_path = config_name_generator(test_path, test_set, external_id)
+            with open(conf_path, 'w') as f:
+                f.write('\n'.join(template))
+            return conf_path
 
 
 

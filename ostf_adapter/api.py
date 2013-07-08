@@ -45,7 +45,7 @@ class API(object):
     def run(self, test_set, metadata):
         log.info('Starting test run with metadata %s' % metadata)
         external_id = metadata['cluster_id']
-        config = metadata['config']
+        config = metadata.get('config', {})
         command, transport = self._find_command(test_set)
         if not transport.obj.check_current_running(external_id):
             test_run, session = self._storage.add_test_run(
@@ -76,7 +76,7 @@ class API(object):
             if cleanup:
                 status = 'cleanup'
             self._storage.update_test_run(test_run_id, status=status)
-            self._storage.update_running_tests(test_run_id, status=status)
+            self._storage.update_running_tests(test_run_id, status='stopped')
 
     def get_last_test_run(self, external_id):
         test_run = self._storage.get_last_test_results(external_id)
