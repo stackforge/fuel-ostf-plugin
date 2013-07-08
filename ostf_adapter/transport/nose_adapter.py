@@ -36,18 +36,21 @@ def get_description(test_obj):
 
 
 def config_name_generator(test_path, test_set, external_id):
+    log.info('CALLED WITH %s' % locals())
     try:
         module_path = os.path.dirname(__import__(test_path).__file__)
+        log.info('MODULE PATH IS %s' % module_path)
         return os.path.join(
             module_path,
-            'test_{}_{}.conf'.format(test_set, external_id))
-    except:
+            'test_{0}_{1}.conf'.format(test_set, external_id))
+    except Exception, e:
+        log.info('ERROR IN PARSING CONFIG PATH %s' % e)
         module_path = os.path.dirname(test_path)
         current_path = os.path.realpath('.')
         return os.path.join(
             current_path,
             module_path,
-            'test_{}_{}.conf'.format(test_set, external_id))
+            'test_{0}_{1}.conf'.format(test_set, external_id))
 
 
 class StoragePlugin(Plugin):
@@ -208,7 +211,7 @@ class NoseDriver(object):
             if cleanup:
                 proc = multiprocessing.Process(
                     target=self._clean_up,
-                    args=(test_run_id, external_id, test_set, test_path))
+                    args=(test_run_id, external_id, test_set, test_path, cleanup))
                 proc.daemon = True
                 proc.start()
             else:
@@ -217,30 +220,35 @@ class NoseDriver(object):
         return False
 
     def _clean_up(self,
-                  test_run_id, external_id, test_set, test_path):
+                  test_run_id, external_id, test_set, test_path, cleanup):
         stor = get_storage(conf.dbpath)
         try:
             log.info("TRYING TO CLEAN")
-            module_obj = __import__(test_path, ['cleanup'], -1)
+            module_obj = __import__(cleanup, -1)
 
             os.environ['OSTF_CONF_PATH'] = config_name_generator(
                 test_path, test_set, external_id)
+            log.info('STARTING CLEANUP FUNCTION')
             module_obj.cleanup.cleanup()
+            log.info('CLEANUP IS SUCCESSFULL')
             stor.update_test_run(test_run_id, status='stopped')
-        except BaseException:
+        except BaseException, e:
+            log.error('EXCITED WITH EXCEPTIOBN %s' % e)
             stor.update_test_run(test_run_id, status='error_on_cleanup')
 
     def prepare_config(self, config, test_path, external_id, test_set, groups):
         template = []
+
         for group_name, group_items in groups.iteritems():
             template_group = []
             for group_item in group_items:
                 if group_item in config:
                     if not template_group:
-                        template_group.append('[{}]'.format(group_name))
-                    template_group.append('{} = {}'.format(
+                        template_group.append('[{0}]'.format(group_name))
+                    template_group.append('{0} = {1}'.format(
                         group_item, config[group_item]))
                 template.extend(template_group)
+
         if template:
             conf_path = config_name_generator(test_path, test_set, external_id)
             with open(conf_path, 'w') as f:

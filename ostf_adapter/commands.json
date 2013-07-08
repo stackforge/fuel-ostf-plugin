@@ -4,21 +4,21 @@
         "driver": "nose",
         "description": "Full five min test run with sanity and fuel",
         "argv": ["fuel_health.tests"],
-        "cleanup": true
+        "cleanup": "fuel_health.cleanup"
     },
     "fuel_smoke": {
         "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
         "description": "Five min test run",
         "argv": ["fuel_health.tests.smoke"],
-        "cleanup": true
+        "cleanup": "fuel_health.cleanup"
     },
     "fuel_sanity": {
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
         "description": "Five min test run",
         "argv": ["fuel_health.tests.sanity"],
-        "cleanup": true
+        "cleanup": "fuel_health.cleanup"
     },
     "plugin_general": {
         "driver": "nose",
