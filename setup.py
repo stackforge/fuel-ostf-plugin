@@ -50,7 +50,7 @@ setuptools.setup(
         ],
         'console_scripts': [
             'ostf-server = bin.adapter_api:main',
-            'update-commands = tests.utils.update_commands:main'
+            'update-commands = test_utils.update_commands:main'
         ]
     },
 )
