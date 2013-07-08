@@ -1,6 +1,6 @@
 from pecan import rest, expose, request, response
 from pecan.core import abort
-import simplejson as json
+import json
 from ostf_adapter.api import API
 import logging
 from ostf_adapter import exceptions as exc
@@ -46,6 +46,10 @@ class V1Controller(BaseRestController):
     }
 
     @expose('json')
+    def index(self):
+        return {}
+
+    @expose('json')
     def get_testsets(self):
         return self.api.get_test_sets()
 
@@ -64,8 +68,7 @@ class V1Controller(BaseRestController):
     @expose('json')
     def post_testruns(self):
         test_runs = json.loads(request.body)
-        self.api.run_multiple(test_runs)
-        return
+        return self.api.run_multiple(test_runs)
 
     @expose('json')
     def put_testruns(self):

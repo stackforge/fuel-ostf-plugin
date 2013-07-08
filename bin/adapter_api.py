@@ -13,10 +13,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-from oslo.config import cfg
-import argparse
 import sys
 import os
+import argparse
 from ostf_adapter import cli_config
 from ostf_adapter.storage.sql.cli import do_apply_migrations
 from ostf_adapter.common import logger
@@ -24,19 +23,24 @@ from gevent import wsgi
 from ostf_adapter.wsgi import app
 import logging
 
-logger.setup()
-
-log = logging.getLogger(__name__)
-
 
 def main():
+    cli_args = cli_config.parse_cli()
+
+    logger.setup(log_file=cli_args.log_file)
+
+    log = logging.getLogger(__name__)
     log.info('STARTING SETUP')
-    if getattr(cfg.CONF, 'after_init_hook'):
+    if getattr(cli_args, 'after_init_hook'):
         return do_apply_migrations()
-    root = app.setup_app({'server': {
-                            'host': cfg.CONF.host,
-                            'port': cfg.CONF.port
-                        }})
+    root = app.setup_app(
+        {'server': 
+            {
+                'host': cli_args.host,
+                'port': cli_args.port
+            },
+        'dbpath': cli_args.dbpath
+            })
 
     host, port = app.pecan_config_dict['server'].values()
     srv = wsgi.WSGIServer((host, int(port)), root)

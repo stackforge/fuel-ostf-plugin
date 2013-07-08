@@ -1,7 +1,7 @@
 import os
 from ostf_adapter.storage import get_storage
 from ostf_adapter import exceptions as exc
-import simplejson as json
+import json
 from stevedore import extension
 import logging
 
@@ -27,7 +27,7 @@ class API(object):
 
     def __init__(self):
         log.info('Initialized API')
-        self.commands = parse_json_file(COMMANDS_FILE_PATH)
+        self.commands = {}
         log.info('Parsed commands %s' % self.commands)
         self._storage = get_storage()
         self._transport_manager = extension.ExtensionManager(
@@ -35,10 +35,12 @@ class API(object):
         self._discovery()
 
     def run_multiple(self, test_runs):
+        res = []
         for test_run in test_runs:
             test_set = test_run['testset']
             metadata = test_run['metadata']
-            self.run(test_set, metadata)
+            res.append(self.run(test_set, metadata))
+        return res
 
     def run(self, test_set, metadata):
         log.info('Starting test run with metadata %s' % metadata)
@@ -46,9 +48,12 @@ class API(object):
         config = metadata['config']
         command, transport = self._find_command(test_set)
         if not transport.obj.check_current_running(external_id):
-            test_run_id = self._storage.add_test_run(
+            test_run, session = self._storage.add_test_run(
                 test_set, external_id, metadata)
-            transport.obj.run(test_run_id, external_id, config, **command)
+            transport.obj.run(test_run.id, external_id, config, **command)
+            data = self._prepare_test_run(test_run)
+            session.close()
+            return data
 
 
     def kill_multiple(self, test_runs):
@@ -60,6 +65,7 @@ class API(object):
 
     def kill(self, test_run_id, status):
         test_run = self._storage.get_test_run(test_run_id)
+        log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
         if transport.obj.check_current_running(test_run.id):
             transport.obj.kill(test_run.id)
@@ -86,10 +92,6 @@ class API(object):
             'started_at': test_run.started_at,
             'ended_at': test_run.ended_at
         }
-        if test_run.stats:
-            test_run_data['stats'] = json.loads(test_run.stats)
-        else:
-            test_run_data['stats'] = {}
         tests = []
         if test_run.tests:
             for test in test_run.tests:
@@ -112,7 +114,9 @@ class API(object):
 
     def _discovery(self):
         log.info('Started general tests discovery')
+        self.commands = parse_json_file(COMMANDS_FILE_PATH)
         for test_set in self.commands:
+            log.info('PROCESSING %s' %test_set)
             command, transport = self._find_command(test_set)
             argv_add = command.get('argv', [])
             self._storage.add_test_set(test_set, command)
