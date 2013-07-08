@@ -5,8 +5,6 @@ from nose.plugins import Plugin
 from nose.suite import ContextSuite
 import os
 from ostf_adapter.storage import get_storage
-import gevent
-from gevent import pool
 from time import time
 import logging
 from ostf_adapter import exceptions as exc

@@ -6,3 +6,4 @@ psycogreen
 sqlalchemy
 alembic
 nose
+jinja2

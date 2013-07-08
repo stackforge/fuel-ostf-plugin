@@ -1,6 +1,5 @@
 import os
-import sys
-from alembic import command, config, util
+from alembic import command, config
 from pecan import conf
 
 

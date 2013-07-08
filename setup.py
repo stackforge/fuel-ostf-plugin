@@ -34,7 +34,8 @@ setuptools.setup(
         'Topic :: System :: Testing',
     ],
 
-    packages=setuptools.find_packages(exclude=['tests', 'bin', 'utils', 'functional']),
+    packages=setuptools.find_packages(
+        exclude=['tests', 'bin', 'utils', 'functional', '*_tests']),
 
     include_package_data=True,
 
@@ -50,7 +51,7 @@ setuptools.setup(
         ],
         'console_scripts': [
             'ostf-server = bin.adapter_api:main',
-            'update-commands = tests.utils.update_commands:main'
+            'update-commands = test_utils.update_commands:main'
         ]
     },
 )

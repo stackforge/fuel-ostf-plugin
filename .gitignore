@@ -5,3 +5,5 @@ nosetests.xml
 *.egg-info
 /*.egg
 .tox
+build
+dist
