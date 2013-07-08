@@ -6,7 +6,7 @@ def main():
     with open('data/commands.json', 'rw+') as file:
         data = loads(file.read())
         for item in data:
-            data[item]['argv'].appent("--with-xunit")
+            data[item]['argv'].append("--with-xunit")
         test_apps = {"plugin-general": {"test_path": "tests/functional/dummy_tests/general_test.py", "driver": "nose"},
                      "plugin-stopped": {"test_path": "tests/functional/dummy_tests/stopped_test.py", "driver": "nose"}}
         data.update(test_apps)
