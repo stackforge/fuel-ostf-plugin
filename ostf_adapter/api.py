@@ -47,15 +47,14 @@ class API(object):
         external_id = metadata['cluster_id']
         config = metadata.get('config', {})
         command, transport = self._find_command(test_set)
-        if not transport.obj.check_current_running(external_id):
-            test_run, session = self._storage.add_test_run(
-                test_set, external_id, metadata)
-            transport.obj.run(test_run.id, external_id, config,
-                              test_set, test_path=command.get('test_path'),
-                              argv=command.get('argv'))
-            data = self._prepare_test_run(test_run)
-            session.close()
-            return data
+        test_run, session = self._storage.add_test_run(
+            test_set, external_id, metadata)
+        transport.obj.run(test_run.id, external_id, config,
+                          test_set, test_path=command.get('test_path'),
+                          argv=command.get('argv'))
+        data = self._prepare_test_run(test_run)
+        session.close()
+        return data
 
     def kill_multiple(self, test_runs):
         log.info(u'Trying to stop tests %s' % test_runs)
@@ -68,15 +67,15 @@ class API(object):
         test_run = self._storage.get_test_run(test_run_id)
         log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
-        if transport.obj.check_current_running(test_run.id):
-            cleanup = command.get('cleanup')
-            transport.obj.kill(
-                test_run.id, test_run.external_id, test_run.type,
-                test_path=command.get('test_path'), cleanup=cleanup)
-            if cleanup:
-                status = 'cleanup'
-            self._storage.update_test_run(test_run_id, status=status)
-            self._storage.update_running_tests(test_run_id, status='stopped')
+        # if transport.obj.check_current_running(test_run.id):
+        cleanup = command.get('cleanup')
+        transport.obj.kill(
+            test_run.id, test_run.external_id, test_run.type,
+            test_path=command.get('test_path'), cleanup=cleanup)
+        if cleanup:
+            status = 'cleanup'
+        self._storage.update_test_run(test_run_id, status=status)
+        self._storage.update_running_tests(test_run_id, status='stopped')
 
     def get_last_test_run(self, external_id):
         test_run = self._storage.get_last_test_results(external_id)

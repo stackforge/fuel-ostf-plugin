@@ -19,7 +19,7 @@ import argparse
 from ostf_adapter import cli_config
 from ostf_adapter.storage.sql.cli import do_apply_migrations
 from ostf_adapter.common import logger
-from gevent import wsgi
+from gevent import pywsgi
 from ostf_adapter.wsgi import app
 import logging
 
@@ -48,7 +48,7 @@ def main():
     root = app.setup_app()
 
     host, port = app.pecan_config_dict['server'].values()
-    srv = wsgi.WSGIServer((host, int(port)), root)
+    srv = pywsgi.WSGIServer((host, int(port)), root)
     log.info('Starting server in PID %s' % os.getpid())
 
     if host == '0.0.0.0':

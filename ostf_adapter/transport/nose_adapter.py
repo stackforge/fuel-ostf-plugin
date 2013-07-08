@@ -158,6 +158,7 @@ class NoseDriver(object):
         proc.daemon = True
         proc.start()
         self._named_threads[test_run_id] = proc
+        log.info('NAMED PROCESS %s' % self._named_threads)
 
     def tests_discovery(self, test_set, test_path, argv_add):
         try:
