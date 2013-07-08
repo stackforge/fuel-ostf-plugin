@@ -2,40 +2,7 @@ __author__ = 'ekonstantinov'
 import unittest
 import requests
 import time
-from collections import Iterable
-import collections
-
-
-class TestingAdapterClient(object):
-    def __init__(self, url):
-        self.url = url
-
-    def _request(self, method, url, data=None):
-        headers = {'content-type': 'application/json'}
-        r = requests.request(method, url, data=data, headers=headers)
-        if 2 != r.status_code/100:
-            raise AssertionError('{url} responded with {code}'.format(usrl=url, code=r.status_code))
-        return r.json()
-
-    def __getattr__(self, item):
-        getters = ['testsets', 'tests', 'testruns']
-        if item in getters:
-            url = ''.join([self.url, '/', item])
-            return lambda: self._request('GET', url)
-
-    def testruns_last(self, cluster_id):
-        url = ''.join([self.url, '/testruns/', cluster_id])
-        return self._request('GET', url)
-
-    def start_testrun(self, testset, metadata):
-        url = ''.join([self.url, '/testruns'])
-        data = {"testset": testset, "metadata": metadata}
-        return self._request('POST', url, data=data)
-
-    def stop_testrun(self, testrun_id):
-        url = ''.join([self.url, '/testruns'])
-        data = {"id": testrun_id, "status": "stopped"}
-        self._request("PUT", url, data=data)
+from client import TestingAdapterClient
 
 
 class adapter_tests(unittest.TestCase):
@@ -49,7 +16,7 @@ class adapter_tests(unittest.TestCase):
             self.assertEquals(assertions[assertion], res)
 
     def setUp(self):
-        url = 'http://localhost:8989/v1'
+        url = 'http://172.18.164.69:8989/v1'
         self.adapter = TestingAdapterClient(url)
         self.tests = {
             'fast_pass': 'tests.functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
@@ -71,7 +38,7 @@ class adapter_tests(unittest.TestCase):
 
     def test_list_tests(self):
         json = self.adapter.tests()
-        self.asserTrue(all(x in (item['id'] for item in json) for x in self.tests.values()))
+        self.assertTrue(all(x in (item['id'] for item in json) for x in self.tests.values()))
 
     def test_general_testset(self):
         testset = "plugin-general"
@@ -91,7 +58,7 @@ class adapter_tests(unittest.TestCase):
         self.verify_json(assertions, json)
 
 
-
+"""
         r = requests.post(self.general, headers=self.headers)
         self.assertEquals(200, r.status_code)
         json_out = r.json()
@@ -150,3 +117,4 @@ class adapter_tests(unittest.TestCase):
         message = 'Killed test run with ID {id}'.format(id=self.id)
         json_out = r.json()
         self.assertEquals(message, json_out['message'])
+"""
