@@ -40,10 +40,10 @@ class SqlStorageTests(unittest.TestCase):
             {'name': 'SOMETHING HUMAN READABLE'})
 
     def get_last_test_results(self):
-        test_run = self.storage.get_last_test_results('12')
-        self.assertEqual(test_run.id, 1)
-        self.assertEqual(len(test_run.tests), 2)
-        self.assertEqual(test_run.external_id, '12')
+        test_runs = self.storage.get_last_test_results('12')
+        self.assertEqual(test_runs[0].id, 1)
+        self.assertEqual(len(test_runs[0].tests), 2)
+        self.assertEqual(test_runs[0].external_id, '12')
 
     def test_get_test_run(self):
         test_run = self.storage.get_test_run(self.test_run.id)
