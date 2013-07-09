@@ -31,7 +31,7 @@ class SqlStorage(object):
         session = self.get_session()
         tests = session.query(models.Test).filter_by(test_set_id=test_set)
         test_run = models.TestRun(type=test_set, external_id=external_id,
-                                  data=json.dumps(data), status='started')
+                                  data=json.dumps(data), status=status)
         session.add(test_run)
         for test in tests:
             new_test = models.Test(test_run_id=test_run.id,
@@ -119,10 +119,15 @@ class SqlStorage(object):
             raise exc.OstfDBException(message=msg)
         return test_run
 
-    def get_test_run(self, test_run_id):
+    def get_test_run(self, test_run_id, joined=False):
         session = self.get_session()
-        test_run = session.query(models.TestRun).\
-            filter_by(id=test_run_id).first()
+        if not joined:
+            test_run = session.query(models.TestRun).\
+                filter_by(id=test_run_id).first()
+        else:
+            test_run = session.query(models.TestRun).\
+                options(joinedload('tests')).\
+                filter_by(id=test_run_id).first()
         session.commit()
         session.close()
         return test_run

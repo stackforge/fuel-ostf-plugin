@@ -6,40 +6,42 @@ from ostf_adapter.storage.sql import models
 class SqlStorageTests(unittest.TestCase):
 
     def setUp(self):
-        self.fixture = {'type': 'failure', 'taken': 5,
-                         'id': 'fixture.Fixture1'}
-        self.stats = {'errors': 0,
-                      'failures': 1,
-                      'passes': 0,
-                      'skipped': 0}
+        self.test_set_fixtures = {'test_health':
+                                      {'description': 'Fixtures of test set'}}
+        self.tests_fixtures = [{'name': 'test_simple.TesSimple1'},
+                               {'name': 'test_simple.TesSimple2'}]
         self.storage = SqlStorage('sqlite://')
         models.Base.metadata.create_all(self.storage._engine)
-        self.storage.add_test_run('test', 1)
-        self.storage.add_test_result(
-            '1', self.fixture['id'], self.fixture)
-        self.storage.update_test_run(
-            '1', self.stats)
+        self.storage.add_test_set(*self.test_set_fixtures.items()[0])
+        for test in self.tests_fixtures:
+            self.storage.add_sets_test('test_health', test['name'], test)
+        self.storage.add_test_run('test_health', '12', {})
 
     def test_add_test_run(self):
-        res = self.storage.add_test_run('test', 1)
-        self.assertEqual(res, 2)
+        external_id = 15
+        test_run, session = self.storage.add_test_run(
+            'test_health', external_id, {})
+        self.assertEqual(test_run.external_id, 15)
+        self.assertEqual(len(test_run.tests), 2)
 
-    def test_add_test_result(self):
-        data = {'type': 'success', 'taken': 10.5,
-                'id': 'test.SimpleTest.test_tests'}
-        test = self.storage.add_test_result(
-            1, 'test.SimpleTest.test_tests', data)
-        self.assertTrue(test.id)
+    def test_get_test_sets(self):
+        res = self.storage.get_test_sets()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].id, 'test_health')
 
-    def test_get_test_results(self):
-        result = self.storage.get_test_results()
-        expected = {'type': 'test', 'id': 1, 'stats': self.stats,
-                    'tests': {self.fixture['id']: self.fixture,
-                    }}
-        self.assertEqual(result.count(), 1)
-        self.assertEqual(result[0].id, expected['id'])
+    def test_get_sets(self):
+        res = self.storage.get_tests()
+        self.assertEqual(len(res), 2)
 
-    def test_update_test_run(self):
-        res = self.storage.update_test_run(1, {'passes': 1})
-        self.assertEqual(res, 1)
+    def test_add_sets_test(self):
+        test = self.storage.add_sets_test(
+            'fuel_health', 'test_simple.TesSimple1',
+            {'name': 'SOMETHING HUMAN READABLE'})
+
+    def get_last_test_results(self):
+        test_run = self.storage.get_last_test_results('12')
+        self.assertEqual(test_run.id, 1)
+        self.assertEqual(len(test_run.tests), 2)
+        self.assertEqual(test_run.external_id, '12')
+
 

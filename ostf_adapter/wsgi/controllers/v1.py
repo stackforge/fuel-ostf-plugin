@@ -58,8 +58,10 @@ class V1Controller(BaseRestController):
         return self.api.get_tests()
 
     @expose('json')
-    def get_testruns(self):
-        return self.api.get_test_runs()
+    def get_testruns(self, id=None):
+        if not id:
+            return self.api.get_test_runs()
+        return self.api.get_test_run(id)
 
     @expose('json')
     def get_testruns_last(self, external_id):
