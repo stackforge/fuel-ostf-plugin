@@ -159,7 +159,6 @@ class SqlStorage(object):
             update(updated_data)
         session.commit()
         session.close()
-        return test_run
 
     def update_running_tests(self, test_run_id, status='stopped'):
         session = self.get_session()
@@ -169,7 +168,6 @@ class SqlStorage(object):
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()
-
 
     def flush_testsets(self):
         session = self.get_session()

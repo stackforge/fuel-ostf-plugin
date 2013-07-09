@@ -15,7 +15,8 @@ class SqlStorageTests(unittest.TestCase):
         self.storage.add_test_set(*self.test_set_fixtures.items()[0])
         for test in self.tests_fixtures:
             self.storage.add_sets_test('test_health', test['name'], test)
-        self.storage.add_test_run('test_health', '12', {})
+        self.test_run, session = self.storage.add_test_run(
+            'test_health', '12', {})
 
     def test_add_test_run(self):
         external_id = 15
@@ -44,4 +45,20 @@ class SqlStorageTests(unittest.TestCase):
         self.assertEqual(len(test_run.tests), 2)
         self.assertEqual(test_run.external_id, '12')
 
+    def test_get_test_run(self):
+        test_run = self.storage.get_test_run(self.test_run.id)
+        self.assertEqual(test_run.id, self.test_run.id)
 
+    def test_add_test_result(self):
+        self.storage.add_test_result(
+            self.test_run.id, 'test_simple.TesSimple1',
+            'started', 12.0, {'message': 'OK'})
+
+    def test_update_test_run(self):
+        self.storage.update_test_run(self.test_run.id, status='finished')
+
+    def test_update_running_tests(self):
+        self.storage.update_running_tests(self.test_run.id, status='stopped')
+
+    def test_flush_testsets(self):
+        self.storage.flush_testsets()
