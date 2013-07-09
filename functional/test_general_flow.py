@@ -19,7 +19,7 @@ class adapter_tests(unittest.TestCase):
                     self.assertTrue(items[item] == test.get(item), msg)
 
     def setUp(self):
-        url = 'http://172.18.164.69:8989/v1'
+        url = 'http://127.0.0.1:8989/v1'
         self.adapter = TestingAdapterClient(url)
         self.tests = {
             'fast_pass': 'functional.dummy_tests.general_test.Dummy_test.test_fast_pass',

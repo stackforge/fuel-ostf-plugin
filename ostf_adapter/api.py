@@ -51,7 +51,7 @@ class API(object):
             test_set, external_id, metadata)
         transport.obj.run(test_run.id, external_id, config,
                           test_set, test_path=command.get('test_path'),
-                          argv=command.get('argv'))
+                          argv=command.get('argv', []))
         data = self._prepare_test_run(test_run)
         session.close()
         return data
