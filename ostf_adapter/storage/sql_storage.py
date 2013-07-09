@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, exc, desc
+from sqlalchemy import create_engine, exc, desc, func
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 from datetime import datetime
@@ -106,18 +106,20 @@ class SqlStorage(object):
 
     def get_last_test_results(self, external_id):
         session = self.get_session()
-        test_run = session.query(models.TestRun).\
+        test_run_ids = session.query(func.max(models.TestRun.id))\
+            .group_by(models.TestRun.type).filter_by(external_id=external_id)
+        log.info('LASR TEST RUN IDS %s' % test_run_ids)
+        test_runs = session.query(models.TestRun).\
             options(joinedload('tests')).\
-            filter_by(external_id=external_id).\
-            order_by(desc(models.TestRun.id)).first()
+            filter(models.TestRun.id.in_((test_run_ids)))
         session.commit()
         session.close()
-        if not test_run:
+        if not test_runs:
             msg = 'Database does not contains ' \
                   'Test Run with ID %s' % external_id
             log.warning(msg)
             raise exc.OstfDBException(message=msg)
-        return test_run
+        return test_runs
 
     def get_test_run(self, test_run_id, joined=False):
         session = self.get_session()

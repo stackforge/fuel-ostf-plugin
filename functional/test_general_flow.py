@@ -56,10 +56,10 @@ class adapter_tests(unittest.TestCase):
         """
         testset = "plugin_general"
         config = {}
-        cluster_id = 1
+        cluster_id = 201
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(5)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         assertions = {
             self.tests['fast_pass']:  {'status': 'success'},
             self.tests['not_long']:  {'status': 'running'},
@@ -74,10 +74,10 @@ class adapter_tests(unittest.TestCase):
     def test_stopped_testset(self):
         testset = "plugin_stopped"
         config = {}
-        cluster_id = 2
+        cluster_id = 202
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(15)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         current_id = json['id']
         assertions = {
             self.tests['really_long']:  {'status': 'running'},
@@ -86,7 +86,7 @@ class adapter_tests(unittest.TestCase):
         }
         self._verify_json(assertions, json)
         self.adapter.stop_testrun(current_id)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         assertions[self.tests['really_long']]['status'] = 'stopped'
         self._verify_json(assertions, json)
 

@@ -67,7 +67,6 @@ class API(object):
         test_run = self._storage.get_test_run(test_run_id)
         log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
-        # if transport.obj.check_current_running(test_run.id):
         cleanup = command.get('cleanup')
         transport.obj.kill(
             test_run.id, test_run.external_id, test_run.type,
@@ -78,8 +77,11 @@ class API(object):
         self._storage.update_running_tests(test_run_id, status='stopped')
 
     def get_last_test_run(self, external_id):
-        test_run = self._storage.get_last_test_results(external_id)
-        return self._prepare_test_run(test_run)
+        test_runs = self._storage.get_last_test_results(external_id)
+        data = []
+        for test_run in test_runs:
+            data.append(self._prepare_test_run(test_run))
+        return data
 
     def get_test_runs(self):
         test_runs = self._storage.get_test_results()
