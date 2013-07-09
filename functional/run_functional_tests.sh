@@ -1,0 +1,1 @@
+nosetests test_general_flow.py:adapter_tests --with-xunit
