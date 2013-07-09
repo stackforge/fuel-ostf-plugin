@@ -3,7 +3,7 @@ from json import loads, dumps
 
 
 def main():
-    with open('data/commands.json', 'rw+') as commands:
+    with open('ostf_adapter/commands.json', 'rw+') as commands:
         data = loads(commands.read())
         for item in data:
             if data[item].get('argv'):

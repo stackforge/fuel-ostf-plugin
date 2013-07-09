@@ -15,7 +15,7 @@ class Dummy_test(unittest.TestCase):
     def test_long_pass(self):
         """Will sleep 5 sec
         """
-        time.sleep(5)
+        time.sleep(15)
         self.assertTrue(True)
 
     def test_fast_fail(self):
@@ -24,7 +24,7 @@ class Dummy_test(unittest.TestCase):
         self.assertTrue(False, msg='Something goes wroooong')
 
     def test_fast_error(self):
-        """And fust error
+        """And fast error
         """
         conn = httplib.HTTPSConnection('random.random/random')
         conn.request("GET", "/random.aspx")

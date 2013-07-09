@@ -1,5 +1,6 @@
 __author__ = 'ekonstantinov'
 import requests
+from json import dumps
 
 
 class TestingAdapterClient(object):
@@ -8,9 +9,13 @@ class TestingAdapterClient(object):
 
     def _request(self, method, url, data=None):
         headers = {'content-type': 'application/json'}
-        r = requests.request(method, url, data=data, headers=headers)
+        if data:
+            r = requests.request(method, url, data=data, headers=headers)
+        else:
+            r = requests.request(method, url, headers=headers)
         if 2 != r.status_code/100:
-            raise AssertionError('{url} responded with {code}'.format(usrl=url, code=r.status_code))
+            raise AssertionError('{method} "{url}" responded with "{code}" status code'
+                                    .format(method=method.upper(), url=url, code=r.status_code))
         return r.json()
 
     def __getattr__(self, item):
@@ -20,15 +25,17 @@ class TestingAdapterClient(object):
             return lambda: self._request('GET', url)
 
     def testruns_last(self, cluster_id):
-        url = ''.join([self.url, '/testruns/', cluster_id])
+        url = ''.join([self.url, '/testruns/last/', str(cluster_id)])
         return self._request('GET', url)
 
-    def start_testrun(self, testset, metadata):
+    def start_testrun(self, testset, config, cluster_id):
         url = ''.join([self.url, '/testruns'])
-        data = {"testset": testset, "metadata": metadata}
-        return self._request('POST', url, data=data)
+        data = [{'testset': testset,
+                'metadata': {'config': config,
+                'cluster_id': cluster_id}}]
+        return self._request('POST', url, data=dumps(data))
 
     def stop_testrun(self, testrun_id):
         url = ''.join([self.url, '/testruns'])
-        data = {"id": testrun_id, "status": "stopped"}
-        self._request("PUT", url, data=data)
+        data = [{"id": testrun_id, "status": "stopped"}]
+        return self._request("PUT", url, data=dumps(data))
