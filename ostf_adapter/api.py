@@ -91,7 +91,7 @@ class API(object):
         return response
 
     def get_test_run(self, test_run_id):
-        test_run = self._storage.get_test_run(self, test_run_id, joined=True)
+        test_run = self._storage.get_test_run(test_run_id, joined=True)
         return self._prepare_test_run(test_run)
 
     def _prepare_test_run(self, test_run):
