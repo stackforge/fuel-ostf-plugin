@@ -1,10 +1,9 @@
-import sys
+import os
 import unittest
 from ostf_adapter.transport import nose_adapter
 import io
 from mock import patch, MagicMock
 from time import time
-from gevent import GreenletExit
 
 
 TEST_RUN_ID = 1
@@ -12,187 +11,139 @@ EXTERNAL_ID = 1
 CONF = {'keys': 'values'}
 
 
-@patch('ostf_adapter.transport.nose_adapter.pool')
-@patch('ostf_adapter.transport.nose_adapter.get_storage')
+patch.TEST_PREFIX = ''
+
+
+class NoExitStriongIO(io.StringIO):
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class TestNoseAdapters(unittest.TestCase):
 
-    def setUp(self):
-        self.pool_mock = MagicMock()
-        self.thread_mock = MagicMock()
-        self.storage_mock = MagicMock()
-
+    @patch('ostf_adapter.transport.nose_adapter.get_storage')
+    def setUp(self, get_storage_mock):
+        self.thread = MagicMock()
+        self.storage = MagicMock()
+        self.config_out = NoExitStriongIO()
+        get_storage_mock.return_value = self.storage
+        self.driver = nose_adapter.NoseDriver()
 
     @patch('__builtin__.open')
-    def test_prepare_config_conf(self, io_mock, get_storage_mock, pool_module):
+    def test_prepare_config_conf(self, open_mock):
+        open_mock.return_value = self.config_out
+        conf = {'network_catalog_type': 'TEST_TYPE',
+                'url': 'http://localhost:8989/v1/'}
+        test_path = 'fuel_health.tests'
+        external_id = 12
+        test_set = 'fuel_health'
+        self.driver.prepare_config(
+            conf, test_path, external_id, test_set)
+        self.assertEqual(self.config_out.getvalue(),
+                         u'[network]\ncatalog_type = TEST_TYPE\n[identity]\nurl = http://localhost:8989/v1/')
 
-        class DummyStringIO(io.StringIO):
 
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                pass
+    # def test_run_with_config_path_with_argv(
+    #         self, get_storage_mock, pool_module):
+    #     get_storage_mock.return_value = self.storage_mock
+    #     pool_module.Pool.return_value = self.pool_mock
+    #     nose_driver = nose_adapter.NoseDriver()
+    #     with patch.object(nose_driver, 'prepare_config')\
+    #         as prepare_config_mock:
+    #         res = nose_driver.run(
+    #             TEST_RUN_ID, EXTERNAL_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
+    #             test_path='/home/tests')
+    #     prepare_config_mock.assert_called_once_with(CONF, '/etc/test.conf')
+    #     self.pool_mock.spawn.assert_called_once_with(
+    #         nose_driver._run_tests, TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity']
+    #     )
+    #     self.assertTrue(1 in nose_driver._named_threads)
+    #
+    # def test_kill_test_run_success(self, get_storage_mock, pool_module):
+    #     pool_module.Pool.return_value = self.pool_mock
+    #     nose_driver = nose_adapter.NoseDriver()
+    #     nose_driver._named_threads[TEST_RUN_ID] = self.thread_mock
+    #
+    #     res = nose_driver.kill(TEST_RUN_ID)
+    #     self.thread_mock.kill.assert_called_once_with()
+    #     self.assertTrue(res)
+    #
+    # def test_kill_test_run_fail(self, get_storage_mock, pool_module):
+    #     pool_module.Pool.return_value = self.pool_mock
+    #     nose_driver = nose_adapter.NoseDriver()
+    #
+    #     res = nose_driver.kill(2)
+    #     self.assertFalse(res)
 
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-        string_io = DummyStringIO()
-        io_mock.return_value = string_io
-        conf = {'param1': 'test',
-                'param2': 'test'}
-        conf_path = '/etc/config.conf'
-        res = nose_driver.prepare_config(conf, conf_path)
-        self.assertEqual(string_io.getvalue(),
-                         u'param2 = test\nparam1 = test\n')
 
-    def test_run_with_config_path_with_argv(
-            self, get_storage_mock, pool_module):
-        get_storage_mock.return_value = self.storage_mock
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-        with patch.object(nose_driver, 'prepare_config')\
-            as prepare_config_mock:
-            res = nose_driver.run(
-                TEST_RUN_ID, EXTERNAL_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
-                test_path='/home/tests')
-        prepare_config_mock.assert_called_once_with(CONF, '/etc/test.conf')
-        self.pool_mock.spawn.assert_called_once_with(
-            nose_driver._run_tests, TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity']
-        )
-        self.assertTrue(1 in nose_driver._named_threads)
+class TestNoseUtils(unittest.TestCase):
 
-    def test_kill_test_run_success(self, get_storage_mock, pool_module):
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-        nose_driver._named_threads[TEST_RUN_ID] = self.thread_mock
 
-        res = nose_driver.kill(TEST_RUN_ID)
-        self.thread_mock.kill.assert_called_once_with()
-        self.assertTrue(res)
+    def test_config_name_generator_module(self):
+        test_path = 'fuel_health.tests'
+        external_id = 12
+        test_set = 'fuel_health'
+        test_path = nose_adapter.config_name_generator(
+            test_path, test_set, external_id)
+        self.assertEqual(test_path.split('/')[-1], 'test_fuel_health_12.conf')
 
-    def test_kill_test_run_fail(self, get_storage_mock, pool_module):
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-
-        res = nose_driver.kill(2)
-        self.assertFalse(res)
-
-    @patch('ostf_adapter.transport.nose_adapter.main')
-    def test_run_tests_raise_system_exit(
-            self, nose_test_program_mock, get_storage_mock, pool_module):
-        def raise_system_exit(*args, **kwargs):
-            raise SystemExit
-
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-        nose_driver._named_threads[EXTERNAL_ID] = 'VALUE'
-        nose_test_program_mock.side_effect = raise_system_exit
-
-        self.assertRaises(GreenletExit, nose_driver._run_tests,
-                          TEST_RUN_ID, EXTERNAL_ID,'/home/tests', ['sanity'])
-
-    @patch('ostf_adapter.transport.nose_adapter.main')
-    def test_run_tests_raise_greelet_exit(
-            self, nose_test_program_mock, get_storage_mock, pool_module):
-
-        def raise_greenlet_exit(*args, **kwargs):
-            raise GreenletExit
-
-        pool_module.Pool.return_value = self.pool_mock
-        nose_driver = nose_adapter.NoseDriver()
-        nose_driver._named_threads[EXTERNAL_ID] = 'VALUE'
-        nose_test_program_mock.side_effect = raise_greenlet_exit
-
-        self.assertRaises(GreenletExit, nose_driver._run_tests,
-                          TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity'])
-
+    def test_config_name_generator_relative_path(self):
+        test_path = 'functional/dummy_tests/general_test.py'
+        external_id = 12
+        test_set = 'plugin_general'
+        test_path = nose_adapter.config_name_generator(
+            test_path, test_set, external_id)
+        self.assertEqual(test_path.split('/')[-1],
+                         'test_plugin_general_12.conf')
 
 class TestNoseStoragePlugin(unittest.TestCase):
 
-    def setUp(self):
-        self.storage_mock = MagicMock()
-        self.test_mock = MagicMock()
-
-    def test_storage_plugin_properties(self):
-        self.assertEqual(nose_adapter.StoragePlugin.enabled, True)
-        self.assertEqual(nose_adapter.StoragePlugin.score, 15000)
-        self.assertEqual(nose_adapter.StoragePlugin.name, 'storage')
+    @patch('ostf_adapter.transport.nose_adapter.get_storage')
+    def setUp(self, get_storage_mock):
+        self.storage = MagicMock()
+        self.test = MagicMock()
+        self.err = MagicMock()
+        get_storage_mock.return_value = self.storage
+        self.test_parent_id = 12
+        self.plugin = nose_adapter.StoragePlugin(
+            self.test_parent_id, discovery=False,
+            test_conf_path='/etc/config.conf')
 
     def test_options_interface_defined(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.options([], [])
-        self.assertEqual(plugin.test_run_id, TEST_RUN_ID)
+        self.plugin.options({})
 
-    def test_configure_defined(self):
-        stats_expected = {'errors': 0,
-                          'failures': 0,
-                          'passes': 0,
-                          'skipped': 0}
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.configure({}, {'conf': 'conf'})
-        self.assertEqual(plugin.conf, {'conf': 'conf'})
-        self.assertEqual(plugin.stats, stats_expected)
+        self.assertEqual(os.environ['CUSTOM_FUEL_CONFIG'],
+                         self.plugin.test_conf_path)
 
-    def test_add_success(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.stats = {'passes': 0}
-        with patch.object(plugin, '_add_message') as add_message_mock:
-            plugin.addSuccess('test')
-        add_message_mock.assert_called_once_with(
-            'test', type='success', taken=0)
-        self.assertEqual(plugin.stats, {'passes': 1})
+    def test_add_success_discover_false(self):
+        with patch.object(self.plugin, '_add_message') as add_mock:
+            self.plugin._start_time = time()
+            self.plugin.addSuccess(self.test)
+            self.assertEqual(add_mock.call_count, 1)
+
+    def test_add_success_discover_true(self):
+        self.plugin.discovery = True
+        self.plugin.addSuccess(self.test)
+        self.assertEqual(self.storage.add_sets_test.call_count, 1)
 
     def test_add_failure(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.stats = {'failures': 0}
-        with patch.object(plugin, '_add_message') as add_message_mock:
-            plugin.addFailure('test', 'failure')
-        add_message_mock.assert_called_once_with(
-            'test', err='failure', type='failure', taken=0)
-        self.assertEqual(plugin.stats, {'failures': 1})
+        with patch.object(self.plugin, '_add_message') as add_mock:
+            self.plugin._start_time = time()
+            self.plugin.addFailure(self.test, self.err)
+            self.assertEqual(add_mock.call_count, 1)
 
     def test_add_error(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.stats = {'errors': 0}
-        with patch.object(plugin, '_add_message') as add_message_mock:
-            plugin.addError('test', 'error')
-        add_message_mock.assert_called_once_with(
-            'test', err='error', type='error', taken=0)
-        self.assertEqual(plugin.stats, {'errors': 1})
+        with patch.object(self.plugin, '_add_message') as add_mock:
+            self.plugin._start_time = time()
+            self.plugin.addError(self.test, self.err)
+            self.assertEqual(add_mock.call_count, 1)
 
-    def test_report(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin.stats = {'failures': 1,
-                        'passes': 1,
-                        'errors': 1}
-        stats_expected = {'failures': 1,
-                        'passes': 1,
-                        'errors': 1,
-                        'total': 3}
-        plugin.report('stream')
-        self.assertEqual(plugin.stats, stats_expected)
-        self.storage_mock.update_test_run.assert_called_once_with(
-            TEST_RUN_ID, stats_expected)
+    def test_before_test(self):
+        with patch.object(self.plugin, '_add_message') as add_mock:
+            self.plugin._start_time = time()
+            self.plugin.beforeTest(self.test)
+            self.assertEqual(add_mock.call_count, 1)
 
-    @patch('ostf_adapter.transport.nose_adapter.time')
-    def test_before_test(self, time_mock):
-        test_start_time = time()
-        time_mock.return_value = test_start_time
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        with patch.object(plugin, '_add_message') as add_message_mock:
-            plugin.beforeTest(self.test_mock)
-        add_message_mock.assert_called_once_with(
-            self.test_mock, type='running')
-        self.assertEqual(plugin._start_time, test_start_time)
-
-    @patch('ostf_adapter.transport.nose_adapter.time')
-    def test_taken_property(self, time_mock):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        plugin._start_time = time()
-        end_time = time()
-        time_mock.return_value = end_time
-        self.assertEqual(end_time - plugin._start_time, plugin.taken)
-
-    def test_add_message(self):
-        plugin = nose_adapter.StoragePlugin(TEST_RUN_ID, self.storage_mock)
-        test_mock = MagicMock()
-        test_mock.id.return_value = 'test:1'
-        plugin._start_time = time()
-        plugin._add_message(test_mock, type='test')
-        self.assertEqual(self.storage_mock.add_test_result.call_count, 1)
+    def test_describe_test(self):
+        self.plugin.describeTest(self.test)

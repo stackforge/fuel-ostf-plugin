@@ -18,8 +18,8 @@ class adapter_tests(unittest.TestCase):
                     self.assertTrue(items[item] == test.get(item), msg)
 
     @classmethod
-    def setUpClass(cls):
-        url = 'http://172.18.164.69:8989/v1'
+    def setUp(cls):
+        url = 'http://127.0.0.1:8989/v1'
         cls.adapter = TestingAdapterClient(url)
         cls.tests = {
             'fast_pass': 'functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
@@ -60,7 +60,7 @@ class adapter_tests(unittest.TestCase):
         cluster_id = 1
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(5)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         assertions = {
             self.tests['fast_pass']:  {'status': 'success'},
             self.tests['not_long']:  {'status': 'running'},
@@ -69,7 +69,7 @@ class adapter_tests(unittest.TestCase):
         }
         self._verify_json(assertions, json)
         time.sleep(15)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         assertions[self.tests['not_long']]['status'] = 'success'
         self._verify_json(assertions, json)
 
@@ -79,7 +79,7 @@ class adapter_tests(unittest.TestCase):
         cluster_id = 2
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(15)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         current_id = json['id']
         assertions = {
             self.tests['really_long']:  {'status': 'running'},
@@ -88,7 +88,7 @@ class adapter_tests(unittest.TestCase):
         }
         self._verify_json(assertions, json)
         self.adapter.stop_testrun(current_id)
-        json = self.adapter.testruns_last(cluster_id)
+        json = self.adapter.testruns_last(cluster_id)[0]
         assertions[self.tests['really_long']]['status'] = 'stopped'
         self._verify_json(assertions, json)
 

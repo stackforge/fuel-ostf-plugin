@@ -3,6 +3,10 @@ from ostf_adapter.wsgi import hooks
 
 
 pecan_config_dict = {
+    'server': {
+        'host': '0.0.0.0',
+        'port': 8989
+    },
     'app': {
         'root': 'ostf_adapter.wsgi.controllers.root.RootController',
         'modules': ['ostf_adapter.wsgi'],

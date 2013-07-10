@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, exc, desc
+from sqlalchemy import create_engine, exc, desc, func
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 from datetime import datetime
@@ -31,7 +31,7 @@ class SqlStorage(object):
         session = self.get_session()
         tests = session.query(models.Test).filter_by(test_set_id=test_set)
         test_run = models.TestRun(type=test_set, external_id=external_id,
-                                  data=json.dumps(data), status='started')
+                                  data=json.dumps(data), status=status)
         session.add(test_run)
         for test in tests:
             new_test = models.Test(test_run_id=test_run.id,
@@ -68,7 +68,7 @@ class SqlStorage(object):
         log.info('Tests received %s' % tests.count())
         session.commit()
         session.close()
-        return [{'id': t.name, 'test_set': t.test_set_id,
+        return [{'id': t.name, 'testset': t.test_set_id,
                  'name': json.loads(t.data)['name']} for t in tests]
 
     def add_sets_test(self, test_set, test_name, data):
@@ -106,23 +106,30 @@ class SqlStorage(object):
 
     def get_last_test_results(self, external_id):
         session = self.get_session()
-        test_run = session.query(models.TestRun).\
+        test_run_ids = session.query(func.max(models.TestRun.id))\
+            .group_by(models.TestRun.type).filter_by(external_id=external_id)
+        log.info('LASR TEST RUN IDS %s' % test_run_ids)
+        test_runs = session.query(models.TestRun).\
             options(joinedload('tests')).\
-            filter_by(external_id=external_id).\
-            order_by(desc(models.TestRun.id)).first()
+            filter(models.TestRun.id.in_((test_run_ids)))
         session.commit()
         session.close()
-        if not test_run:
+        if not test_runs:
             msg = 'Database does not contains ' \
                   'Test Run with ID %s' % external_id
             log.warning(msg)
             raise exc.OstfDBException(message=msg)
-        return test_run
+        return test_runs
 
-    def get_test_run(self, test_run_id):
+    def get_test_run(self, test_run_id, joined=False):
         session = self.get_session()
-        test_run = session.query(models.TestRun).\
-            filter_by(id=test_run_id).first()
+        if not joined:
+            test_run = session.query(models.TestRun).\
+                filter_by(id=test_run_id).first()
+        else:
+            test_run = session.query(models.TestRun).\
+                options(joinedload('tests')).\
+                filter_by(id=test_run_id).first()
         session.commit()
         session.close()
         return test_run
@@ -148,13 +155,13 @@ class SqlStorage(object):
         updated_data = {}
         if status:
             updated_data['status'] = status
+        if status not in ['running']:
             updated_data['ended_at'] = datetime.utcnow()
-        test_run = session.query(models.TestRun).\
+        session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
             update(updated_data)
         session.commit()
         session.close()
-        return test_run
 
     def update_running_tests(self, test_run_id, status='stopped'):
         session = self.get_session()
@@ -164,7 +171,6 @@ class SqlStorage(object):
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()
-
 
     def flush_testsets(self):
         session = self.get_session()

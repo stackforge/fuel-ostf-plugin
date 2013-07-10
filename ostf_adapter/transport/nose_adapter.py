@@ -45,11 +45,10 @@ def config_name_generator(test_path, test_set, external_id):
             'test_{0}_{1}.conf'.format(test_set, external_id))
     except Exception, e:
         log.info('ERROR IN PARSING CONFIG PATH %s' % e)
-        module_path = os.path.dirname(test_path)
-        current_path = os.path.realpath('.')
+        current_path = os.path.join(os.path.realpath('.'), test_path)
+        dir_path = os.path.dirname(current_path)
         return os.path.join(
-            current_path,
-            module_path,
+            dir_path,
             'test_{0}_{1}.conf'.format(test_set, external_id))
 
 
@@ -63,7 +62,7 @@ class StoragePlugin(Plugin):
             self, test_parent_id, discovery=False, test_conf_path=''):
         self._capture = []
         self.test_parent_id = test_parent_id
-        self.storage = get_storage(conf.dbpath)
+        self.storage = get_storage()
         self.discovery = discovery
         self.test_conf_path = test_conf_path
         super(StoragePlugin, self).__init__()
@@ -72,7 +71,7 @@ class StoragePlugin(Plugin):
         self._started = False
 
     def options(self, parser, env=os.environ):
-        env['OSTF_CONF_PATH'] = self.test_conf_path
+        env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
 
     def configure(self, options, conf):
         self.conf = conf
@@ -109,6 +108,7 @@ class StoragePlugin(Plugin):
             log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
             self.storage.add_sets_test(self.test_parent_id, test.id(), data)
         else:
+            log.info('UPDATING TEST %s' % test)
             self._add_message(test, status='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
@@ -125,7 +125,8 @@ class StoragePlugin(Plugin):
         self._add_message(test, status='running')
 
     def describeTest(self, test):
-        log.info('CALLED FOR TEST %s DESC %s' % (test.id(), test.test._testMethodDoc))
+        log.info('CALLED FOR TEST %s '
+                 'DESC %s' % (test.id(), test.test._testMethodDoc))
         return test.test._testMethodDoc 
 
     @property
@@ -139,7 +140,7 @@ class NoseDriver(object):
 
     def __init__(self):
         log.info('NoseDriver initialized')
-        self.storage = get_storage(conf.dbpath)
+        self.storage = get_storage()
         self._named_threads = {}
         self._configs = parse_json_file('config_templates.json')
 
@@ -150,7 +151,7 @@ class NoseDriver(object):
             conf, test_set, test_path=None, argv=None):
         if conf:
             test_conf_path = self.prepare_config(
-                conf, test_path, external_id, test_set, self._configs)
+                conf, test_path, external_id, test_set)
         else:
             test_conf_path = ''
         argv_add = argv or []
@@ -236,10 +237,9 @@ class NoseDriver(object):
             log.error('EXCITED WITH EXCEPTIOBN %s' % e)
             stor.update_test_run(test_run_id, status='error_on_cleanup')
 
-    def prepare_config(self, config, test_path, external_id, test_set, groups):
+    def prepare_config(self, config, test_path, external_id, test_set):
         template = []
-
-        for group_name, group_items in groups.iteritems():
+        for group_name, group_items in self._configs.iteritems():
             template_group = []
             for group_item in group_items:
                 if group_item in config:
@@ -247,12 +247,18 @@ class NoseDriver(object):
                         template_group.append('[{0}]'.format(group_name))
                     template_group.append('{0} = {1}'.format(
                         group_item, config[group_item]))
-                template.extend(template_group)
+                with_group = '{}_{}'.format(group_name, group_item)
+                if with_group in config:
+                    if not template_group:
+                        template_group.append('[{0}]'.format(group_name))
+                    template_group.append('{0} = {1}'.format(
+                        group_item, config[with_group]))
+            template.extend(template_group)
 
         if template:
             conf_path = config_name_generator(test_path, test_set, external_id)
             with open(conf_path, 'w') as f:
-                f.write('\n'.join(template))
+                f.write(u'\n'.join(template))
             return conf_path
 
 
