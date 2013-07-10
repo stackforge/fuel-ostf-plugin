@@ -112,7 +112,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
 
     def test_options_interface_defined(self):
         self.plugin.options({})
-        self.assertEqual(os.environ['OSTF_CONF_PATH'],
+        self.assertEqual(os.environ['CUSTOM_FUEL_CONFIG'],
                          self.plugin.test_conf_path)
 
     def test_add_success_discover_false(self):

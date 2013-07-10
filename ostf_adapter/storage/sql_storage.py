@@ -155,8 +155,9 @@ class SqlStorage(object):
         updated_data = {}
         if status:
             updated_data['status'] = status
+        if status not in ['running']:
             updated_data['ended_at'] = datetime.utcnow()
-        test_run = session.query(models.TestRun).\
+        session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
             update(updated_data)
         session.commit()
