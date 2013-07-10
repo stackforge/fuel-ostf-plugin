@@ -1,0 +1,25 @@
+#!/bin/bash
+
+function killapp {
+ declare app_pid=$(netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]*)
+ echo "Ostf-adapter pid is: $app_pid"
+ kill -9 $app_pid
+}
+
+function startapp {
+  ! netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Server exists" && return 1; }
+  nohup ostf-server --log_file testing.log --host 0.0.0.0 &
+  sleep 3
+  nc -xvw 2 0.0.0.0 8989 &> /dev/null || echo "Not working"
+}
+
+function update_tests {
+  if [[ -z $1 && -z $OSTF_TESTS_BRANCH ]] ; then echo "Please specify a branch"; return 1; fi
+  if [[ ! -z $1 ]] ; then
+    git ls-remote --heads git@github.com:Mirantis/fuel-ostf-tests.git $1 | grep $1 &> /dev/null || { echo "No branch" && return 1; }
+    export OSTF_TESTS_BRANCH=$1
+  fi
+  ! pip freeze | grep ostf-tests &> /dev/null || pip uninstall -y ostf-tests
+  pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-tests.git@"$OSTF_TESTS_BRANCH"#egg=ostf-tests
+
+}

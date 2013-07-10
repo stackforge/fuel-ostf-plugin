@@ -1,6 +1,5 @@
 __author__ = 'ekonstantinov'
 import unittest
-import requests
 import time
 from client import TestingAdapterClient
 
@@ -18,10 +17,11 @@ class adapter_tests(unittest.TestCase):
                         .format(test=test['id'], item=item, actual=test.get(item).capitalize(), expected=items.get(item).capitalize())
                     self.assertTrue(items[item] == test.get(item), msg)
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         url = 'http://172.18.164.69:8989/v1'
-        self.adapter = TestingAdapterClient(url)
-        self.tests = {
+        cls.adapter = TestingAdapterClient(url)
+        cls.tests = {
             'fast_pass': 'functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
             'fast_error': 'functional.dummy_tests.general_test.Dummy_test.test_fast_error',
             'fast_fail': 'functional.dummy_tests.general_test.Dummy_test.test_fast_fail',
@@ -31,7 +31,7 @@ class adapter_tests(unittest.TestCase):
             'so_long': 'functional.dummy_tests.stopped_test.dummy_tests_stopped.test_one_no_so_long'
 
         }
-        self.testsets = [
+        cls.testsets = [
             "fuel_smoke",
             "fuel_sanity",
             "plugin_general",
@@ -52,7 +52,8 @@ class adapter_tests(unittest.TestCase):
 
     def test_general_testset(self):
         """Send start_testrun
-        wait
+        wait for 5 sec
+        check status: expected
         """
         testset = "plugin_general"
         config = {}
@@ -68,7 +69,8 @@ class adapter_tests(unittest.TestCase):
         }
         self._verify_json(assertions, json)
         time.sleep(15)
-        assertions[self.tests['fast_pass']]['status'] = 'success'
+        json = self.adapter.testruns_last(cluster_id)
+        assertions[self.tests['not_long']]['status'] = 'success'
         self._verify_json(assertions, json)
 
     def test_stopped_testset(self):
