@@ -35,7 +35,7 @@ setuptools.setup(
     ],
 
     packages=setuptools.find_packages(
-        exclude=['tests', 'bin', 'utils', 'functional', '*_tests']),
+        exclude=['tests', 'utils', 'functional', '*_tests']),
 
     include_package_data=True,
 
