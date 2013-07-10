@@ -56,7 +56,7 @@ class adapter_tests(unittest.TestCase):
         """
         testset = "plugin_general"
         config = {}
-        cluster_id = 201
+        cluster_id = 1201
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(5)
         json = self.adapter.testruns_last(cluster_id)[0]
@@ -74,7 +74,7 @@ class adapter_tests(unittest.TestCase):
     def test_stopped_testset(self):
         testset = "plugin_stopped"
         config = {}
-        cluster_id = 202
+        cluster_id = 1202
         self.adapter.start_testrun(testset, config, cluster_id)
         time.sleep(15)
         json = self.adapter.testruns_last(cluster_id)[0]

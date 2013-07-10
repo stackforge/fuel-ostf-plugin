@@ -151,7 +151,7 @@ class NoseDriver(object):
             conf, test_set, test_path=None, argv=None):
         if conf:
             test_conf_path = self.prepare_config(
-                conf, test_path, external_id, test_set, self._configs)
+                conf, test_path, external_id, test_set)
         else:
             test_conf_path = ''
         argv_add = argv or []
