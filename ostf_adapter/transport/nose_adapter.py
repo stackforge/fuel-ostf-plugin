@@ -247,7 +247,7 @@ class NoseDriver(object):
                         template_group.append('[{0}]'.format(group_name))
                     template_group.append('{0} = {1}'.format(
                         group_item, config[group_item]))
-                with_group = '{}_{}'.format(group_name, group_item)
+                with_group = '{0}_{1}'.format(group_name, group_item)
                 if with_group in config:
                     if not template_group:
                         template_group.append('[{0}]'.format(group_name))
