@@ -10,7 +10,7 @@ function killapp {
 function startapp {
   ! netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Server exists" && return 1; }
   nohup ostf-server --log_file testing.log --host 0.0.0.0 &
-  sleep 3
+  sleep 10
   nc -xvw 2 0.0.0.0 8989 &> /dev/null || echo "Not working"
 }
 
@@ -26,7 +26,8 @@ function update_tests {
 
 function migrate_db {
   service postgresql restart
-
+  while ! service postgresql status | grep running &> /dev/null; do sleep 1; done
+  sleep 30
   export PGPASSWORD='ostf'
   psql -U postgres -h localhost -c "drop database if exists testing_adapter"
   psql -U postgres -h localhost -c "drop user adapter"
@@ -38,5 +39,5 @@ function migrate_db {
 
 function run_functional_tests {
   [[ ! -z $WORKSPACE ]] || export WORKSPACE=$(pwd)
-  nosetests -q test_general_flow.py:adapter_tests --with-xunit --xunit-file=$WORKSPACE/functional.xml
+  nosetests -q functional/test_general_flow.py:adapter_tests --with-xunit --xunit-file=$WORKSPACE/functional.xml
 }

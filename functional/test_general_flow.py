@@ -19,7 +19,7 @@ class adapter_tests(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        url = 'http://127.0.0.1:8989/v1'
+        url = 'http://172.18.164.69:8989/v1'
         cls.adapter = TestingAdapterClient(url)
         cls.tests = {
             'fast_pass': 'functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
@@ -42,12 +42,20 @@ class adapter_tests(unittest.TestCase):
         """Verify that self.testsets are in json respons
         """
         json = self.adapter.testsets()
+        for testset in self.testsets:
+            response_testsets = [item['id'] for item in json]
+            msg = '"{test}" not in "{response}"'.format(test=testset.capitalize(), response=response_testsets)
+            self.assertTrue(testset in response_testsets, msg)
         self.assertTrue(all(x in (item['id'] for item in json) for x in self.testsets))
 
     def test_list_tests(self):
         """Verify that self.tests are in json response
         """
         json = self.adapter.tests()
+        for test in self.tests.values():
+            response_tests = [item['id'] for item in json]
+            msg = '"{test}" not in "{response}"'.format(test=test.capitalize(), response=response_tests)
+            self.assertTrue(test in response_tests, msg)
         self.assertTrue(all(x in (item['id'] for item in json) for x in self.tests.values()))
 
     def test_general_testset(self):
@@ -92,6 +100,11 @@ class adapter_tests(unittest.TestCase):
         assertions[self.tests['really_long']]['status'] = 'stopped'
         self._verify_json(assertions, json)
 
+    def test_testruns(self):
+        testsets = ["plugin_stopped",
+                    "plugin_general"]
+        config = {}
+        cluster_id = 3
 
 
 
