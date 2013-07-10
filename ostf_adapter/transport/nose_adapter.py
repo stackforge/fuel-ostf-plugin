@@ -71,7 +71,7 @@ class StoragePlugin(Plugin):
         self._started = False
 
     def options(self, parser, env=os.environ):
-        env['OSTF_CONF_PATH'] = self.test_conf_path
+        env['FUEL_CONFIG'] = self.test_conf_path
 
     def configure(self, options, conf):
         self.conf = conf
