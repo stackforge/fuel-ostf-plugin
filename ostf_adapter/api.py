@@ -47,14 +47,22 @@ class API(object):
         external_id = metadata['cluster_id']
         config = metadata.get('config', {})
         command, transport = self._find_command(test_set)
-        test_run, session = self._storage.add_test_run(
-            test_set, external_id, metadata)
-        transport.obj.run(test_run.id, external_id, config,
-                          test_set, test_path=command.get('test_path'),
-                          argv=command.get('argv', []))
-        data = self._prepare_test_run(test_run)
-        session.close()
+        data = {}
+        if self.check_last_running(test_set, external_id):
+            test_run, session = self._storage.add_test_run(
+                test_set, external_id, metadata)
+            transport.obj.run(test_run.id, external_id, config,
+                              test_set, test_path=command.get('test_path'),
+                              argv=command.get('argv', []))
+            data = self._prepare_test_run(test_run)
+            session.close()
         return data
+
+    def check_last_running(self, test_set, external_id):
+        test_run = self._storage.get_last_test_run(test_set, external_id)
+        if not test_run:
+            return True
+        return test_run.status not in ['running', 'started']
 
     def kill_multiple(self, test_runs):
         log.info(u'Trying to stop tests %s' % test_runs)

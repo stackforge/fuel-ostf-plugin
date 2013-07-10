@@ -86,10 +86,10 @@ class SqlStorage(object):
         session.commit()
         session.close()
 
-    def get_last_test_run(self, external_id):
+    def get_last_test_run(self, test_set, external_id):
         session = self.get_session()
         test_run = session.query(models.TestRun).\
-            filter_by(external_id=external_id).\
+            filter_by(external_id=str(external_id), type=test_set).\
             order_by(desc(models.TestRun.id)).first()
         session.commit()
         session.close()

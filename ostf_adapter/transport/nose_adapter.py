@@ -4,6 +4,7 @@ from nose.case import Test
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
 import os
+import sys
 from ostf_adapter.storage import get_storage
 from time import time
 import logging
@@ -72,6 +73,7 @@ class StoragePlugin(Plugin):
 
     def options(self, parser, env=os.environ):
         env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
+
 
     def configure(self, options, conf):
         self.conf = conf
