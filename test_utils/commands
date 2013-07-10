@@ -1,9 +1,10 @@
 #!/bin/bash
 
 function killapp {
- declare app_pid=$(netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]*)
- echo "Ostf-adapter pid is: $app_pid"
- kill -9 $app_pid
+  netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Not running" && return 1; }
+  declare app_pid=$(netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]*)
+  echo "Ostf-adapter pid is: $app_pid"
+  kill -9 $app_pid
 }
 
 function startapp {
@@ -21,5 +22,21 @@ function update_tests {
   fi
   ! pip freeze | grep ostf-tests &> /dev/null || pip uninstall -y ostf-tests
   pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-tests.git@"$OSTF_TESTS_BRANCH"#egg=ostf-tests
+}
 
+function migrate_db {
+  service postgresql restart
+
+  export PGPASSWORD='ostf'
+  psql -U postgres -h localhost -c "drop database if exists testing_adapter"
+  psql -U postgres -h localhost -c "drop user adapter"
+  psql -U postgres -h localhost -c "create role adapter with nosuperuser createdb password 'demo' login"
+  psql -U postgres -h localhost -c "create database testing_adapter"
+
+ ostf-server --after-initialization-environment-hook --dbpath=postgresql+psycopg2://adapter:demo@localhost/testing_adapter
+ }
+
+function run_functional_tests {
+  [[ ! -z $WORKSPACE ]] || export WORKSPACE=$(pwd)
+  nosetests -q test_general_flow.py:adapter_tests --with-xunit --xunit-file=$WORKSPACE/functional.xml
 }
