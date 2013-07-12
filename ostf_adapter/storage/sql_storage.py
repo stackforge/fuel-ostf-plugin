@@ -68,9 +68,13 @@ class SqlStorage(object):
         log.info('Tests received %s' % tests.count())
         session.commit()
         session.close()
-        return [{'id': t.name, 'testset': t.test_set_id,
-                 'name': json.loads(t.data)['name']} for t in tests]
-
+        tests_data = []
+        for t in tests:
+            test_data = json.loads(t.data)
+            tests_data.append({'id': t.name, 'testset': t.test_set_id,
+                               'name': test_data['name'],
+                               'description': test_data['description']})
+        return tests_data
     def add_sets_test(self, test_set, test_name, data):
         log.info('Data received %s' % data)
         session = self.get_session()

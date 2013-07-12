@@ -31,9 +31,14 @@ def get_exc_message(exception_value):
 
 def get_description(test_obj):
     if isinstance(test_obj, Test):
-        return test_obj.shortDescription()
-    else:
-        return test_obj.id()
+        docstring = test_obj.shortDescription()
+        if docstring:
+            docstring = docstring.split('\n')
+            name = docstring.pop(0)
+            description = u'\n'.join(docstring) if docstring else u""
+            return name, description
+    return u"", u""
+
 
 
 def config_name_generator(test_path, test_set, external_id):
@@ -85,7 +90,7 @@ class StoragePlugin(Plugin):
             self.storage.update_test_run(self.test_parent_id, status='running')
         self._started = True
         data = {}
-        data['name'] = get_description(test)
+        data['name'], data['description'] = get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
             log.info('Error %s' % exc_value)
@@ -94,7 +99,7 @@ class StoragePlugin(Plugin):
             data['message'] = u''
         if isinstance(test, ContextSuite):
             for sub_test in test._tests:
-                data['name'] = get_description(sub_test)
+                data['name'], data['description'] = get_description(sub_test)
                 self.storage.add_test_result(
                     self.test_parent_id, sub_test.id(), status, taken, data)
         else:
@@ -105,7 +110,7 @@ class StoragePlugin(Plugin):
         log.info('SUCCESS for %s' % test)
         if self.discovery:
             data = {}
-            data['name'] = test.shortDescription()
+            data['name'], data['description'] = get_description(test)
             data['message'] = u''
             log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
             self.storage.add_sets_test(self.test_parent_id, test.id(), data)

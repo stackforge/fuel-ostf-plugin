@@ -136,7 +136,7 @@ class API(object):
         self._storage.flush_testsets()
         self.commands = parse_json_file(COMMANDS_FILE_PATH)
         for test_set in self.commands:
-            log.info('PROCESSING %s' %test_set)
+            log.info('PROCESSING %s' % test_set)
             command, transport = self._find_command(test_set)
             argv_add = command.get('argv', [])
             self._storage.add_test_set(test_set, command)
