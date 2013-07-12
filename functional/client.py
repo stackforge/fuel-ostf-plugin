@@ -1,6 +1,7 @@
 __author__ = 'ekonstantinov'
 import requests
 from json import dumps
+import time
 
 
 class TestingAdapterClient(object):
@@ -39,3 +40,36 @@ class TestingAdapterClient(object):
         url = ''.join([self.url, '/testruns'])
         data = [{"id": testrun_id, "status": "stopped"}]
         return self._request("PUT", url, data=dumps(data))
+
+    def stop_testrun_last(self, cluster_id, testset):
+        latest = self.testruns_last(cluster_id)
+        testrun_id = [item['id'] for item in latest if item['testset'] == testset][0]
+        return self.stop_testrun(testrun_id)
+
+    """def _wait_for(self, event, state, state_finder, timeout, stop_sequence):
+        start_time = int(time.time())
+        evnt = None
+        while 1:
+            try:
+                evnt = event()
+            except Exception:
+                pass
+            if state_finder(evnt) == state:
+                    return evnt
+            if (int(time.time()) - start_time) >= timeout:
+                try:
+                    stop_sequence()
+                except Exception:
+                    return "Failed"
+                return "Stopped"
+
+
+    def run_test_set_and_wait_for_finished(self, testset, config, cluster_id, timeout):
+
+        state = "finished"
+        def state_finder(submitie):
+            status = [y['status'] for y in submitie if y['testset'] == 'fuel_sanity']
+            return status[0] if status else None
+
+        event = lambda: self.start_testrun(testset, config, cluster_id)
+        stop_sequence = lambda: self.start_testrun()"""

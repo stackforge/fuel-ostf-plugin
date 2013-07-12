@@ -10,7 +10,8 @@ function killapp {
 function startapp {
   ! netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Server exists" && return 1; }
   nohup ostf-server --log_file testing.log --host 0.0.0.0 &
-  sleep 10
+  count=1
+  while ! tail -1 testing.log | grep "serving on" &> /dev/null && ((count != 60)) ; do sleep 1; ((count+=1)) ; done
   nc -xvw 2 0.0.0.0 8989 &> /dev/null || echo "Not working"
 }
 
@@ -22,6 +23,16 @@ function update_tests {
   fi
   ! pip freeze | grep ostf-tests &> /dev/null || pip uninstall -y ostf-tests
   pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-tests.git@"$OSTF_TESTS_BRANCH"#egg=ostf-tests
+}
+
+function update_adapter {
+  if [[ -z $1 && -z $OSTF_ADAPTER_BRANCH ]] ; then echo "Please specify a branch"; return 1; fi
+  if [[ ! -z $1 ]] ; then
+    git ls-remote --heads git@github.com:Mirantis/fuel-ostf-adapter.git $1 | grep $1 &> /dev/null || { echo "No branch" && return 1; }
+    export OSTF_ADAPTER_BRANCH=$1
+  fi
+  ! pip freeze | grep ostf-tests &> /dev/null || pip uninstall -y ostf-tests
+  pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-adapter.git@"$OSTF_ADAPTER_BRANCH"#egg=ostf-tests
 }
 
 function migrate_db {
