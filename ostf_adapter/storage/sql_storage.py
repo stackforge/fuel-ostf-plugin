@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, exc, desc, func
+from sqlalchemy import create_engine, exc, desc, func, asc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.pool import QueuePool
 from datetime import datetime
@@ -48,7 +48,8 @@ class SqlStorage(object):
         description = test_set_data.pop("description", "")
 
         test_set_obj = models.TestSet(
-            id=test_set, description=description, data=json.dumps(test_set_data))
+            id=test_set, description=description,
+            data=json.dumps(test_set_data))
         new_obj = session.merge(test_set_obj)
         session.add(new_obj)
         session.commit()
@@ -64,7 +65,9 @@ class SqlStorage(object):
 
     def get_tests(self):
         session = self.get_session()
-        tests = session.query(models.Test).filter_by(test_run_id=None)
+        tests = session.query(models.Test).order_by(
+            asc(models.Test.test_set_id), asc(models.Test.name)).\
+            filter_by(test_run_id=None)
         log.info('Tests received %s' % tests.count())
         session.commit()
         session.close()
@@ -75,6 +78,7 @@ class SqlStorage(object):
                                'name': test_data['name'],
                                'description': test_data['description']})
         return tests_data
+
     def add_sets_test(self, test_set, test_name, data):
         log.info('Data received %s' % data)
         session = self.get_session()

@@ -2,14 +2,14 @@
     "fuel_smoke": {
         "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
-        "description": "Five min test run",
+        "description": "Smoke tests. Runs 3 min - 8 min",
         "argv": ["fuel_health.tests.smoke"],
         "cleanup": "fuel_health.cleanup"
     },
     "fuel_sanity": {
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
-        "description": "Five min test run",
+        "description": "Sanity tests. Runs 30sec - 2 min",
         "argv": ["fuel_health.tests.sanity"],
         "cleanup": "fuel_health.cleanup"
     },

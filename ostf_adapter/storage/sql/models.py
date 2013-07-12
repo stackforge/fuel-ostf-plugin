@@ -20,7 +20,7 @@ class TestRun(Base):
     started_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     ended_at = sa.Column(sa.DateTime)
 
-    tests = relationship('Test', backref='test_run')
+    tests = relationship('Test', backref='test_run', order_by='Test.name')
 
 
 class TestSet(Base):
@@ -31,7 +31,7 @@ class TestSet(Base):
     description = sa.Column(sa.String(128))
     data = sa.Column(sa.Text())
 
-    tests = relationship('Test', backref='test_set')
+    tests = relationship('Test', backref='test_set', order_by='Test.name')
 
 
 class Test(Base):
