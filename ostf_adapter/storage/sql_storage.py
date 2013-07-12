@@ -186,3 +186,14 @@ class SqlStorage(object):
         session.query(models.TestSet).delete()
         session.commit()
         session.close()
+
+    def update_all_running_test_runs(self, status='stopped'):
+        session = self.get_session()
+        session.query(models.TestRun).\
+            filter(models.TestRun.status.in_(('started', 'running'))).\
+            update({'status': status}, synchronize_session=False )
+        session.query(models.Test).\
+            filter(models.Test.status.in_(('running', 'wait_running'))).\
+            update({'status': status}, synchronize_session=False)
+        session.commit()
+        session.close()

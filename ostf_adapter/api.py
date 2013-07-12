@@ -142,6 +142,8 @@ class API(object):
             self._storage.add_test_set(test_set, command)
             transport.obj.tests_discovery(test_set, command['test_path'], argv_add)
         log.info('Finished general test discovery')
+        self._storage.update_all_running_test_runs()
+        log.info('Finished updating stopped tests')
 
     def _find_command(self, test_run_name):
         log.info('Looking for %s in %s' % (test_run_name, self.commands))
