@@ -64,15 +64,30 @@ class API(object):
             return True
         return test_run.status not in ['running', 'started']
 
-    def kill_multiple(self, test_runs):
-        log.info(u'Trying to stop tests %s' % test_runs)
+    def update_multiple(self, test_runs):
+        data = []
         for test_run in test_runs:
-            cluster_id = test_run['id']
-            status = test_run.get('status', u'stopped')
-            self.kill(cluster_id, status)
+            status = test_run.get('status')
+            if status == 'stopped':
+                worker = self.kill(test_run)
+            elif status == 'restart':
+                worker = self.restart(test_run)
+            data.append(worker)
+        return data
 
-    def kill(self, test_run_id, status):
-        test_run = self._storage.get_test_run(test_run_id)
+    def restart(self, test_run):
+        status = 'restarted'
+        test_run = self._storage.get_test_run(test_run['id'])
+        log.info('RESTARTING TEST RUN %s' % test_run)
+        command, transport = self._find_command(test_run.type)
+        self._storage.update_test_run(test_run.id, status=status)
+        transport.obj.run(test_run.id, test_run.external_id, test_run.type,
+            test_path=command.get('test_path'), argv=command.get('argv', []))
+        return {}
+
+    def kill(self, test_run):
+        status = 'stopped'
+        test_run = self._storage.get_test_run(test_run['id'])
         log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
         cleanup = command.get('cleanup')
@@ -81,8 +96,9 @@ class API(object):
             test_path=command.get('test_path'), cleanup=cleanup)
         if cleanup:
             status = 'cleanup'
-        self._storage.update_test_run(test_run_id, status=status)
-        self._storage.update_running_tests(test_run_id, status='stopped')
+        self._storage.update_test_run(test_run.id, status=status)
+        self._storage.update_running_tests(test_run.id, status='stopped')
+        return {}
 
     def get_last_test_run(self, external_id):
         test_runs = self._storage.get_last_test_results(external_id)

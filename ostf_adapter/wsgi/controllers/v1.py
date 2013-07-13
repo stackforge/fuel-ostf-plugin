@@ -75,5 +75,5 @@ class V1Controller(BaseRestController):
     @expose('json')
     def put_testruns(self):
         test_runs = json.loads(request.body)
-        self.api.kill_multiple(test_runs)
-        return
+        # self.api.update_multiple(test_runs) 
+        return {'yolo': 'yolo'}
