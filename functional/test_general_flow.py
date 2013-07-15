@@ -19,6 +19,12 @@ class adapter_tests(unittest.TestCase):
                         .format(test=test['id'], item=item, actual=test.get(item).capitalize(), expected=items.get(item).capitalize())
                     self.assertTrue(items[item] == test.get(item), msg)
 
+    def _verify_json_status(self, json, testset=None):
+        for item in json:
+            test_set = testset if testset else item['testset']
+            for test in self.testsets[test_set]:
+                self.assertTrue(self.tests[test] in (item['id'] for item in item['tests']))
+
     @classmethod
     def setUp(cls):
         url = 'http://0.0.0.0:8989/v1'
@@ -120,6 +126,7 @@ class adapter_tests(unittest.TestCase):
         testset = "plugin_general"
         config = {}
         json = self.adapter.testruns()
+
         last_test_run = max(item['id'] for item in json)
         self.assertTrue(last_test_run == len(json))
         for cluster_id in xrange(20):
@@ -129,18 +136,14 @@ class adapter_tests(unittest.TestCase):
         last_test_run = max(item['id'] for item in json)
         self.assertTrue(last_test_run == len(json))
 
-    def test_long_work(self):
+
+
+    """   def test_long_work(self):
         config = CONFIG
         testset = "fuel_sanity"
         cluster_id = 11
         json = self.adapter.start_testrun(testset, config, cluster_id)
-        #self.assertFalse(json)
-
-    def _verify_json_status(self, json, testset=None):
-        for item in json:
-            test_set = testset if testset else item['testset']
-            for test in self.testsets[test_set]:
-                self.assertTrue(self.tests[test] in (item['id'] for item in item['tests']))
+        #self.assertFalse(json)"""
 
     """def _wait_for(self, event, state, state_finder, timeout, stop_sequence):
         start_time = int(time.time())

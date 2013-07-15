@@ -10,8 +10,10 @@ function killapp {
 function startapp {
   ! netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Server exists" && return 1; }
   nohup ostf-server --log_file testing.log --host 0.0.0.0 &
+  touch testing.log
+  sleep 5
   count=1
-  while ! tail -1 testing.log | grep "serving on" &> /dev/null && ((count != 60)) ; do sleep 1; ((count+=1)) ; done
+  while ! tail -1 testing.log | grep "serving on" &> /dev/null && ((count != 60)) ; do sleep 3; ((count+=1)) ; done
   nc -xvw 2 0.0.0.0 8989 &> /dev/null || echo "Not working"
 }
 
