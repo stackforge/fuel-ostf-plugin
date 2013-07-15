@@ -106,8 +106,9 @@ class TestNoseStoragePlugin(unittest.TestCase):
         self.err = MagicMock()
         get_storage_mock.return_value = self.storage
         self.test_parent_id = 12
+        self.cluster_id = '14'
         self.plugin = nose_adapter.StoragePlugin(
-            self.test_parent_id, discovery=False,
+            self.test_parent_id, self.cluster_id, discovery=False,
             test_conf_path='/etc/config.conf')
 
     def test_options_interface_defined(self):
@@ -115,6 +116,8 @@ class TestNoseStoragePlugin(unittest.TestCase):
 
         self.assertEqual(os.environ['CUSTOM_FUEL_CONFIG'],
                          self.plugin.test_conf_path)
+        self.assertEqual(os.environ['CLUSTER_ID'],
+                         self.cluster_id)
 
     def test_add_success_discover_false(self):
         with patch.object(self.plugin, '_add_message') as add_mock:

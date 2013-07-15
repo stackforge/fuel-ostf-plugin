@@ -58,8 +58,7 @@ def config_name_generator(test_path, test_set, external_id):
 
 
 def modify_test_name_for_nose(test_path):
-    test_module, test_name = test_path.rsplit('.', 1)
-    test_class, test_method = test_name.split(':')
+    test_module, test_class, test_method = test_path.rsplit('.', 2)
     return '{0}:{1}.{2}'.format(test_module, test_class, test_method)
 
 
@@ -70,9 +69,11 @@ class StoragePlugin(Plugin):
     score = 15000
 
     def __init__(
-            self, test_parent_id, discovery=False, test_conf_path=''):
+            self, test_run_id, cluster_id, discovery=False,
+            test_conf_path=''):
         self._capture = []
-        self.test_parent_id = test_parent_id
+        self.test_run_id = test_run_id
+        self.cluster_id = cluster_id
         self.storage = get_storage()
         self.discovery = discovery
         self.test_conf_path = test_conf_path
@@ -83,7 +84,10 @@ class StoragePlugin(Plugin):
 
     def options(self, parser, env=os.environ):
         env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
-
+        env['NAILGUN_HOST'] = '172.18.8.40'
+        env['NAILGUN_PORT'] = '8000'
+        if self.cluster_id:
+            env['CLUSTER_ID'] = self.cluster_id
 
     def configure(self, options, conf):
         self.conf = conf
@@ -92,7 +96,7 @@ class StoragePlugin(Plugin):
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
         if not self._started:
-            self.storage.update_test_run(self.test_parent_id, status='running')
+            self.storage.update_test_run(self.test_run_id, status='running')
         self._started = True
         data = {}
         data['name'], data['description'] = get_description(test)
@@ -106,10 +110,10 @@ class StoragePlugin(Plugin):
             for sub_test in test._tests:
                 data['name'], data['description'] = get_description(sub_test)
                 self.storage.add_test_result(
-                    self.test_parent_id, sub_test.id(), status, taken, data)
+                    self.test_run_id, sub_test.id(), status, taken, data)
         else:
             self.storage.add_test_result(
-                self.test_parent_id, test.id(), status, taken, data)
+                self.test_run_id, test.id(), status, taken, data)
 
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
@@ -118,7 +122,7 @@ class StoragePlugin(Plugin):
             data['name'], data['description'] = get_description(test)
             data['message'] = u''
             log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
-            self.storage.add_sets_test(self.test_parent_id, test.id(), data)
+            self.storage.add_sets_test(self.test_run_id, test.id(), data)
         else:
             log.info('UPDATING TEST %s' % test)
             self._add_message(test, status='success', taken=self.taken)
@@ -187,7 +191,7 @@ class NoseDriver(object):
             log.info('Started test discovery %s' % test_set)
             main(defaultTest=test_path,
                  addplugins=[StoragePlugin(
-                     test_set, discovery=True)],
+                     test_set, '', discovery=True)],
                  exit=False,
                  argv=['tests', '--collect-only'] + argv_add)
         except Exception, e:
@@ -199,12 +203,12 @@ class NoseDriver(object):
             log.info('Nose Driver spawn process for TEST RUN: %s\n'
                      'ARGS: %s' % (test_run_id, argv_add))
             main(addplugins=[StoragePlugin(
-                test_run_id, test_conf_path=test_conf_path)],
+                test_run_id, external_id, test_conf_path=test_conf_path)],
                 exit=False,
                 argv=['tests']+argv_add)
             log.info('Test run %s finished successfully' % test_run_id)
             if test_run_id in self._named_threads:
-                del self._named_threads[external_id]
+                del self._named_threads[test_run_id]
             self.storage.update_test_run(test_run_id, status='finished')
         #To close thread we need to catch any exception
         except Exception, e:
@@ -215,7 +219,7 @@ class NoseDriver(object):
             self.storage.update_running_tests(test_run_id,
                                               status='error')
             if test_run_id in self._named_threads:
-                del self._named_threads[external_id]
+                del self._named_threads[test_run_id]
 
     def kill(self, test_run_id, external_id, test_set,
              test_path=None, cleanup=False):
@@ -228,7 +232,8 @@ class NoseDriver(object):
             if cleanup:
                 proc = multiprocessing.Process(
                     target=self._clean_up,
-                    args=(test_run_id, external_id, test_set, test_path, cleanup))
+                    args=(test_run_id, external_id, test_set,
+                          test_path, cleanup))
                 proc.daemon = True
                 proc.start()
             else:

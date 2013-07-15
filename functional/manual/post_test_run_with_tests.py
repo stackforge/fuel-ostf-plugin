@@ -5,7 +5,7 @@ import time
 import pprint
 
 def make_requests(claster_id, test_set):
-    tests = ['fuel_health.tests.sanity.test_sanity_networking.NetworksTest:test_list_networks']
+    tests = ['fuel_health.tests.sanity.test_sanity_networking.NetworksTest.test_list_networks']
     body = [{'testset': test_set,
              'tests': tests,
             'metadata': {'config': {},
@@ -17,4 +17,4 @@ def make_requests(claster_id, test_set):
 
 
 if __name__ == '__main__':
-    make_requests(27, 'fuel_sanity')
+    make_requests('6', 'fuel_sanity')

@@ -111,7 +111,7 @@ class ApiV1Tests(unittest.TestCase):
             {'id': 'HHH', 'status': "stopped"},
         ]
         resp = self.app.put_json('/v1/testruns', body)
-        self.api.kill_multiple.assert_called_once_with(body)
+        self.api.update_multiple.assert_called_once_with(body)
         self.assertEqual(resp.status, '200 OK')
 
     def test_index_v1(self):
