@@ -40,7 +40,6 @@ def get_description(test_obj):
     return u"", u""
 
 
-
 def config_name_generator(test_path, test_set, external_id):
     log.info('CALLED WITH %s' % locals())
     try:
@@ -56,6 +55,12 @@ def config_name_generator(test_path, test_set, external_id):
         return os.path.join(
             dir_path,
             'test_{0}_{1}.conf'.format(test_set, external_id))
+
+
+def modify_test_name_for_nose(test_path):
+    test_module, test_name = test_path.rsplit('.', 1)
+    test_class, test_method = test_name.split(':')
+    return '{0}:{1}.{2}'.format(test_module, test_class, test_method)
 
 
 class StoragePlugin(Plugin):
@@ -155,17 +160,23 @@ class NoseDriver(object):
         return unique_id in self._named_threads
 
     def run(self, test_run_id, external_id,
-            conf, test_set, test_path=None, argv=None):
+            conf, test_set, tests=None, test_path=None, argv=None):
         if conf:
             test_conf_path = self.prepare_config(
                 conf, test_path, external_id, test_set)
         else:
             test_conf_path = ''
         argv_add = argv or []
+        tests = tests or []
+        if tests:
+            log.info('TESTS RECEIVED %s' % tests)
+            argv_add += map(modify_test_name_for_nose, tests)
+        else:
+            argv_add.append(test_path)
         log.info('Additional args: %s' % argv_add)
         proc = multiprocessing.Process(
             target=self._run_tests,
-            args=(test_run_id, external_id, test_path, argv_add, test_conf_path))
+            args=(test_run_id, external_id, argv_add, test_conf_path))
         proc.daemon = True
         proc.start()
         self._named_threads[test_run_id] = proc
@@ -178,21 +189,19 @@ class NoseDriver(object):
                  addplugins=[StoragePlugin(
                      test_set, discovery=True)],
                  exit=False,
-                 argv=['tests', '--collect-only']+argv_add)
+                 argv=['tests', '--collect-only'] + argv_add)
         except Exception, e:
             log.info('Finished tests discovery %s' % test_set)
 
     def _run_tests(self, test_run_id, external_id,
-                   test_path, argv_add, test_conf_path=''):
+                   argv_add, test_conf_path=''):
         try:
             log.info('Nose Driver spawn process for TEST RUN: %s\n'
-                     'TEST PATH: %s\n'
-                     'ARGS: %s' % (test_run_id, test_path, argv_add))
-            main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(
-                     test_run_id, test_conf_path=test_conf_path)],
-                 exit=False,
-                 argv=['tests']+argv_add)
+                     'ARGS: %s' % (test_run_id, argv_add))
+            main(addplugins=[StoragePlugin(
+                test_run_id, test_conf_path=test_conf_path)],
+                exit=False,
+                argv=['tests']+argv_add)
             log.info('Test run %s finished successfully' % test_run_id)
             if test_run_id in self._named_threads:
                 del self._named_threads[external_id]

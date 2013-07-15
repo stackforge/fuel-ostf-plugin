@@ -3,14 +3,14 @@
         "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
         "description": "Smoke tests. Runs 3 min - 8 min",
-        "argv": ["fuel_health.tests.smoke"],
+        "argv": [],
         "cleanup": "fuel_health.cleanup"
     },
     "fuel_sanity": {
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
         "description": "Sanity tests. Runs 30sec - 2 min",
-        "argv": ["fuel_health.tests.sanity"],
+        "argv": [],
         "cleanup": "fuel_health.cleanup"
     },
     "plugin_general": {

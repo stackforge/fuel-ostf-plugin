@@ -1,6 +1,3 @@
-import gevent
-from gevent import monkey
-monkey.patch_all()
 import requests
 import json
 import time
@@ -8,9 +5,11 @@ import time
 import pprint
 
 def make_requests(claster_id, test_set):
+    tests = ['fuel_health.tests.sanity.test_sanity_networking.NetworksTest:test_list_networks']
     body = [{'testset': test_set,
-    'metadata': {'config': {},
-                'cluster_id': claster_id}}]
+             'tests': tests,
+            'metadata': {'config': {},
+            'cluster_id': claster_id}}]
     headers = {'Content-Type': 'application/json'}
     response = requests.post('http://127.0.0.1:8989/v1/testruns',
                              data=json.dumps(body), headers=headers)
@@ -18,4 +17,4 @@ def make_requests(claster_id, test_set):
 
 
 if __name__ == '__main__':
-    make_requests(24, 'plugin_general')
+    make_requests(27, 'fuel_sanity')
