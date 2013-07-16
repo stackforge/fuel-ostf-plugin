@@ -118,7 +118,7 @@ class API(object):
             self._storage.update_test_run(test_run.id, status=status)
             self._storage.update_running_tests(test_run.id, status='stopped')
         return self._prepare_test_run(
-            self._storage.get_test_run(test_run['id'], joined=True))
+            self._storage.get_test_run(test_run.id, joined=True))
 
     def get_last_test_run(self, external_id):
         test_runs = self._storage.get_last_test_results(external_id)
