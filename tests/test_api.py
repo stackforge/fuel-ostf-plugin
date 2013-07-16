@@ -28,12 +28,11 @@ class TestApi(unittest.TestCase):
         self.command = TEST_COMMANDS['fuel_health']
         self.storage = MagicMock()
         self.test_run = MagicMock(**TEST_RUN)
-        self.session= MagicMock()
+        self.session = MagicMock()
         get_storage_mock.return_value = self.storage
         self.api = API()
         get_storage_mock.assert_any_call()
         discovery_mock.assert_any_call()
-
 
     def test_init_api(self):
         self.assertEqual(self.api._storage, self.storage)
@@ -48,23 +47,24 @@ class TestApi(unittest.TestCase):
     def test_run(self):
         test_set = 'fuel_health'
         metadata = {'cluster_id': 1, 'config': {}}
+        tests = ['test_simple']
         with patch.object(self.api, '_prepare_test_run') as prepare_mock:
             with patch.object(self.api, '_find_command') as command_mock:
                 command_mock.return_value = (self.command, self.transport)
                 self.storage.add_test_run.return_value = (self.test_run,
                                                           self.session)
-                self.api.run(test_set, metadata)
+                self.api.run(test_set, metadata, tests)
 
     def test_kill_multiple(self):
         test_runs = [{'id': 1, 'status': 'stopped'},
                      {'id': 2, 'status': 'stopped'}]
         with patch.object(self.api, 'kill') as kill_mock:
-            self.api.kill_multiple(test_runs)
+            self.api.update_multiple(test_runs)
         self.assertEqual(kill_mock.call_count, 2)
 
     def test_kill(self):
-        test_run_id = 1
+        test_run = {'id': 1}
         status = 'stopped'
         with patch.object(self.api, '_find_command') as command_mock:
             command_mock.return_value = (self.command, self.transport)
-            self.api.kill(test_run_id, status)
+            self.api.kill(test_run)

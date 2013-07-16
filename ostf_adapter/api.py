@@ -39,10 +39,11 @@ class API(object):
         for test_run in test_runs:
             test_set = test_run['testset']
             metadata = test_run['metadata']
-            res.append(self.run(test_set, metadata))
+            tests = test_run.get('tests', [])
+            res.append(self.run(test_set, metadata, tests))
         return res
 
-    def run(self, test_set, metadata):
+    def run(self, test_set, metadata, tests):
         log.info('Starting test run with metadata %s' % metadata)
         external_id = metadata['cluster_id']
         config = metadata.get('config', {})
@@ -50,10 +51,15 @@ class API(object):
         data = {}
         if self.check_last_running(test_set, external_id):
             test_run, session = self._storage.add_test_run(
-                test_set, external_id, metadata)
-            transport.obj.run(test_run.id, external_id, config,
-                              test_set, test_path=command.get('test_path'),
-                              argv=command.get('argv', []))
+                test_set, external_id, metadata, tests=tests)
+            transport.obj.run(
+                test_run.id,
+                test_run.external_id,
+                config,
+                test_run.type,
+                tests,
+                test_path=command.get('test_path'),
+                argv=command.get('argv', []))
             data = self._prepare_test_run(test_run)
             session.close()
         return data
@@ -64,25 +70,55 @@ class API(object):
             return True
         return test_run.status not in ['running', 'started']
 
-    def kill_multiple(self, test_runs):
-        log.info(u'Trying to stop tests %s' % test_runs)
+    def update_multiple(self, test_runs):
+        data = []
         for test_run in test_runs:
-            cluster_id = test_run['id']
-            status = test_run.get('status', u'stopped')
-            self.kill(cluster_id, status)
+            status = test_run.get('status')
+            if status == 'stopped':
+                worker = self.kill(test_run)
+            elif status == 'restarted':
+                worker = self.restart(test_run)
+            data.append(worker)
+        return data
 
-    def kill(self, test_run_id, status):
-        test_run = self._storage.get_test_run(test_run_id)
+    def restart(self, test_run):
+        log.info('RESTARTING %s' % test_run)
+        status = 'restarted'
+        tests = test_run.get('tests', [])
+        test_run = self._storage.get_test_run(test_run['id'])
+        if self.check_last_running(test_run.type, test_run.external_id):
+            config = json.loads(test_run.data)['config']
+            log.info('RESTARTING TEST RUN %s' % test_run)
+            command, transport = self._find_command(test_run.type)
+            self._storage.update_test_run(test_run.id, status=status)
+            if tests:
+                self._storage.update_test_run_tests(test_run.id, tests)
+            transport.obj.run(test_run.id,
+                              test_run.external_id,
+                              config,
+                              test_run.type,
+                              tests,
+                              test_path=command.get('test_path'),
+                              argv=command.get('argv', []))
+        return self._prepare_test_run(
+            self._storage.get_test_run(test_run.id, joined=True))
+
+    def kill(self, test_run):
+        status = 'stopped'
+        test_run = self._storage.get_test_run(test_run['id'])
         log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
         cleanup = command.get('cleanup')
-        transport.obj.kill(
+        killed = transport.obj.kill(
             test_run.id, test_run.external_id, test_run.type,
             test_path=command.get('test_path'), cleanup=cleanup)
-        if cleanup:
-            status = 'cleanup'
-        self._storage.update_test_run(test_run_id, status=status)
-        self._storage.update_running_tests(test_run_id, status='stopped')
+        if killed:
+            if cleanup:
+                status = 'cleanup'
+            self._storage.update_test_run(test_run.id, status=status)
+            self._storage.update_running_tests(test_run.id, status='stopped')
+        return self._prepare_test_run(
+            self._storage.get_test_run(test_run['id'], joined=True))
 
     def get_last_test_run(self, external_id):
         test_runs = self._storage.get_last_test_results(external_id)
@@ -140,7 +176,8 @@ class API(object):
             command, transport = self._find_command(test_set)
             argv_add = command.get('argv', [])
             self._storage.add_test_set(test_set, command)
-            transport.obj.tests_discovery(test_set, command['test_path'], argv_add)
+            transport.obj.tests_discovery(test_set, command['test_path'],
+                                          argv_add)
         log.info('Finished general test discovery')
         self._storage.update_all_running_test_runs()
         log.info('Finished updating stopped tests')

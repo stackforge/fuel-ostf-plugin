@@ -26,18 +26,24 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_set, external_id, data, status='started'):
-        log.info('Invoke test run - %s' % test_set)
+    def add_test_run(self, test_set, external_id, data, status='started',
+                     tests=None):
+        log.info('ADD test run - %s' % test_set)
+        predefined_tests = tests or []
         session = self.get_session()
         tests = session.query(models.Test).filter_by(test_set_id=test_set)
         test_run = models.TestRun(type=test_set, external_id=external_id,
                                   data=json.dumps(data), status=status)
         session.add(test_run)
         for test in tests:
-            new_test = models.Test(test_run_id=test_run.id,
-                                   status='wait_running',
-                                   name=test.name,
-                                   data=test.data)
+            test_data = {'test_run_id': test_run.id,
+                         'name': test.name,
+                         'data': test.data,
+                         'status': 'wait_running'}
+            if predefined_tests and test.name not in predefined_tests:
+                log.info('PREDEFINED TEST %s' % test.name)
+                test_data.update({'status': 'disabled'})
+            new_test = models.Test(**test_data)
             session.add(new_test)
         session.commit()
         return test_run, session
@@ -194,6 +200,16 @@ class SqlStorage(object):
             update({'status': status}, synchronize_session=False )
         session.query(models.Test).\
             filter(models.Test.status.in_(('running', 'wait_running'))).\
+            update({'status': status}, synchronize_session=False)
+        session.commit()
+        session.close()
+
+    def update_test_run_tests(self, test_run_id,
+                              tests_names, status='wait_running'):
+        session = self.get_session()
+        session.query(models.Test).\
+            filter(models.Test.name.in_(tests_names),
+                   models.Test.test_run_id == test_run_id).\
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()
