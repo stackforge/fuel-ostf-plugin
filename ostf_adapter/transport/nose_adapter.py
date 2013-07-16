@@ -1,12 +1,9 @@
 import multiprocessing
 from nose import main
-from nose.case import Test
-from nose.plugins import Plugin
-from nose.suite import ContextSuite
 import os
-import sys
 from ostf_adapter.storage import get_storage
-from time import time
+from ostf_adapter.transport import nose_utils
+from ostf_adapter.transport import nose_storage_plugin
 import logging
 from ostf_adapter.api import parse_json_file
 from ostf_adapter import exceptions as exc
@@ -17,139 +14,6 @@ TESTS_PROCESS = {}
 
 
 log = logging.getLogger(__name__)
-
-
-def get_exc_message(exception_value):
-    """
-    @exception_value - Exception type object
-    """
-    _exc_long = str(exception_value)
-    if isinstance(_exc_long, basestring):
-        return _exc_long.split('\n')[0]
-    return u""
-
-
-def get_description(test_obj):
-    if isinstance(test_obj, Test):
-        docstring = test_obj.shortDescription()
-        if docstring:
-            docstring = docstring.split('\n')
-            name = docstring.pop(0)
-            description = u'\n'.join(docstring) if docstring else u""
-            return name, description
-    return u"", u""
-
-
-def config_name_generator(test_path, test_set, external_id):
-    log.info('CALLED WITH %s' % locals())
-    try:
-        module_path = os.path.dirname(__import__(test_path).__file__)
-        log.info('MODULE PATH IS %s' % module_path)
-        return os.path.join(
-            module_path,
-            'test_{0}_{1}.conf'.format(test_set, external_id))
-    except Exception, e:
-        log.info('ERROR IN PARSING CONFIG PATH %s' % e)
-        current_path = os.path.join(os.path.realpath('.'), test_path)
-        dir_path = os.path.dirname(current_path)
-        return os.path.join(
-            dir_path,
-            'test_{0}_{1}.conf'.format(test_set, external_id))
-
-
-def modify_test_name_for_nose(test_path):
-    test_module, test_class, test_method = test_path.rsplit('.', 2)
-    return '{0}:{1}.{2}'.format(test_module, test_class, test_method)
-
-
-class StoragePlugin(Plugin):
-
-    enabled = True
-    name = 'storage'
-    score = 15000
-
-    def __init__(
-            self, test_run_id, cluster_id, discovery=False,
-            test_conf_path=''):
-        self._capture = []
-        self.test_run_id = test_run_id
-        self.cluster_id = cluster_id
-        self.storage = get_storage()
-        self.discovery = discovery
-        self.test_conf_path = test_conf_path
-        super(StoragePlugin, self).__init__()
-        log.info('Storage Plugin initialized')
-        self._start_time = None
-        self._started = False
-
-    def options(self, parser, env=os.environ):
-        env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
-        env['NAILGUN_HOST'] = '172.18.8.40'
-        env['NAILGUN_PORT'] = '8000'
-        if self.cluster_id:
-            env['CLUSTER_ID'] = self.cluster_id
-
-    def configure(self, options, conf):
-        self.conf = conf
-
-    def _add_message(
-            self, test, err=None, capt=None,
-            tb_info=None, status=None, taken=0):
-        if not self._started:
-            self.storage.update_test_run(self.test_run_id, status='running')
-        self._started = True
-        data = {}
-        data['name'], data['description'] = get_description(test)
-        if err:
-            exc_type, exc_value, exc_traceback = err
-            log.info('Error %s' % exc_value)
-            data['message'] = get_exc_message(exc_value)
-        else:
-            data['message'] = u''
-        if isinstance(test, ContextSuite):
-            for sub_test in test._tests:
-                data['name'], data['description'] = get_description(sub_test)
-                self.storage.add_test_result(
-                    self.test_run_id, sub_test.id(), status, taken, data)
-        else:
-            self.storage.add_test_result(
-                self.test_run_id, test.id(), status, taken, data)
-
-    def addSuccess(self, test, capt=None):
-        log.info('SUCCESS for %s' % test)
-        if self.discovery:
-            data = {}
-            data['name'], data['description'] = get_description(test)
-            data['message'] = u''
-            log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
-            self.storage.add_sets_test(self.test_run_id, test.id(), data)
-        else:
-            log.info('UPDATING TEST %s' % test)
-            self._add_message(test, status='success', taken=self.taken)
-
-    def addFailure(self, test, err, capt=None, tb_info=None):
-        log.info('FAILURE for %s' % test)
-        self._add_message(test, err=err, status='failure', taken=self.taken)
-
-    def addError(self, test, err, capt=None, tb_info=None):
-        log.info('TEST NAME: %s\n'
-                 'ERROR: %s' % (test, err))
-        self._add_message(test, err=err, status='error', taken=self.taken)
-
-    def beforeTest(self, test):
-        self._start_time = time()
-        self._add_message(test, status='running')
-
-    def describeTest(self, test):
-        log.info('CALLED FOR TEST %s '
-                 'DESC %s' % (test.id(), test.test._testMethodDoc))
-        return test.test._testMethodDoc 
-
-    @property
-    def taken(self):
-        if self._start_time:
-            return time() - self._start_time
-        return 0
 
 
 class NoseDriver(object):
@@ -174,7 +38,7 @@ class NoseDriver(object):
         tests = tests or []
         if tests:
             log.info('TESTS RECEIVED %s' % tests)
-            argv_add += map(modify_test_name_for_nose, tests)
+            argv_add += map(nose_utils.modify_test_name_for_nose, tests)
         else:
             argv_add.append(test_path)
         log.info('Additional args: %s' % argv_add)
@@ -190,7 +54,7 @@ class NoseDriver(object):
         try:
             log.info('Started test discovery %s' % test_set)
             main(defaultTest=test_path,
-                 addplugins=[StoragePlugin(
+                 addplugins=[nose_storage_plugin.StoragePlugin(
                      test_set, '', discovery=True)],
                  exit=False,
                  argv=['tests', '--collect-only'] + argv_add)
@@ -202,8 +66,8 @@ class NoseDriver(object):
         try:
             log.info('Nose Driver spawn process for TEST RUN: %s\n'
                      'ARGS: %s' % (test_run_id, argv_add))
-            main(addplugins=[StoragePlugin(
-                test_run_id, external_id, test_conf_path=test_conf_path)],
+            main(addplugins=[nose_storage_plugin.StoragePlugin(
+                test_run_id, str(external_id), test_conf_path=test_conf_path)],
                 exit=False,
                 argv=['tests']+argv_add)
             log.info('Test run %s finished successfully' % test_run_id)
@@ -248,7 +112,7 @@ class NoseDriver(object):
             log.info("TRYING TO CLEAN")
             module_obj = __import__(cleanup, -1)
 
-            os.environ['OSTF_CONF_PATH'] = config_name_generator(
+            os.environ['OSTF_CONF_PATH'] = nose_utils.config_name_generator(
                 test_path, test_set, external_id)
             log.info('STARTING CLEANUP FUNCTION')
             module_obj.cleanup.cleanup()
@@ -277,7 +141,8 @@ class NoseDriver(object):
             template.extend(template_group)
 
         if template:
-            conf_path = config_name_generator(test_path, test_set, external_id)
+            conf_path = nose_utils.config_name_generator(
+                test_path, test_set, external_id)
             with open(conf_path, 'w') as f:
                 f.write(u'\n'.join(template))
             return conf_path

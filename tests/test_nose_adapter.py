@@ -1,6 +1,8 @@
 import os
 import unittest
 from ostf_adapter.transport import nose_adapter
+from ostf_adapter.transport import nose_utils
+from ostf_adapter.transport import nose_storage_plugin
 import io
 from mock import patch, MagicMock
 from time import time
@@ -44,39 +46,6 @@ class TestNoseAdapters(unittest.TestCase):
                          u'[network]\ncatalog_type = TEST_TYPE\n[identity]\nurl = http://localhost:8989/v1/')
 
 
-    # def test_run_with_config_path_with_argv(
-    #         self, get_storage_mock, pool_module):
-    #     get_storage_mock.return_value = self.storage_mock
-    #     pool_module.Pool.return_value = self.pool_mock
-    #     nose_driver = nose_adapter.NoseDriver()
-    #     with patch.object(nose_driver, 'prepare_config')\
-    #         as prepare_config_mock:
-    #         res = nose_driver.run(
-    #             TEST_RUN_ID, EXTERNAL_ID, CONF, config_path='/etc/test.conf', argv=['sanity'],
-    #             test_path='/home/tests')
-    #     prepare_config_mock.assert_called_once_with(CONF, '/etc/test.conf')
-    #     self.pool_mock.spawn.assert_called_once_with(
-    #         nose_driver._run_tests, TEST_RUN_ID, EXTERNAL_ID, '/home/tests', ['sanity']
-    #     )
-    #     self.assertTrue(1 in nose_driver._named_threads)
-    #
-    # def test_kill_test_run_success(self, get_storage_mock, pool_module):
-    #     pool_module.Pool.return_value = self.pool_mock
-    #     nose_driver = nose_adapter.NoseDriver()
-    #     nose_driver._named_threads[TEST_RUN_ID] = self.thread_mock
-    #
-    #     res = nose_driver.kill(TEST_RUN_ID)
-    #     self.thread_mock.kill.assert_called_once_with()
-    #     self.assertTrue(res)
-    #
-    # def test_kill_test_run_fail(self, get_storage_mock, pool_module):
-    #     pool_module.Pool.return_value = self.pool_mock
-    #     nose_driver = nose_adapter.NoseDriver()
-    #
-    #     res = nose_driver.kill(2)
-    #     self.assertFalse(res)
-
-
 class TestNoseUtils(unittest.TestCase):
 
 
@@ -84,7 +53,7 @@ class TestNoseUtils(unittest.TestCase):
         test_path = 'fuel_health.tests'
         external_id = 12
         test_set = 'fuel_health'
-        test_path = nose_adapter.config_name_generator(
+        test_path = nose_utils.config_name_generator(
             test_path, test_set, external_id)
         self.assertEqual(test_path.split('/')[-1], 'test_fuel_health_12.conf')
 
@@ -92,14 +61,14 @@ class TestNoseUtils(unittest.TestCase):
         test_path = 'functional/dummy_tests/general_test.py'
         external_id = 12
         test_set = 'plugin_general'
-        test_path = nose_adapter.config_name_generator(
+        test_path = nose_utils.config_name_generator(
             test_path, test_set, external_id)
         self.assertEqual(test_path.split('/')[-1],
                          'test_plugin_general_12.conf')
 
 class TestNoseStoragePlugin(unittest.TestCase):
 
-    @patch('ostf_adapter.transport.nose_adapter.get_storage')
+    @patch('ostf_adapter.transport.nose_storage_plugin.get_storage')
     def setUp(self, get_storage_mock):
         self.storage = MagicMock()
         self.test = MagicMock()
@@ -107,7 +76,7 @@ class TestNoseStoragePlugin(unittest.TestCase):
         get_storage_mock.return_value = self.storage
         self.test_parent_id = 12
         self.cluster_id = '14'
-        self.plugin = nose_adapter.StoragePlugin(
+        self.plugin = nose_storage_plugin.StoragePlugin(
             self.test_parent_id, self.cluster_id, discovery=False,
             test_conf_path='/etc/config.conf')
 

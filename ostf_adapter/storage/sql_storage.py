@@ -82,7 +82,11 @@ class SqlStorage(object):
             test_data = json.loads(t.data)
             tests_data.append({'id': t.name, 'testset': t.test_set_id,
                                'name': test_data['name'],
-                               'description': test_data['description']})
+                               'description': test_data['description'],
+                               'duration': test_data['duration'],
+                               'message': test_data['message'],
+                               'status': t.status,
+                               'taken': t.taken})
         return tests_data
 
     def add_sets_test(self, test_set, test_name, data):

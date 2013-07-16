@@ -9,9 +9,13 @@ class SqlStorageTests(unittest.TestCase):
         self.test_set_fixtures = {'test_health':
                                       {'description': 'Fixtures of test set'}}
         self.tests_fixtures = [{'name': 'test_simple.TesSimple1',
-                                'description': 'SOMETHING WORKS'},
+                                'description': 'SOMETHING WORKS',
+                                'message': '',
+                                'duration': ''},
                                {'name': 'test_simple.TesSimple2',
-                                'description': 'SOMETHING ELSE WORKS'}]
+                                'description': 'SOMETHING ELSE WORKS',
+                                 'message': '',
+                                'duration': ''}]
         self.storage = SqlStorage('sqlite://')
         models.Base.metadata.create_all(self.storage._engine)
         self.storage.add_test_set(*self.test_set_fixtures.items()[0])
