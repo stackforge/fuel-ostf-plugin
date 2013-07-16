@@ -29,11 +29,14 @@ class TestingAdapterClient(object):
         url = ''.join([self.url, '/testruns/last/', str(cluster_id)])
         return self._request('GET', url)
 
-    def start_testrun(self, testset, config, cluster_id):
+    def start_testrun(self, testset, cluster_id):
+        return self.start_testrun_tests(testset, [], cluster_id)
+
+    def start_testrun_tests(self, testset, tests, cluster_id):
         url = ''.join([self.url, '/testruns'])
         data = [{'testset': testset,
-                'metadata': {'config': config,
-                'cluster_id': cluster_id}}]
+                 'tests': tests,
+                'metadata': {'cluster_id': str(cluster_id)}}]
         return self._request('POST', url, data=dumps(data))
 
     def stop_testrun(self, testrun_id):
@@ -45,6 +48,15 @@ class TestingAdapterClient(object):
         latest = self.testruns_last(cluster_id)
         testrun_id = [item['id'] for item in latest if item['testset'] == testset][0]
         return self.stop_testrun(testrun_id)
+
+    def restart_tests(self, cluster_id, tests):
+        url = ''.join([self.url, '/testruns'])
+        body = [{'id': str(cluster_id), 'tests': tests,
+                'status': 'restarted'}]
+        return self._request('PUT', url, data=dumps(body))
+
+
+
 
     """def _wait_for(self, event, state, state_finder, timeout, stop_sequence):
         start_time = int(time.time())

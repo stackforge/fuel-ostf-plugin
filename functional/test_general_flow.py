@@ -10,7 +10,6 @@ class adapter_tests(unittest.TestCase):
     def _verify_json(self, assertions, json):
         """For the given json response verify that assertions are present
         """
-
         for test in json['tests']:
             if test['id'] in assertions:
                 items = assertions[test['id']]
@@ -20,6 +19,8 @@ class adapter_tests(unittest.TestCase):
                     self.assertTrue(items[item] == test.get(item), msg)
 
     def _verify_json_status(self, json, testset=None):
+        """Helper to verify that json responce contains information about tests either for defined testset,
+         or for all test in json response. Verification is done against global self.testsets dict"""
         for item in json:
             test_set = testset if testset else item['testset']
             for test in self.testsets[test_set]:
@@ -47,7 +48,7 @@ class adapter_tests(unittest.TestCase):
         }
 
     def test_list_testsets(self):
-        """Verify that self.testsets are in json respons
+        """Verify that self.testsets are in json response
         """
         json = self.adapter.testsets()
         for testset in self.testsets:
@@ -65,21 +66,18 @@ class adapter_tests(unittest.TestCase):
             self.assertTrue(test in response_tests, msg)
 
     def test_general_testset(self):
-        """Send start_testrun
-        wait for 5 sec
-        check status: expected
+        """Verify that test status changes in time from running to success
         """
         testset = "plugin_general"
-        config = {}
         cluster_id = 1
-        json = self.adapter.start_testrun(testset, config, cluster_id)
+        json = self.adapter.start_testrun(testset, cluster_id)
         self._verify_json_status(json)
         time.sleep(5)
         json = self.adapter.testruns_last(cluster_id)[0]
         assertions = {
             self.tests['fast_pass']:  {'status': 'success'},
             self.tests['not_long']:  {'status': 'running'},
-            self.tests['fast_error']: {'status': 'error', 'message': "[Errno -2] Name or service not known"},
+            self.tests['fast_error']: {'status': 'error', 'message': ""},
             self.tests['fast_fail']:  {'status': 'failure', 'message': 'Something goes wroooong'}
         }
         self._verify_json(assertions, json)
@@ -89,10 +87,11 @@ class adapter_tests(unittest.TestCase):
         self._verify_json(assertions, json)
 
     def test_stopped_testset(self):
+        """Verify that long running testrun can be stopped
+        """
         testset = "plugin_stopped"
-        config = {}
         cluster_id = 2
-        json = self.adapter.start_testrun(testset, config, cluster_id)[0]
+        json = self.adapter.start_testrun(testset, cluster_id)[0]
         current_id = json['id']
         time.sleep(15)
         json = self.adapter.testruns_last(cluster_id)[0]
@@ -108,30 +107,34 @@ class adapter_tests(unittest.TestCase):
         self._verify_json(assertions, json)
 
     def test_testruns(self):
+        """Verify that you can't start new testrun for the same cluster_id while previous run is running"""
         testsets = {"plugin_stopped": None,
                     "plugin_general": None}
-        config = {}
         cluster_id = 3
         for testset in testsets:
-            json = self.adapter.start_testrun(testset, config, cluster_id)
+            json = self.adapter.start_testrun(testset, cluster_id)
             self._verify_json_status(json, testset=testset)
         json = self.adapter.testruns_last(cluster_id)
         self._verify_json_status(json)
 
         for testset in testsets:
-            json = self.adapter.start_testrun(testset, config, cluster_id)
-            self.assertTrue(all(not item for item in json))
+            json = self.adapter.start_testrun(testset, cluster_id)
+            msg = "Response is not empty when you try to start testrun" \
+                " with testset and cluster_id that are already running"
+            self.assertTrue(json == [[]], msg)
 
     def test_load_runs(self):
+        """Verify that you can start 20 testruns in a row with different cluster_id"""
         testset = "plugin_general"
-        config = {}
         json = self.adapter.testruns()
-
         last_test_run = max(item['id'] for item in json)
         self.assertTrue(last_test_run == len(json))
+
         for cluster_id in xrange(20):
-            json = self.adapter.start_testrun(testset, config, cluster_id)
+            json = self.adapter.start_testrun(testset, cluster_id)
             self._verify_json_status(json, testset=testset)
+        '''TODO: Rewrite assertions to verity that all 20 testruns ended with appropriate status'''
+
         json = self.adapter.testruns()
         last_test_run = max(item['id'] for item in json)
         self.assertTrue(last_test_run == len(json))
