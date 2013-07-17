@@ -36,10 +36,12 @@ class StoragePlugin(Plugin):
 
     def options(self, parser, env=os.environ):
         env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
-        env['NAILGUN_HOST'] = conf.nailgun.host
-        env['NAILGUN_PORT'] = conf.nailgun.port
+        log.info('NAILGUN HOST %s '
+                 'AND PORT %s' % (conf.nailgun.host, conf.nailgun.port))
+        env['NAILGUN_HOST'] = str(conf.nailgun.host)
+        env['NAILGUN_PORT'] = str(conf.nailgun.port)
         if self.cluster_id:
-            env['CLUSTER_ID'] = self.cluster_id
+            env['CLUSTER_ID'] = str(self.cluster_id)
 
     def configure(self, options, conf):
         self.conf = conf
