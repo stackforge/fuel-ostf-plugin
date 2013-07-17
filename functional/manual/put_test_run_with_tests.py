@@ -5,7 +5,7 @@ import time
 import pprint
 
 def make_requests(claster_id, test_set):
-    tests = ['fuel_health.tests.sanity.test_sanity_networking.NetworksTest.test_list_ports']
+    tests = ['functional.dummy_tests.general_test.Dummy_test.test_long_pass']
     body = [{'id': claster_id,
              'tests': tests,
              'status': 'restarted',
@@ -17,4 +17,4 @@ def make_requests(claster_id, test_set):
 
 
 if __name__ == '__main__':
-    make_requests('336', 'fuel_sanity')
+    make_requests('363', 'plugin_general')

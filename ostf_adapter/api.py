@@ -87,7 +87,7 @@ class API(object):
         tests = test_run.get('tests', [])
         test_run = self._storage.get_test_run(test_run['id'])
         if self.check_last_running(test_run.type, test_run.external_id):
-            config = json.loads(test_run.data)['config']
+            config = json.loads(test_run.data).get('config', {})
             log.info('RESTARTING TEST RUN %s' % test_run)
             command, transport = self._find_command(test_run.type)
             self._storage.update_test_run(test_run.id, status=status)

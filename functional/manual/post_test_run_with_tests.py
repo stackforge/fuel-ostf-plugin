@@ -5,10 +5,11 @@ import time
 import pprint
 
 def make_requests(claster_id, test_set):
-    tests = ['fuel_health.tests.sanity.test_sanity_networking.NetworksTest.test_list_networks']
+    tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
+             'functional.dummy_tests.general_test.Dummy_test.test_fast_error']
     body = [{'testset': test_set,
              'tests': tests,
-            'metadata': {'config': {},
+            'metadata': {
             'cluster_id': claster_id}}]
     headers = {'Content-Type': 'application/json'}
     response = requests.post('http://127.0.0.1:8989/v1/testruns',
@@ -17,4 +18,4 @@ def make_requests(claster_id, test_set):
 
 
 if __name__ == '__main__':
-    make_requests('6', 'fuel_sanity')
+    make_requests('101', 'plugin_general')
