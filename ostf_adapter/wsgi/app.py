@@ -11,6 +11,10 @@ pecan_config_dict = {
         'root': 'ostf_adapter.wsgi.controllers.root.RootController',
         'modules': ['ostf_adapter.wsgi'],
         'debug': False,
+    },
+    'nailgun': {
+        'host': '127.0.0.1',
+        'port': 8000
     }
 }
 

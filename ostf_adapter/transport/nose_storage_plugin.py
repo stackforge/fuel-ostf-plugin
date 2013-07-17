@@ -5,6 +5,7 @@ import logging
 from ostf_adapter.transport import nose_utils
 from ostf_adapter.storage import get_storage
 import os
+from pecan import conf
 
 
 TESTS_PROCESS = {}
@@ -35,8 +36,8 @@ class StoragePlugin(Plugin):
 
     def options(self, parser, env=os.environ):
         env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
-        env['NAILGUN_HOST'] = '172.18.8.40'
-        env['NAILGUN_PORT'] = '8000'
+        env['NAILGUN_HOST'] = conf.nailgun.host
+        env['NAILGUN_PORT'] = conf.nailgun.port
         if self.cluster_id:
             env['CLUSTER_ID'] = self.cluster_id
 
