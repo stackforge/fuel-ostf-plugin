@@ -13,4 +13,4 @@ def make_requests(claster_id, test_set):
     pprint.pprint(data)
 
 if __name__ == '__main__':
-    make_requests(356, 'plugin_stopped')
+    make_requests(378, 'plugin_stopped')

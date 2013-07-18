@@ -110,8 +110,7 @@ class API(object):
         command, transport = self._find_command(test_run.type)
         cleanup = command.get('cleanup')
         killed = transport.obj.kill(
-            test_run.id, test_run.external_id, test_run.type,
-            test_path=command.get('test_path'), cleanup=cleanup)
+            test_run.id, test_run.external_id, cleanup=cleanup)
         if killed:
             if cleanup:
                 status = 'cleanup'

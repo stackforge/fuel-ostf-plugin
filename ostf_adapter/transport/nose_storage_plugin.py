@@ -21,21 +21,18 @@ class StoragePlugin(Plugin):
     score = 15000
 
     def __init__(
-            self, test_run_id, cluster_id, discovery=False,
-            test_conf_path=''):
+            self, test_run_id, cluster_id, discovery=False):
         self._capture = []
         self.test_run_id = test_run_id
         self.cluster_id = cluster_id
         self.storage = get_storage()
         self.discovery = discovery
-        self.test_conf_path = test_conf_path
         super(StoragePlugin, self).__init__()
         log.info('Storage Plugin initialized')
         self._start_time = None
         self._started = False
 
     def options(self, parser, env=os.environ):
-        env['CUSTOM_FUEL_CONFIG'] = self.test_conf_path
         log.info('NAILGUN HOST %s '
                  'AND PORT %s' % (conf.nailgun.host, conf.nailgun.port))
         env['NAILGUN_HOST'] = str(conf.nailgun.host)
@@ -52,13 +49,15 @@ class StoragePlugin(Plugin):
         if not self._started:
             self.storage.update_test_run(self.test_run_id, status='running')
         self._started = True
-        data = {}
+        data = dict()
         data['name'], data['description'], data['duration'] =\
             nose_utils.get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
             log.info('Error %s' % exc_value)
-            data['message'] = nose_utils.get_exc_message(exc_value)
+            data['message'] = u''
+            if not status == 'error':
+                data['message'] = nose_utils.get_exc_message(exc_value)
             data['traceback'] = nose_utils.format_exception(err)
         else:
             data['message'] = None
@@ -76,7 +75,7 @@ class StoragePlugin(Plugin):
     def addSuccess(self, test, capt=None):
         log.info('SUCCESS for %s' % test)
         if self.discovery:
-            data = {}
+            data = dict()
             data['name'], data['description'], data['duration'] =\
                 nose_utils.get_description(test)
             data['message'] = None

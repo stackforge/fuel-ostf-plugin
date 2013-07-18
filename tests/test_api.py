@@ -66,5 +66,7 @@ class TestApi(unittest.TestCase):
         test_run = {'id': 1}
         status = 'stopped'
         with patch.object(self.api, '_find_command') as command_mock:
-            command_mock.return_value = (self.command, self.transport)
-            self.api.kill(test_run)
+            with patch.object(self.api, '_prepare_test_run') as test_run_mock:
+                command_mock.return_value = (self.command, self.transport)
+                self.api.kill(test_run)
+        self.assertEqual(test_run_mock.call_count, 1)
