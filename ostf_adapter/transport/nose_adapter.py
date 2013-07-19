@@ -34,6 +34,10 @@ class NoseDriver(object):
 
     def run(self, test_run_id, external_id,
             conf, test_set, tests=None, test_path=None, argv=None):
+        """
+            remove unneceserry arguments
+            spawn processes and send them tasks as to workers
+        """
         self.clean_process()
         argv_add = argv or []
         tests = tests or []
@@ -77,8 +81,11 @@ class NoseDriver(object):
             log.info('Test run %s finished successfully' % test_run_id)
             self.storage.update_test_run(test_run_id, status='finished')
             self._named_threads.pop(int(test_run_id), None)
+
             raise SystemExit
+
         except Exception, e:
+
             log.info('Close process TEST_RUN: %s\n'
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
@@ -90,6 +97,7 @@ class NoseDriver(object):
         log.info('Trying to stop process %s\n'
                  '%s' % (test_run_id, self._named_threads))
         self.clean_process()
+
         if test_run_id in self._named_threads:
 
             log.info('Terminating process: %s' % test_run_id)

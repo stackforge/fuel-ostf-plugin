@@ -9,4 +9,4 @@ class RootController(object):
     @expose('json', generic=True)
     def index(self): 
         return {'versions': {'v1': '/v1/'},
-        		'message': 'Use specific version request'}
+                'message': 'Use specific version request'}

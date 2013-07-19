@@ -33,6 +33,5 @@ def setup_app(pecan_config=None, extra_hooks=None):
         force_canonical=True,
         hooks=app_hooks
     )
-    
     return app
 

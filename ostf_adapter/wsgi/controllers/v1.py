@@ -28,11 +28,14 @@ class BaseRestController(rest.RestController):
                     'get_%s' % method_name,
                     method_name
                 )
-            if controller:
-                return controller, []
+                if controller:
+                    return controller, []
         return super(BaseRestController, self)._handle_get(method, remainder)
 
 class V1Controller(BaseRestController):
+    """
+        TODO Rewrite it with wsme expose
+    """
 
     def __init__(self, *args, **kwargs):
         self.api = API()
