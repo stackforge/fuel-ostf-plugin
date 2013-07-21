@@ -57,10 +57,11 @@ class StoragePlugin(Plugin):
             log.info('Error %s' % exc_value)
             data['message'] = u''
             if not status == 'error':
-                data['message'] = nose_utils.get_exc_message(exc_value)
+                data['step'], data['message'] =\
+                    nose_utils.format_failure_message(exc_value)
             data['traceback'] = nose_utils.format_exception(err)
         else:
-            data['message'] = None
+            data['step'], data['message'] = None, None
             data['traceback'] = None
         if isinstance(test, ContextSuite):
             for sub_test in test._tests:

@@ -68,6 +68,14 @@ class TestNoseUtils(unittest.TestCase):
         self.assertEqual(test_path.split('/')[-1],
                          'test_plugin_general_12.conf')
 
+    def test_message_matcher(self):
+        ex1 = 'Step 2 Failed: Some Message'
+        ex2 = 'Step 1 Failed . What is going on'
+        self.assertEqual(('2', 'Some Message'), 
+            nose_utils.format_failure_message(ex1))
+        self.assertEqual(('1', 'What is going on'),
+            nose_utils.format_failure_message(ex2))
+
 
 class TestNoseStoragePlugin(unittest.TestCase):
 

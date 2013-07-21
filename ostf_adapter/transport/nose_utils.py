@@ -72,3 +72,14 @@ def format_exception(exc_info):
         return tb_data + ev
     else:
         return ''.join(traceback.format_exception(*exc_info))
+
+
+def format_failure_message(message):
+    matcher = re.search(
+        r'^[a-zA-Z]+\s?(\d+)\s?[a-zA-Z]+\s?[\.:]\s?(.+)',
+        message)
+    if matcher:
+        step, msg = matcher.groups()
+        return step, msg
+    return '', message
+
