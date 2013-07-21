@@ -75,6 +75,7 @@ def format_exception(exc_info):
 
 
 def format_failure_message(message):
+    message = get_exc_message(message)
     matcher = re.search(
         r'^[a-zA-Z]+\s?(\d+)\s?[a-zA-Z]+\s?[\.:]\s?(.+)',
         message)

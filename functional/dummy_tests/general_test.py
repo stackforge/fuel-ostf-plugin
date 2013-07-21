@@ -15,7 +15,7 @@ class Dummy_test(unittest.TestCase):
     def test_long_pass(self):
         """Will sleep 5 sec
         """
-        time.sleep(15)
+        time.sleep(1)
         self.assertTrue(True)
 
     def test_fast_fail(self):
@@ -28,3 +28,6 @@ class Dummy_test(unittest.TestCase):
         """
         conn = httplib.HTTPSConnection('random.random/random')
         conn.request("GET", "/random.aspx")
+
+    def test_fail_with_step(self):
+        self.fail('Step 3 Failed: MEssaasasas')

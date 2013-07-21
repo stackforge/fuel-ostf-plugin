@@ -80,6 +80,7 @@ class StoragePlugin(Plugin):
             data['name'], data['description'], data['duration'] =\
                 nose_utils.get_description(test)
             data['message'] = None
+            data['step'] = None
             data['traceback'] = None
             log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
             self.storage.add_sets_test(self.test_run_id, test.id(), data)
