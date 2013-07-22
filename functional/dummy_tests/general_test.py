@@ -8,18 +8,23 @@ class Dummy_test(unittest.TestCase):
     """
 
     def test_fast_pass(self):
-        """Ths tests fast pass OK?
+        """fast pass test
+        This is a simple always pass test
+        duration: 1 sec
         """
         self.assertTrue(True)
 
     def test_long_pass(self):
-        """Will sleep 5 sec
+        """Will sleep 15 sec
+        This is a simple test
+        it will run for 15 sec
+        duration: 15 sec
         """
-        time.sleep(1)
+        time.sleep(5)
         self.assertTrue(True)
 
     def test_fast_fail(self):
-        """Fust fail
+        """Fast fail
         """
         self.assertTrue(False, msg='Something goes wroooong')
 
