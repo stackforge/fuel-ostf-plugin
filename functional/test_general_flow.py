@@ -112,7 +112,7 @@ class adapter_tests(unittest.TestCase):
             {'status': 'running',
                 'tests': [
                     {'id': self.tests['fast_pass'],
-                        'name': 'Ths tests fast pass OK?',
+                        'name': 'fast pass test',
                         'status': 'success'},
                     {'id': self.tests['long_pass'],
                         'description': '        ',
