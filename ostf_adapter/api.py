@@ -68,7 +68,7 @@ class API(object):
         test_run = self._storage.get_last_test_run(test_set, external_id)
         if not test_run:
             return True
-        return test_run.status not in ['running', 'started']
+        return test_run.status not in ['running', 'started', 'restarted']
 
     def update_multiple(self, test_runs):
         data = []
@@ -100,8 +100,9 @@ class API(object):
                               tests,
                               test_path=command.get('test_path'),
                               argv=command.get('argv', []))
-        return self._prepare_test_run(
-            self._storage.get_test_run(test_run.id, joined=True))
+            return self._prepare_test_run(
+                self._storage.get_test_run(test_run.id, joined=True))
+        return {}
 
     def kill(self, test_run):
         status = 'stopped'
