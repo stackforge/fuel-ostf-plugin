@@ -85,6 +85,7 @@ class SqlStorage(object):
                                'description': test_data['description'],
                                'duration': test_data['duration'],
                                'message': test_data['message'],
+                               'step': test_data['step'],
                                'status': t.status,
                                'taken': t.taken})
         return tests_data
