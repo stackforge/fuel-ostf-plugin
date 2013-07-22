@@ -10,15 +10,15 @@ class Dummy_test(unittest.TestCase):
     def test_fast_pass(self):
         """fast pass test
         This is a simple always pass test
-        duration: 1 sec
+        Duration: 1sec
         """
         self.assertTrue(True)
 
     def test_long_pass(self):
-        """Will sleep 15 sec
+        """Will sleep 5 sec
         This is a simple test
-        it will run for 15 sec
-        duration: 15 sec
+        it will run for 5 sec
+        Duration: 5sec
         """
         time.sleep(5)
         self.assertTrue(True)
