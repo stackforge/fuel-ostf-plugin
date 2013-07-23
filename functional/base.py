@@ -19,7 +19,7 @@ class Response(object):
             self.request = None
         else:
             self._parse_json(response.json())
-            self.request = '{} {} \n with {}'\
+            self.request = '{0} {1} \n with {2}'\
                 .format(response.request.method, response.request.url, response.request.body)
 
     def __getattr__(self, item):
@@ -83,7 +83,7 @@ class SubsetException(Exception):
 class BaseAdapterTest(TestCase):
     def compare(self, response, comparable):
         if response.is_empty:
-            msg = '{} is empty'.format(response.request)
+            msg = '{0} is empty'.format(response.request)
             raise AssertionError(msg)
         if not isinstance(comparable, Response):
             comparable = Response(comparable)
@@ -96,7 +96,7 @@ class BaseAdapterTest(TestCase):
             if item == 'tests':
                 continue
             if response.test_sets[test_set][item] != test_set_data[item]:
-                msg = '"{}" != "{}" in {}.{}'.format(response.test_sets[test_set][item],
+                msg = '"{0}" != "{1}" in {2}.{3}'.format(response.test_sets[test_set][item],
                                                      test_set_data[item], test_set, item)
                 diff.append(msg)
 
@@ -105,7 +105,7 @@ class BaseAdapterTest(TestCase):
                 if t == 'id':
                     continue
                 if response._tests[test_name][t] != test[t]:
-                    msg = '"{}" != "{}" in {}.{}.{}'.format(response._tests[test_name][t],
+                    msg = '"{0}" != "{1}" in {2}.{3}.{4}'.format(response._tests[test_name][t],
                                                             test[t], test_set, test_name, t)
                     diff.append(msg)
         if diff:
