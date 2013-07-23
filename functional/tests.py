@@ -61,7 +61,7 @@ class AdapterTests(BaseAdapterTest):
 
         r = self.client.testruns_last(cluster_id)
         print r.plugin_general['status']
-        print {test: r._tests[test]['status'] for test in r._tests}
+        print dict((test, r._tests[test]['status']) for test in r._tests)
         assertions = Response([{'status': 'running',
                                 'testset': 'plugin_general',
                                 'tests': [
@@ -122,7 +122,7 @@ class AdapterTests(BaseAdapterTest):
         for testset in testsets:
             r = self.client.start_testrun(testset, cluster_id)
 
-            msg = "Response {} is not empty when you try to start testrun" \
+            msg = "Response {0} is not empty when you try to start testrun" \
                 " with testset and cluster_id that are already running".format(r)
 
             self.assertTrue(r.is_empty, msg)
@@ -133,7 +133,7 @@ class AdapterTests(BaseAdapterTest):
 
         for cluster_id in range(100, 105):
             r = self.client.start_testrun(testset, cluster_id)
-            msg = '{} was empty'.format(r.request)
+            msg = '{0} was empty'.format(r.request)
             self.assertFalse(r.is_empty, msg)
 
         '''TODO: Rewrite assertions to verity that all 5 testruns ended with appropriate status'''
@@ -237,6 +237,6 @@ class AdapterTests(BaseAdapterTest):
         time.sleep(2)
 
         r = self.client.restart_tests_last(testset, tests, cluster_id)
-        msg = 'Response was not empty after trying to restart running testset:\n {}'.format(r.request)
+        msg = 'Response was not empty after trying to restart running testset:\n {0}'.format(r.request)
         self.assertTrue(r.is_empty, msg)
 
