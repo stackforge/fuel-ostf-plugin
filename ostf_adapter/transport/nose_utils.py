@@ -81,6 +81,6 @@ def format_failure_message(message):
         message)
     if matcher:
         step, msg = matcher.groups()
-        return step, msg
+        return int(step), msg
     return '', message
 
