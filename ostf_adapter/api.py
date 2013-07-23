@@ -4,6 +4,7 @@ from ostf_adapter import exceptions as exc
 import json
 from stevedore import extension
 import logging
+from pecan import conf
 
 
 log = logging.getLogger(__name__)
@@ -12,7 +13,22 @@ log = logging.getLogger(__name__)
 PLUGINS_NAMESPACE = 'plugins'
 
 
-COMMANDS_FILE_PATH = 'commands.json'
+COMMANDS = {
+    "fuel_sanity": {
+        "test_path": "fuel_health.tests.sanity",
+        "driver": "nose",
+        "description": "Sanity tests. Duration 30sec - 2 min",
+        "argv": [],
+        "cleanup": "fuel_health.cleanup"
+    },
+    "fuel_smoke": {
+        "test_path": "fuel_health.tests.smoke",
+        "driver": "nose",
+        "description": "Smoke tests. Duration 3 min - 8 min",
+        "argv": [],
+        "cleanup": "fuel_health.cleanup"
+    }
+}
 
 
 def parse_json_file(file_path):
@@ -170,7 +186,7 @@ class API(object):
     def _discovery(self):
         log.info('Started general tests discovery')
         self._storage.flush_testsets()
-        self.commands = parse_json_file(COMMANDS_FILE_PATH)
+        self.commands = COMMANDS
         for test_set in self.commands:
             log.info('PROCESSING %s' % test_set)
             command, transport = self._find_command(test_set)

@@ -1,27 +1,18 @@
 {
-    "fuel_smoke": {
-        "test_path": "fuel_health.tests.smoke",
-        "driver": "nose",
-        "description": "Smoke tests. Runs 3 min - 8 min",
-        "argv": [],
-        "cleanup": "fuel_health.cleanup"
-    },
+
     "fuel_sanity": {
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
-        "description": "Sanity tests. Runs 30sec - 2 min",
+        "description": "Sanity tests. Duration 30sec - 2 min",
         "argv": [],
         "cleanup": "fuel_health.cleanup"
     },
-    "plugin_general": {
+    "fuel_smoke": {
+        "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
-        "test_path": "functional.dummy_tests.general_test",
-        "description": "General fake tests"
-    },
-    "plugin_stopped": {
-        "driver": "nose",
-        "test_path": "functional.dummy_tests.stopped_test",
-        "description": "Long running 25 secs fake tests"
+        "description": "Smoke tests. Duration 3 min - 8 min",
+        "argv": [],
+        "cleanup": "fuel_health.cleanup"
     }
 }
 
