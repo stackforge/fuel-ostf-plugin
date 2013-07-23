@@ -29,3 +29,21 @@ class ScenarioTests(BaseAdapterTest):
                 print "restarting: ", running_tests
                 result = self.client.restart_with_timeout(testset, running_tests, cluster_id, timeout)
                 print 'Restart', result
+
+    def test_run_fuel_sanity(self):
+        testset = "fuel_sanity"
+        cluster_id = 3
+        tests = []
+        timeout = 120
+
+        r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)
+        self.assertEqual(r.fuel_sanity['status'], 'finished')
+
+    def test_run_fuel_smoke(self):
+        testset = "fuel_smoke"
+        cluster_id = 3
+        tests = []
+        timeout = 480
+
+        r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)
+        self.assertEqual(r.fuel_smoke['status'], 'finished')
