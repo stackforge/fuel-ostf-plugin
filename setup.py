@@ -1,13 +1,28 @@
 import multiprocessing
-import os
-import subprocess
 import setuptools
 
-
-def load_requirements(requirements_path):
-    root = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(root, requirements_path), 'r') as reqs:
-        return reqs.read().split('\n')
+requirements = [
+    'Mako==0.8.1',
+    'MarkupSafe==0.18',
+    'SQLAlchemy==0.8.2',
+    'WebOb==1.2.3',
+    'WebTest==2.0.6',
+    'alembic==0.5.0',
+    'argparse==1.2.1',
+    'beautifulsoup4==4.2.1',
+    'distribute==0.7.3',
+    'gevent==0.13.8',
+    'greenlet==0.4.1',
+    'nose==1.3.0',
+    'pecan==0.3.0',
+    'psycogreen==1.0',
+    'psycopg2==2.5.1',
+    'simplegeneric==0.8.1',
+    'six==1.3.0',
+    'stevedore==0.10',
+    'waitress==0.8.5',
+    'wsgiref==0.1.2'
+]
 
 setuptools.setup(
 
@@ -39,11 +54,7 @@ setuptools.setup(
 
     include_package_data=True,
 
-    install_requires=load_requirements('tools/pip-requires'),
-
-    tests_require=load_requirements('tools/test-requires'),
-
-    setup_requires=['setuptools_git>=0.4'],
+    install_requires=requirements,
 
     entry_points={
         'plugins': [
