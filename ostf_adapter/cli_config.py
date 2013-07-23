@@ -20,6 +20,8 @@ def parse_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument('--after-initialization-environment-hook',
                         action='store_true', dest='after_init_hook')
+    parser.add_argument('--debug',
+                        action='store_true', dest='debug')
     parser.add_argument('--dbpath', metavar='DB_PATH',
         default='postgresql+psycopg2://adapter:demo@localhost/testing_adapter')
     parser.add_argument('--host', default='127.0.0.1')

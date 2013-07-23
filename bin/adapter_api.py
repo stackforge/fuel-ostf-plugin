@@ -34,8 +34,9 @@ def main():
                 'host': cli_args.host,
                 'port': cli_args.port
             },
-        'dbpath': cli_args.dbpath
-            }
+        'dbpath': cli_args.dbpath,
+        'debug': cli_args.debug
+    }
 
     logger.setup(log_file=cli_args.log_file)
     app.setup_config(config)

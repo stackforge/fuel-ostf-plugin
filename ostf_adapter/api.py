@@ -200,7 +200,10 @@ class API(object):
     def _discovery(self):
         log.info('Started general tests discovery')
         self._storage.flush_testsets()
-        self.commands = COMMANDS
+        if conf.debug:
+            self.commands = parse_json_file('commands.json')
+        else:
+            self.commands = COMMANDS
         for test_set in self.commands:
             log.info('PROCESSING %s' % test_set)
             command, transport = self._find_command(test_set)
