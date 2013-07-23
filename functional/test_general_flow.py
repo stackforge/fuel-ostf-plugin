@@ -1,3 +1,17 @@
+#    Copyright 2013 Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 __author__ = 'ekonstantinov'
 import unittest
 import time
@@ -14,6 +28,8 @@ class adapter_tests(unittest.TestCase):
     def _verify_json(self, assertions, json):
         """For the given json response verify that assertions are present
         """
+        if json == [{}]:
+            raise AssertionError('response is empty')
         for item in json:
             for subitem in assertions:
                 if item['testset'] == subitem['testset']:
@@ -113,9 +129,10 @@ class adapter_tests(unittest.TestCase):
                 'tests': [
                     {'id': self.tests['fast_pass'],
                         'name': 'fast pass test',
+                        'description': """        This is a simple always pass test
+        """,
                         'status': 'success'},
                     {'id': self.tests['long_pass'],
-                        'description': '        ',
                         'status': 'running'},
                     {'id': self.tests['fail_step'],
                         'message': 'MEssaasasas',
@@ -128,7 +145,7 @@ class adapter_tests(unittest.TestCase):
                         'status': 'failure'}],
                 'testset': 'plugin_general'}]
         self._verify_json(assertions, json)
-        time.sleep(25)
+        time.sleep(5)
         json = self.adapter.testruns_last(cluster_id)
         assertions[0]['status'] = 'finished'
         assertions[0]['tests'][1]['status'] = 'success'
@@ -140,7 +157,7 @@ class adapter_tests(unittest.TestCase):
         testset = "plugin_stopped"
         cluster_id = 2
         json = self.adapter.start_testrun(testset, cluster_id)
-        current_id = json[0]['id']
+        #current_id = json[0]['id']
         time.sleep(15)
         json = self.adapter.testruns_last(cluster_id)
         assertions = [
@@ -153,12 +170,13 @@ class adapter_tests(unittest.TestCase):
                     {'id': self.tests['really_long'],
                         'status': 'running'}],
                 'testset': 'plugin_stopped'}]
-        self._verify_json(assertions, json)
-        self.adapter.stop_testrun(current_id)
+        print json
+        self._verify_json(assertions, json.json())
+        self.adapter.stop_testrun_last(testset, cluster_id)
         json = self.adapter.testruns_last(cluster_id)
         assertions[0]['status'] = 'stopped'
         assertions[0]['tests'][2]['status'] = 'stopped'
-        self._verify_json(assertions, json)
+        self._verify_json(assertions, json.json())
 
     def test_testruns(self):
         """Verify that you can't start new testrun for the same cluster_id while previous run is running"""
@@ -180,15 +198,18 @@ class adapter_tests(unittest.TestCase):
     def test_load_runs(self):
         """Verify that you can start 20 testruns in a row with different cluster_id"""
         testset = "plugin_general"
-        json = self.adapter.testruns()
-        last_test_run = max(item['id'] for item in json)
-        self.assertTrue(last_test_run == len(json))
+        #json = self.adapter.testruns().json()
+        #last_test_run = max(item['id'] for item in json)
+        #self.assertTrue(last_test_run == len(json))
 
-        for cluster_id in xrange(100, 105):
+        for cluster_id in range(100, 105):
             json = self.adapter.start_testrun(testset, cluster_id)
-
-            msg = 'Response for start_testset("{testset}", "{cluster_id}") was empty = {json}'.\
-                format(testset=testset, cluster_id=cluster_id, json=json)
+            #r = json.request
+            #print ' : '.join([r.method, r.url, r.body])
+            #print json.text
+            #json = json.json()
+            msg = 'Response for {url} start_testset("{testset}", "{cluster_id}") was empty = {json}'.\
+                format(testset=testset, cluster_id=cluster_id, json=json, url=self.adapter.url)
 
             self.assertTrue(json != [{}], msg)
 
@@ -363,13 +384,14 @@ class adapter_tests(unittest.TestCase):
         from pprint import pprint
 
         for i in range(1):
-            result = self.adapter.run_and_timeout_unless_finished('run', testset, tests, cluster_id, timeout)
-            pprint(result)
+            result = self.adapter.run_with_timeout('run', testset, tests, cluster_id, timeout)
+            print result.test_sets
+            print result._tests
             if result['status'] == 'running':
                 running_tests = [test for test in result['tests']
                                  if result['tests'][test][0] in ['running', 'wait_running']]
                 print "restarting: ", running_tests
-                result = self.adapter.run_and_timeout_unless_finished('restart', testset, running_tests, cluster_id, timeout)
+                result = self.adapter.run_with_timeout('restart', testset, running_tests, cluster_id, timeout)
                 print 'Restart', result, '\n'
 
 

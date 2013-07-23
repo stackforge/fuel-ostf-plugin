@@ -1,3 +1,17 @@
+#    Copyright 2013 Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 import os
 import unittest
 from ostf_adapter.transport import nose_adapter
@@ -71,9 +85,9 @@ class TestNoseUtils(unittest.TestCase):
     def test_message_matcher(self):
         ex1 = 'Step 2 Failed: Some Message'
         ex2 = 'Step 1 Failed . What is going on'
-        self.assertEqual(('2', 'Some Message'), 
+        self.assertEqual((2, 'Some Message'),
             nose_utils.format_failure_message(ex1))
-        self.assertEqual(('1', 'What is going on'),
+        self.assertEqual((1, 'What is going on'),
             nose_utils.format_failure_message(ex2))
 
 

@@ -1,8 +1,21 @@
+#    Copyright 2013 Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 __author__ = 'ekonstantinov'
 import requests
 from json import dumps
 import time
-import logging
 
 
 class TestingAdapterClient(object):
@@ -13,15 +26,11 @@ class TestingAdapterClient(object):
         headers = {'content-type': 'application/json'}
         if data:
             print data
-            r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
-        else:
-            r = requests.request(method, url, headers=headers, timeout=30.0)
-
-        #r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
+        r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
         if 2 != r.status_code/100:
             raise AssertionError('{method} "{url}" responded with "{code}" status code'
                                     .format(method=method.upper(), url=url, code=r.status_code))
-        return r.json()
+        return r
 
     def __getattr__(self, item):
         getters = ['testsets', 'tests', 'testruns']
@@ -37,6 +46,12 @@ class TestingAdapterClient(object):
     def start_testrun(self, testset, cluster_id):
         return self.start_testrun_tests(testset, [], cluster_id)
 
+        '''url = ''.join([self.url, '/testruns'])
+        data = [{'testset': testset,
+                'metadata': {'cluster_id': str(cluster_id)}}]
+
+        return self._request('POST', url, data=dumps(data))'''
+
     def start_testrun_tests(self, testset, tests, cluster_id):
         url = ''.join([self.url, '/testruns'])
         data = [{'testset': testset,
@@ -51,7 +66,7 @@ class TestingAdapterClient(object):
         return self._request("PUT", url, data=dumps(data))
 
     def stop_testrun_last(self, testset, cluster_id):
-        latest = self.testruns_last(cluster_id)
+        latest = self.testruns_last(cluster_id).json()
         testrun_id = [item['id'] for item in latest if item['testset'] == testset][0]
         return self.stop_testrun(testrun_id)
 
@@ -63,24 +78,13 @@ class TestingAdapterClient(object):
         return self._request('PUT', url, data=dumps(body))
 
     def restart_tests_last(self, testset, tests, cluster_id):
-        latest = self.testruns_last(cluster_id)
+        latest = self.testruns_last(cluster_id).json()
         testrun_id = [item['id'] for item in latest if item['testset'] == testset][0]
         return self.restart_tests(tests, testrun_id)
 
-    def run_and_timeout_unless_finished(self, action, testset, tests, cluster_id, timeout):
-
-        if action == 'run':
-            action = lambda: self.start_testrun_tests(testset, tests, cluster_id)
-        elif action == 'restart':
-            action = lambda: self.restart_tests_last(testset, tests, cluster_id)
-        else:
-            raise KeyError('Not Appropriate action')
-        current_status = None
-        current_failed_tests_statuses = None
-
+    def _with_timeout(self, action, testset, cluster_id, timeout):
         start_time = time.time()
-
-        json = action()
+        json = action().json()
 
         if json == [{}]:
             self.stop_testrun_last(testset, cluster_id)
@@ -91,21 +95,23 @@ class TestingAdapterClient(object):
             time.sleep(5)
 
             current_response = self.testruns_last(cluster_id)
+            current_status = [item['status'] for item in current_response.json()
+                              if item['testset'] == testset][0]
 
-            current_testset = [item for item in current_response
-                               if item.get('testset') == testset][0]
-            current_status = current_testset['status']
-            current_failed_tests_statuses = {item['id']: [item['status'], item['message']]
-                                             for item in current_testset['tests'] if item['status'] != 'success'}
+            if current_status == 'finished':
+                break
+        else:
+            current_response = self.stop_testrun_last(testset, cluster_id)
 
-            if current_status == "finished":
-                return {'status': 'finished',
-                        'tests': current_failed_tests_statuses}
+        return current_response
 
-        self.stop_testrun_last(testset, cluster_id)
+    def run_with_timeout(self, testset, tests, cluster_id, timeout):
+        action = lambda: self.start_testrun_tests(testset, tests, cluster_id)
+        return self._with_timeout(action, testset, cluster_id, timeout)
 
-        return {'status': current_status,
-                'tests': current_failed_tests_statuses}
+    def restart_with_timeout(self, testset, tests, cluster_id, timeout):
+        action = lambda: self.restart_tests_last(testset, tests, cluster_id)
+        return self._with_timeout(action, testset, cluster_id, timeout)
 
 
 
