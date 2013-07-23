@@ -48,7 +48,7 @@ class Response(object):
         self._tests = {}
         for testset in json:
             self.test_sets[testset.pop('testset')] = testset
-            self._tests = {self._friendly_name(item.get('id')): item for item in testset['tests']}
+            self._tests = dict((self._friendly_name(item.get('id')), item) for item in testset['tests'])
 
     def _friendly_name(self, name):
         return self.test_name_mapping.get(name, name)
@@ -102,6 +102,8 @@ class BaseAdapterTest(TestCase):
 
         for test_name, test in tests.iteritems():
             for t in test:
+                if t == 'id':
+                    continue
                 if response._tests[test_name][t] != test[t]:
                     msg = '"{}" != "{}" in {}.{}.{}'.format(response._tests[test_name][t],
                                                             test[t], test_set, test_name, t)

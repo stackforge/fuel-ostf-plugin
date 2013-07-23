@@ -57,9 +57,11 @@ class AdapterTests(BaseAdapterTest):
         cluster_id = 1
 
         self.client.start_testrun(testset, cluster_id)
-        time.sleep(2)
+        time.sleep(1)
 
         r = self.client.testruns_last(cluster_id)
+        print r.plugin_general['status']
+        print {test: r._tests[test]['status'] for test in r._tests}
         assertions = Response([{'status': 'running',
                                 'testset': 'plugin_general',
                                 'tests': [
