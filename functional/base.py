@@ -1,7 +1,7 @@
 __author__ = 'ekonstantinov'
-from unittest import TestCase
 from functional.client import TestingAdapterClient
 from functools import wraps
+from unittest import TestCase
 
 
 class EmptyResponseError(Exception):
@@ -10,22 +10,27 @@ class EmptyResponseError(Exception):
 
 class Response(object):
     """This is testing_adapter response object"""
+    test_name_mapping = {}
+
     def __init__(self, response):
-        self._parse_json(response.json)
-        self.request = '{} {} \n with {}'\
-            .format(response.request.method, response.request.url, response.request.body)
+        self.is_empty = False
+        if isinstance(response, list):
+            self._parse_json(response)
+            self.request = None
+        else:
+            self._parse_json(response.json())
+            self.request = '{} {} \n with {}'\
+                .format(response.request.method, response.request.url, response.request.body)
 
     def __getattr__(self, item):
         if item in self.test_sets or item in self._tests:
             return self.test_sets.get(item) or self._tests.get(item)
-
-    def __getattribute__(self, item):
-        if self.is_empty:
-            raise EmptyResponseError()
         else:
-            super(Response, self).__getattribute__(item)
+            return super(type(self), self).__delattr__(item)
 
     def __str__(self):
+        if self.is_empty:
+            return "Empty"
         return self.test_sets.__str__()
 
     @classmethod
@@ -42,8 +47,8 @@ class Response(object):
         self.test_sets = {}
         self._tests = {}
         for testset in json:
-            self._tests = self.test_sets[testset.pop('testset')] = testset
-            self._tests['tests'] = {self._friendly_name(item.pop('id')): item for item in testset['tests']}
+            self.test_sets[testset.pop('testset')] = testset
+            self._tests = {self._friendly_name(item.get('id')): item for item in testset['tests']}
 
     def _friendly_name(self, name):
         return self.test_name_mapping.get(name, name)
@@ -58,6 +63,8 @@ class AdapterClientProxy(object):
         if item in TestingAdapterClient.__dict__:
             call = getattr(self.client, item)
             return self._decorate_call(call)
+    def _friendly_map(self, mapping):
+        Response.set_test_name_mapping(mapping)
 
     def _decorate_call(self, call):
         @wraps(call)
@@ -74,39 +81,38 @@ class SubsetException(Exception):
 
 
 class BaseAdapterTest(TestCase):
-    def _verify_json(self, assertions, json):
-        """For the given json response verify that assertions are present
-        """
-        for item in json:
-            for subitem in assertions:
-                if item['testset'] == subitem['testset']:
-                    for s in subitem['tests']:
-                        if s['id'] not in (i['id'] for i in item['tests']):
-                            raise AssertionError('{} not in:\n{}'.format(s['id'], [i['id'] for i in item['tests']]))
-
-        def is_subset(item, subset):
-            if type(item) != type(subset) and type(subset) not in (str, unicode):
-                return False
-            if type(subset) is list:
-
-                return all(is_subset(i, s) for i in item for s in subset if i.get('id') == s.get('id') or s.get('id') == None)
-            elif type(subset) is dict:
-                try:
-                    return all(is_subset(item[s], subset[s]) for s in subset)
-                except AssertionError as e:
-                    real, expected = e.message.split('|')
-                    key = [x for x in subset if subset[x] == expected][0]
-                    msg = '"{}" was found, when "{}" was excepted in key = "{}"'.format(real, expected, key)
-                    raise SubsetException(msg)
-            else:
-                msg = '{item}|{subset}'.format(item=item, subset=subset)
-                assert item == subset, msg
-                return item == subset
-
-        msg = '{subset}     IS NOT IN     {item}'.format(subset=assertions, item=json)
-        try:
-            self.assertTrue(is_subset(json, assertions), msg)
-        except SubsetException as e:
-            msg = '{}\nwith response:\n{}\nand assertion:\n{}'.format(e.message, json, assertions)
+    def compare(self, response, comparable):
+        if response.is_empty:
+            msg = '{} is empty'.format(response.request)
             raise AssertionError(msg)
+        if not isinstance(comparable, Response):
+            comparable = Response(comparable)
+        test_set = comparable.test_sets.keys()[0]
+        test_set_data = comparable.test_sets[test_set]
+        tests = comparable._tests
+        diff = []
+
+        for item in test_set_data:
+            if item == 'tests':
+                continue
+            if response.test_sets[test_set][item] != test_set_data[item]:
+                msg = '"{}" != "{}" in {}.{}'.format(response.test_sets[test_set][item],
+                                                     test_set_data[item], test_set, item)
+                diff.append(msg)
+
+        for test_name, test in tests.iteritems():
+            for t in test:
+                if response._tests[test_name][t] != test[t]:
+                    msg = '"{}" != "{}" in {}.{}.{}'.format(response._tests[test_name][t],
+                                                            test[t], test_set, test_name, t)
+                    diff.append(msg)
+        if diff:
+            raise AssertionError(diff)
+
+    @staticmethod
+    def init_client(url, mapping):
+        ac = AdapterClientProxy(url)
+        ac._friendly_map(mapping)
+        return ac
+
 

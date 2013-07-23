@@ -2,9 +2,10 @@
 
 function killapp {
   netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]* &> /dev/null || { echo "Not running" && return 1; }
-  declare app_pid=$(netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]*)
-  echo "Ostf-adapter pid is: $app_pid"
-  kill -9 $app_pid
+  while netstat -nplt | grep 8989 &> /dev/null; do
+    declare app_pid=$(netstat -nplt | grep 8989 | grep -o [0-9]*/python | grep -o [0-9]*)
+    echo "Ostf-adapter pid is: $app_pid"
+    kill -9 $app_pid; done
 }
 
 function stopapp {
@@ -62,5 +63,5 @@ function migrate_db {
 
 function run_functional_tests {
   [[ ! -z $WORKSPACE ]] || export WORKSPACE=$(pwd)
-  nosetests -q functional/test_general_flow.py:adapter_tests --with-xunit --xunit-file=$WORKSPACE/functional.xml
+  nosetests -q functional/tests.py:AdapterTests --with-xunit --xunit-file=$WORKSPACE/reports/functional.xml
 }
