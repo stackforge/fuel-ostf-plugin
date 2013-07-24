@@ -47,16 +47,20 @@ class ScenarioTests(BaseAdapterTest):
         testset = "fuel_sanity"
         cluster_id = 3
         tests = []
-        timeout = 120
+        timeout = 240
 
         r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)
+        for item in r.fuel_sanity['tests']:
+            print item['id'].split('.').pop(), item
         self.assertEqual(r.fuel_sanity['status'], 'finished')
 
     def test_run_fuel_smoke(self):
         testset = "fuel_smoke"
         cluster_id = 3
         tests = []
-        timeout = 480
+        timeout = 900
 
         r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)
+        for item in r.fuel_sanity['tests']:
+            print item['id'].split('.').pop(), item
         self.assertEqual(r.fuel_smoke['status'], 'finished')
