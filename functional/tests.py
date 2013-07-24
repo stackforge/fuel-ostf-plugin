@@ -1,4 +1,17 @@
-__author__ = 'ekonstantinov'
+#    Copyright 2013 Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 from functional.base import BaseAdapterTest, Response
 from functional.client import TestingAdapterClient as adapter
 
@@ -9,7 +22,7 @@ class AdapterTests(BaseAdapterTest):
 
     @classmethod
     def setUpClass(cls):
-        url = 'http://0.0.0.0:8989/v1'
+        url = 'http://172.18.198.75:8989/v1'
         cls.mapping = {
             'functional.dummy_tests.general_test.Dummy_test.test_fast_pass':  'fast_pass',
             'functional.dummy_tests.general_test.Dummy_test.test_fast_error': 'fast_error',
@@ -49,7 +62,6 @@ class AdapterTests(BaseAdapterTest):
             msg = '"{test}" not in "{response}"'.format(test=test.capitalize(), response=response_tests)
             self.assertTrue(test in response_tests, msg)
 
-
     def test_run_testset(self):
         """Verify that test status changes in time from running to success
         """
@@ -60,8 +72,7 @@ class AdapterTests(BaseAdapterTest):
         time.sleep(2)
 
         r = self.client.testruns_last(cluster_id)
-        print r.plugin_general['status']
-        print dict((test, r._tests[test]['status']) for test in r._tests)
+
         assertions = Response([{'status': 'running',
                                 'testset': 'plugin_general',
                                 'tests': [
@@ -90,7 +101,7 @@ class AdapterTests(BaseAdapterTest):
         cluster_id = 2
 
         self.client.start_testrun(testset, cluster_id)
-        time.sleep(15)
+        time.sleep(10)
         r = self.client.testruns_last(cluster_id)
         assertions = Response([
             {'status': 'running',
@@ -171,9 +182,7 @@ class AdapterTests(BaseAdapterTest):
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail']
         cluster_id = 60
 
-        self.client.start_testrun(testset, cluster_id)
-
-        time.sleep(10)
+        self.client.run_testset_with_timeout(testset, cluster_id, 10)
 
         r = self.client.restart_tests_last(testset, tests, cluster_id)
         assertions = Response([
@@ -203,21 +212,18 @@ class AdapterTests(BaseAdapterTest):
         disabled_test = ['functional.dummy_tests.general_test.Dummy_test.test_fast_error', ]
         cluster_id = 70
 
-        self.client.start_testrun_tests(testset, tests, cluster_id)
-        time.sleep(5)
-
-        self.client.restart_tests_last(testset, tests, cluster_id)
-        time.sleep(5)
+        self.client.run_with_timeout(testset, tests, cluster_id, 10)
+        self.client.restart_with_timeout(testset, tests, cluster_id, 10)
 
         r = self.client.restart_tests_last(testset, disabled_test, cluster_id)
         assertions = Response([
             {'status': 'restarted',
              'testset': 'plugin_general',
              'tests': [
-                {'status': 'wait_running', 'id': 'fast_error'},
-                {'status': 'failure', 'id': 'fast_fail'},
-                {'status': 'success', 'id': 'fast_pass'},
-                {'status': 'disabled', 'id': 'long_pass'}]}])
+            {'status': 'wait_running', 'id': 'fast_error'},
+            {'status': 'failure', 'id': 'fast_fail'},
+            {'status': 'success', 'id': 'fast_pass'},
+            {'status': 'disabled', 'id': 'long_pass'}]}])
         self.compare(r, assertions)
         time.sleep(5)
 
@@ -226,7 +232,7 @@ class AdapterTests(BaseAdapterTest):
         assertions.fast_error['status'] = 'error'
         self.compare(r, assertions)
 
-    def test_restart_during_run(self):
+    def test_cant_restart_during_run(self):
         testset = 'plugin_general'
         tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail',

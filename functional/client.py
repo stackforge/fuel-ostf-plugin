@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-__author__ = 'ekonstantinov'
 import requests
 from json import dumps
 import time
@@ -108,6 +107,9 @@ class TestingAdapterClient(object):
     def run_with_timeout(self, testset, tests, cluster_id, timeout):
         action = lambda: self.start_testrun_tests(testset, tests, cluster_id)
         return self._with_timeout(action, testset, cluster_id, timeout)
+
+    def run_testset_with_timeout(self, testset, cluster_id, timeout):
+        return self.run_with_timeout(testset, [], cluster_id, timeout)
 
     def restart_with_timeout(self, testset, tests, cluster_id, timeout):
         action = lambda: self.restart_tests_last(testset, tests, cluster_id)

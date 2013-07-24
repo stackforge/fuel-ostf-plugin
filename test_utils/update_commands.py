@@ -20,14 +20,15 @@ def main():
     with open('ostf_adapter/commands.json', 'rw+') as commands:
         data = loads(commands.read())
         for item in data:
-            if data[item].get('argv'):
+            if data[item].get('argv') and item in ['fuel_sanity', 'fuel_smoke']:
                 if "--with-xunit" not in data[item]['argv']:
-                    data[item]['argv'].append("--with-xunit")
+                    data[item]['argv'].extend(["--with-xunit", '--xunit-file={0}.xml'.format(item)])
             else:
                 data[item]['argv'] = ["--with-xunit", ]
         test_apps = {"plugin-general": {"test_path": "tests/functional/dummy_tests/general_test.py", "driver": "nose"},
                      "plugin-stopped": {"test_path": "tests/functional/dummy_tests/stopped_test.py", "driver": "nose"}}
-        data.update(test_apps)
+        if 'plugin-general' not in data or 'plugin_stopped' not in data:
+            data.update(test_apps)
         commands.seek(0)
         commands.write(dumps(data))
         commands.truncate()
