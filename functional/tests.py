@@ -22,7 +22,7 @@ class AdapterTests(BaseAdapterTest):
 
     @classmethod
     def setUpClass(cls):
-        url = 'http://172.18.198.75:8989/v1'
+        url = 'http://0.0.0.0:8989/v1'
         cls.mapping = {
             'functional.dummy_tests.general_test.Dummy_test.test_fast_pass':  'fast_pass',
             'functional.dummy_tests.general_test.Dummy_test.test_fast_error': 'fast_error',

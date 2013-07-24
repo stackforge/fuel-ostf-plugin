@@ -20,7 +20,7 @@ import time
 class ScenarioTests(BaseAdapterTest):
     @classmethod
     def setUpClass(cls):
-        url = 'http://172.18.198.75:8989/v1'
+        url = 'http://0.0.0.0:8989/v1'
         mapping = {}
 
         cls.client = cls.init_client(url, mapping)
