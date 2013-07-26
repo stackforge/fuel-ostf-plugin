@@ -98,7 +98,7 @@ class API(object):
         test_run = self._storage.get_last_test_run(test_set, external_id)
         if not test_run:
             return True
-        return test_run.status not in ['running', 'started', 'restarted']
+        return test_run.status not in ['running']
 
     def update_multiple(self, test_runs):
         data = []
@@ -113,7 +113,7 @@ class API(object):
 
     def restart(self, test_run):
         log.info('RESTARTING %s' % test_run)
-        status = 'restarted'
+        status = 'running'
         tests = test_run.get('tests', [])
         test_run = self._storage.get_test_run(test_run['id'])
         if self.check_last_running(test_run.type, test_run.external_id):
@@ -135,7 +135,7 @@ class API(object):
         return {}
 
     def kill(self, test_run):
-        status = 'stopped'
+        status = 'finished'
         test_run = self._storage.get_test_run(test_run['id'])
         log.info('TRYING TO KILL TEST RUN %s' % test_run)
         command, transport = self._find_command(test_run.type)
@@ -143,9 +143,6 @@ class API(object):
         killed = transport.obj.kill(
             test_run.id, test_run.external_id, cleanup=cleanup)
         if killed:
-            if cleanup:
-                status = 'cleanup'
-            self._storage.update_test_run(test_run.id, status=status)
             self._storage.update_running_tests(test_run.id, status='stopped')
         return self._prepare_test_run(
             self._storage.get_test_run(test_run.id, joined=True))

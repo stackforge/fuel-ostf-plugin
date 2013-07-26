@@ -103,7 +103,7 @@ class NoseDriver(object):
             log.info('Close process TEST_RUN: %s\n'
                      'Thread closed with exception: %s' % (test_run_id,
                                                            e.message))
-            self.storage.update_test_run(test_run_id, status='error')
+            self.storage.update_test_run(test_run_id, status='finished')
             self.storage.update_running_tests(test_run_id,
                                               status='error')
 
@@ -127,7 +127,7 @@ class NoseDriver(object):
                 proc.start()
                 self._named_threads[int(test_run_id)] = proc
             else:
-                self.storage.update_test_run(test_run_id, status='stopped')
+                self.storage.update_test_run(test_run_id, status='finished')
 
             return True
         return False
@@ -150,12 +150,14 @@ class NoseDriver(object):
             module_obj.cleanup.cleanup()
             log.info('CLEANUP IS SUCCESSFULL')
 
-            self.storage.update_test_run(test_run_id, status='stopped')
+            storage.update_test_run(test_run_id, status='finished')
             raise SystemExit
         except Exception, e:
 
             log.error('EXCITED WITH EXCEPTION %s' % e)
-            self.storage.update_test_run(test_run_id, status='error_on_cleanup')
+
+            storage.update_test_run(test_run_id, status='finished')
+
 
 
 

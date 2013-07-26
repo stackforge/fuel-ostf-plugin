@@ -39,7 +39,7 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_set, external_id, data, status='started',
+    def add_test_run(self, test_set, external_id, data, status='running',
                      tests=None):
         log.info('ADD test run - %s' % test_set)
         predefined_tests = tests or []
@@ -211,14 +211,14 @@ class SqlStorage(object):
         session.commit()
         session.close()
 
-    def update_all_running_test_runs(self, status='stopped'):
+    def update_all_running_test_runs(self, status='finished'):
         session = self.get_session()
         session.query(models.TestRun).\
             filter(models.TestRun.status.in_(('started', 'running'))).\
-            update({'status': status}, synchronize_session=False )
+            update({'status': 'finished'}, synchronize_session=False )
         session.query(models.Test).\
             filter(models.Test.status.in_(('running', 'wait_running'))).\
-            update({'status': status}, synchronize_session=False)
+            update({'status': 'stopped'}, synchronize_session=False)
         session.commit()
         session.close()
 
