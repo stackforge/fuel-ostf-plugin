@@ -150,12 +150,12 @@ class NoseDriver(object):
             module_obj.cleanup.cleanup()
             log.info('CLEANUP IS SUCCESSFULL')
 
-            storage.update_test_run(test_run_id, status='stopped')
+            self.storage.update_test_run(test_run_id, status='stopped')
             raise SystemExit
         except Exception, e:
 
             log.error('EXCITED WITH EXCEPTION %s' % e)
-            storage.update_test_run(test_run_id, status='error_on_cleanup')
+            self.storage.update_test_run(test_run_id, status='error_on_cleanup')
 
 
 

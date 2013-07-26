@@ -14,7 +14,7 @@
 
 from sqlalchemy import create_engine, exc, desc, func, asc
 from sqlalchemy.orm import sessionmaker, joinedload
-from sqlalchemy.pool import QueuePool
+from sqlalchemy import pool
 from datetime import datetime
 
 from ostf_adapter.storage.sql import models
@@ -31,9 +31,8 @@ class SqlStorage(object):
     def __init__(self, engine_url):
         log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(
-            engine_url, pool_size=5, 
-            poolclass=QueuePool, max_overflow=2)
-        self._engine.pool._use_threadlocal = True
+            engine_url,
+            poolclass=pool.NullPool)
         self._session = sessionmaker(
             bind=self._engine, expire_on_commit=False)
 
@@ -188,11 +187,11 @@ class SqlStorage(object):
         updated_data = {}
         if status:
             updated_data['status'] = status
-        if status not in ['running']:
+        if status in ['finished', 'error', 'error_on_cleanup']:
             updated_data['ended_at'] = datetime.utcnow()
         session.query(models.TestRun).\
             filter(models.TestRun.id == test_run_id).\
-            update(updated_data)
+            update(updated_data, synchronize_session=False)
         session.commit()
         session.close()
 
