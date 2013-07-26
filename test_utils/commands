@@ -38,13 +38,13 @@ function update_tests {
   pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-tests.git@"$OSTF_TESTS_BRANCH"#egg=ostf-tests
 }
 
-function update_adapters {
+function update_adapter {
   if [[ -z $1 && -z $OSTF_ADAPTER_BRANCH ]] ; then echo "Please specify a branch"; return 1; fi
   if [[ ! -z $1 ]] ; then
     git ls-remote --heads git@github.com:Mirantis/fuel-ostf-plugin.git $1 | grep $1 &> /dev/null || { echo "No branch" && return 1; }
     export OSTF_ADAPTER_BRANCH=$1
   fi
-  ! pip freeze | grep ostf-tests &> /dev/null || pip uninstall -y testing_adapter
+  ! pip freeze | grep ostf-adapter &> /dev/null || pip uninstall -y testing_adapter
   pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-plugin.git@"$OSTF_ADAPTER_BRANCH"#egg=ostf-plugin
 }
 
