@@ -22,7 +22,9 @@ class AdapterTests(BaseAdapterTest):
 
     @classmethod
     def setUpClass(cls):
-        url = 'http://0.0.0.0:8989/v1'
+
+        url = 'http:/0.0.0.0:8989/v1'
+
         cls.mapping = {
             'functional.dummy_tests.general_test.Dummy_test.test_fast_pass':  'fast_pass',
             'functional.dummy_tests.general_test.Dummy_test.test_fast_error': 'fast_error',
@@ -69,7 +71,7 @@ class AdapterTests(BaseAdapterTest):
         cluster_id = 1
 
         self.client.start_testrun(testset, cluster_id)
-        time.sleep(2)
+        time.sleep(3)
 
         r = self.client.testruns_last(cluster_id)
 
@@ -84,8 +86,11 @@ class AdapterTests(BaseAdapterTest):
                                     {'id': 'fast_error', 'message': '', 'status': 'error'},
                                     {'id': 'fast_fail', 'message': 'Something goes wroooong', 'status': 'failure'}]}])
 
+        print r
+        print assertions
+
         self.compare(r, assertions)
-        time.sleep(5)
+        time.sleep(10)
 
         r = self.client.testruns_last(cluster_id)
 
@@ -212,7 +217,7 @@ class AdapterTests(BaseAdapterTest):
         disabled_test = ['functional.dummy_tests.general_test.Dummy_test.test_fast_error', ]
         cluster_id = 70
 
-        self.client.run_with_timeout(testset, tests, cluster_id, 10)
+        self.client.run_with_timeout(testset, tests, cluster_id, 70)
         self.client.restart_with_timeout(testset, tests, cluster_id, 10)
 
         r = self.client.restart_tests_last(testset, disabled_test, cluster_id)
@@ -224,6 +229,7 @@ class AdapterTests(BaseAdapterTest):
             {'status': 'failure', 'id': 'fast_fail'},
             {'status': 'success', 'id': 'fast_pass'},
             {'status': 'disabled', 'id': 'long_pass'}]}])
+        print r
         self.compare(r, assertions)
         time.sleep(5)
 
