@@ -44,7 +44,7 @@ function update_adapter {
     git ls-remote --heads git@github.com:Mirantis/fuel-ostf-plugin.git $1 | grep $1 &> /dev/null || { echo "No branch" && return 1; }
     export OSTF_ADAPTER_BRANCH=$1
   fi
-  ! pip freeze | grep ostf-adapter &> /dev/null || pip uninstall -y testing_adapter
+  ! pip freeze | grep testing_adapter &> /dev/null || pip uninstall -y testing_adapter
   pip install -e git+ssh://git@github.com/Mirantis/fuel-ostf-plugin.git@"$OSTF_ADAPTER_BRANCH"#egg=ostf-plugin
 }
 
