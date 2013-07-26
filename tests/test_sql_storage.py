@@ -15,6 +15,7 @@
 import unittest
 from ostf_adapter.storage.sql_storage import SqlStorage
 from ostf_adapter.storage.sql import models
+from sqlalchemy import pool
 
 
 class SqlStorageTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class SqlStorageTests(unittest.TestCase):
                                  'message': '',
                                 'duration': '',
                                 'step': None}]
-        self.storage = SqlStorage('sqlite://')
+        self.storage = SqlStorage('sqlite://', poolclass=pool.QueuePool)
         models.Base.metadata.create_all(self.storage._engine)
         self.storage.add_test_set(*self.test_set_fixtures.items()[0])
         for test in self.tests_fixtures:

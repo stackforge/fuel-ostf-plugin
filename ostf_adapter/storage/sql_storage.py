@@ -28,11 +28,11 @@ log = logging.getLogger(__name__)
 
 class SqlStorage(object):
 
-    def __init__(self, engine_url):
+    def __init__(self, engine_url, poolclass=pool.NullPool):
         log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(
             engine_url,
-            poolclass=pool.NullPool)
+            poolclass=poolclass)
         self._session = sessionmaker(
             bind=self._engine, expire_on_commit=False)
 
