@@ -94,7 +94,6 @@ class TestingAdapterClient(object):
             time.sleep(5)
 
             current_response = self.testruns_last(cluster_id)
-            print '!!!', current_response.json()
             current_status, current_tests = [(item['status'], item['tests']) for item in current_response.json()
                                              if item['testset'] == testset][0]
 
@@ -110,8 +109,6 @@ class TestingAdapterClient(object):
             msg_tests = '\n'.join(['{0} -> {1}, {2}'.format(item['id'], item['status'], item['taken']) for item in current_tests])
             raise AssertionError('\n'.join([msg, msg_tests]))
         return current_response
-
-
 
     def run_with_timeout(self, testset, tests, cluster_id, timeout):
         action = lambda: self.start_testrun_tests(testset, tests, cluster_id)

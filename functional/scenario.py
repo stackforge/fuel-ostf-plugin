@@ -21,7 +21,7 @@ class ScenarioTests(BaseAdapterTest):
     @classmethod
     def setUpClass(cls):
 
-        url = 'http://0.0.0.0:8989/v1'
+        url = 'http://.0.0.0:8989/v1'
         mapping = {}
 
         cls.client = cls.init_client(url, mapping)
@@ -46,12 +46,9 @@ class ScenarioTests(BaseAdapterTest):
 
     def test_run_fuel_sanity(self):
         testset = "fuel_sanity"
-        cluster_id = 2
-        tests = ['fuel_health.tests.sanity.test_sanity_compute.SanityComputeTest.test_list_volumes',
-                 'fuel_health.tests.sanity.test_sanity_identity.ServicesTestJSON.test_list_users',
-                 'fuel_health.tests.sanity.test_sanity_networking.NetworksTest.test_list_ports']
-        tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
-                 'functional.dummy_tests.general_test.Dummy_test.test_fast_fail']
+        cluster_id = 3
+        tests = []
+
         timeout = 240
 
         r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)

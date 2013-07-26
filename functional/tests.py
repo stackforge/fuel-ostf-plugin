@@ -121,7 +121,7 @@ class AdapterTests(BaseAdapterTest):
         self.client.stop_testrun_last(testset, cluster_id)
         r = self.client.testruns_last(cluster_id)
 
-        assertions.plugin_stopped['status'] = 'stopped'
+        assertions.plugin_stopped['status'] = 'finished'
         assertions.really_long['status'] = 'stopped'
         self.compare(r, assertions)
 
@@ -163,7 +163,7 @@ class AdapterTests(BaseAdapterTest):
 
         r = self.client.start_testrun_tests(testset, tests, cluster_id)
         assertions = Response([
-            {'status': 'started',
+            {'status': 'running',
              'testset': 'plugin_general',
              'tests': [
                 {'status': 'disabled', 'id': 'fast_error'},
@@ -191,7 +191,7 @@ class AdapterTests(BaseAdapterTest):
 
         r = self.client.restart_tests_last(testset, tests, cluster_id)
         assertions = Response([
-            {'status': 'restarted',
+            {'status': 'running',
                 'testset': 'plugin_general',
                 'tests': [
                     {'id': 'fast_pass',  'status': 'wait_running'},
@@ -222,7 +222,7 @@ class AdapterTests(BaseAdapterTest):
 
         r = self.client.restart_tests_last(testset, disabled_test, cluster_id)
         assertions = Response([
-            {'status': 'restarted',
+            {'status': 'running',
              'testset': 'plugin_general',
              'tests': [
             {'status': 'wait_running', 'id': 'fast_error'},
