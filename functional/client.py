@@ -94,14 +94,20 @@ class TestingAdapterClient(object):
             time.sleep(5)
 
             current_response = self.testruns_last(cluster_id)
-            current_status = [item['status'] for item in current_response.json()
-                              if item['testset'] == testset][0]
+            current_status, current_tests = [(item['status'], item['tests']) for item in current_response.json()
+                                             if item['testset'] == testset][0]
 
             if current_status == 'finished':
                 break
         else:
-            current_response = self.stop_testrun_last(testset, cluster_id)
+            self.stop_testrun_last(testset, cluster_id)
+            stopped_response = self.testruns_last(cluster_id)
+            stopped_status = [item['status'] for item in stopped_response.json()
+                              if item['testset'] == testset][0]
 
+            msg = '{0} is still in {1} state. Now the state is {2}'.format(testset, current_status, stopped_status)
+            msg_tests = '\n'.join(['{0} -> {1}, {2}'.format(item['id'], item['status'], item['taken']) for item in current_tests])
+            raise AssertionError('\n'.join([msg, msg_tests]))
         return current_response
 
     def run_with_timeout(self, testset, tests, cluster_id, timeout):

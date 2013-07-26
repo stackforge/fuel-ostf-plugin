@@ -20,7 +20,8 @@ import time
 class ScenarioTests(BaseAdapterTest):
     @classmethod
     def setUpClass(cls):
-        url = 'http://0.0.0.0:8989/v1'
+
+        url = 'http://.0.0.0:8989/v1'
         mapping = {}
 
         cls.client = cls.init_client(url, mapping)
@@ -47,6 +48,7 @@ class ScenarioTests(BaseAdapterTest):
         testset = "fuel_sanity"
         cluster_id = 3
         tests = []
+
         timeout = 240
 
         r = self.client.run_with_timeout(testset, tests, cluster_id, timeout)
