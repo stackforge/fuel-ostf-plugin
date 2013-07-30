@@ -73,7 +73,7 @@ class StoragePlugin(Plugin):
             if not status == 'error':
                 data['step'], data['message'] =\
                     nose_utils.format_failure_message(exc_value)
-            data['traceback'] = nose_utils.format_exception(err)
+            data['traceback'] = None
         else:
             data['step'], data['message'] = None, None
             data['traceback'] = None
