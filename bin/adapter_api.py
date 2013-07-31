@@ -23,6 +23,7 @@ from ostf_adapter.common import logger
 from gevent import pywsgi
 from ostf_adapter.wsgi import app
 import logging
+import signal
 
 
 def main():
@@ -60,6 +61,7 @@ def main():
         log.info("serving on http://%s:%s" % (host, port))
 
     try:
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         srv.serve_forever()
     except KeyboardInterrupt:
         # allow CTRL+C to shutdown without an error
