@@ -47,7 +47,7 @@ class NoseDriver(object):
         return unique_id in self._named_threads
 
     def run(self, test_run_id, external_id,
-            conf, test_set, tests=None, test_path=None, argv=None):
+            conf, command, tests=None, test_path=None, argv=None):
         """
             remove unneceserry arguments
             spawn processes and send them tasks as to workers
@@ -65,7 +65,7 @@ class NoseDriver(object):
 
         proc = multiprocessing.Process(
             target=self._run_tests,
-            args=(test_run_id, external_id, argv_add))
+            args=(test_run_id, external_id, argv_add, command))
         proc.daemon = True
         proc.start()
 
@@ -82,7 +82,7 @@ class NoseDriver(object):
             exit=False,
             argv=['tests', '--collect-only'] + argv_add)
 
-    def _run_tests(self, test_run_id, external_id, argv_add):
+    def _run_tests(self, test_run_id, external_id, argv_add, command):
         log.info('Nose Driver spawn process for TEST RUN: %s\n'
                      'ARGS: %s' % (test_run_id, argv_add))
 
@@ -91,12 +91,12 @@ class NoseDriver(object):
                 test_run_id, str(external_id))],
                 exit=False,
                 argv=['tests']+argv_add)
-
+            cleanup = command.get('cleanup', None)
+            if cleanup:
+                self._clean_up(test_run_id, external_id, cleanup)
             log.info('Test run %s finished successfully' % test_run_id)
             self.storage.update_test_run(test_run_id, status='finished')
             self._named_threads.pop(int(test_run_id), None)
-
-            raise SystemExit
 
         except Exception, e:
 
@@ -133,10 +133,7 @@ class NoseDriver(object):
         return False
 
     def _clean_up(self,
-                  test_run_id, external_id, cleanup,
-                  storage=storage.get_storage):
-        #Had problems with mocking storage.get_storage
-        storage = storage()
+                  test_run_id, external_id, cleanup):
         try:
 
             log.info("TRYING TO CLEAN")
@@ -150,13 +147,12 @@ class NoseDriver(object):
             module_obj.cleanup.cleanup()
             log.info('CLEANUP IS SUCCESSFULL')
 
-            storage.update_test_run(test_run_id, status='finished')
-            raise SystemExit
+            self.storage.update_test_run(test_run_id, status='finished')
         except Exception, e:
 
             log.error('EXCITED WITH EXCEPTION %s' % e)
 
-            storage.update_test_run(test_run_id, status='finished')
+            self.storage.update_test_run(test_run_id, status='finished')
 
 
 

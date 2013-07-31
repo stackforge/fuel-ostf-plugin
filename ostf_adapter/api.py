@@ -86,7 +86,7 @@ class API(object):
                 test_run.id,
                 test_run.external_id,
                 config,
-                test_run.type,
+                command,
                 tests,
                 test_path=command.get('test_path'),
                 argv=command.get('argv', []))
@@ -126,7 +126,7 @@ class API(object):
             transport.obj.run(test_run.id,
                               test_run.external_id,
                               config,
-                              test_run.type,
+                              command,
                               tests,
                               test_path=command.get('test_path'),
                               argv=command.get('argv', []))

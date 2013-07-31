@@ -59,7 +59,7 @@ class TestNoseAdapters(unittest.TestCase):
         conf_mock.nailgun.port = 'NAILGUN_PORT'
         self.driver._named_threads[1] = self.thread
 
-        self.driver._clean_up(1, '101', 'cleanup', storage=MagicMock)
+        self.driver._clean_up(1, '101', 'cleanup')
 
 
 class TestNoseUtils(unittest.TestCase):
