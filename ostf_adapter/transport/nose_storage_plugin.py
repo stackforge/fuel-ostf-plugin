@@ -109,7 +109,11 @@ class StoragePlugin(Plugin):
     def addError(self, test, err, capt=None, tb_info=None):
         log.info('TEST NAME: %s\n'
                  'ERROR: %s' % (test, err))
-        self._add_message(test, err=err, status='error', taken=self.taken)
+        if err[0] == AssertionError:
+            self._add_message(
+                test, err=err, status='failure', taken=self.taken)
+        else:
+            self._add_message(test, err=err, status='error', taken=self.taken)
 
     def beforeTest(self, test):
         self._start_time = time()
