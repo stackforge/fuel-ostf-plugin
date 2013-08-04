@@ -17,8 +17,9 @@ import sys
 from docopt import docopt
 from clint.textui import puts, colored, columns, indent
 from blessings import Terminal
+from requests import get
 
-from .functional.client import TestingAdapterClient
+from client import TestingAdapterClient
 
 
 t = Terminal()
@@ -85,10 +86,19 @@ def list_test_sets():
         puts(columns([test_set['id'], col], [test_set['name'], None]))
     return 0
 
-if __name__ == '__main__':
+
+def get_cluster_id():
+    try:
+        r = get('http://localhost:8000/api/clusters').json()
+    except:
+        return 0
+    return next(item['id'] for item in r)
+
+
+def main():
     args = docopt(__doc__, version='0.1')
     test_set = args['<test_set>']
-    cluster_id = args['--id'] or os.environ.get('OSTF_CLUSTER_ID') or '1'
+    cluster_id = args['--id'] or os.environ.get('OSTF_CLUSTER_ID') or get_cluster_id() or '1'
     tests = args['--tests'] or []
     timeout = args['--timeout']
     url = args['--url'] or os.environ.get('OSTF_URL') or 'http://0.0.0.0:8989/v1'
@@ -96,10 +106,13 @@ if __name__ == '__main__':
     client = TestingAdapterClient(url)
 
     if args['run']:
-        sys.exit(run())
+        run()
     if test_set:
-        sys.exit(list_tests())
-    sys.exit(list_test_sets())
+        list_tests()
+    list_test_sets()
+
+if __name__ == '__main__':
+    sys.exit(main())
 
 
 
