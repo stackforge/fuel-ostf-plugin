@@ -28,7 +28,7 @@ class TestingAdapterClient(object):
         r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
         if 2 != r.status_code/100:
             raise AssertionError('{method} "{url}" responded with "{code}" status code'
-                                    .format(method=method.upper(), url=url, code=r.status_code))
+                                  .format(method=method.upper(), url=url, code=r.status_code))
         return r
 
     def __getattr__(self, item):
@@ -44,12 +44,6 @@ class TestingAdapterClient(object):
 
     def start_testrun(self, testset, cluster_id):
         return self.start_testrun_tests(testset, [], cluster_id)
-
-        '''url = ''.join([self.url, '/testruns'])
-        data = [{'testset': testset,
-                'metadata': {'cluster_id': str(cluster_id)}}]
-
-        return self._request('POST', url, data=dumps(data))'''
 
     def start_testrun_tests(self, testset, tests, cluster_id):
         url = ''.join([self.url, '/testruns'])
@@ -114,7 +108,7 @@ class TestingAdapterClient(object):
             raise AssertionError('\n'.join([msg, msg_tests]))
         return current_response
 
-    def run_with_timeout(self, testset, tests, cluster_id, timeout, polling, polling_hook):
+    def run_with_timeout(self, testset, tests, cluster_id, timeout, polling=5, polling_hook=None):
         action = lambda: self.start_testrun_tests(testset, tests, cluster_id)
         return self._with_timeout(action, testset, cluster_id, timeout, polling, polling_hook)
 

@@ -18,8 +18,15 @@ from docopt import docopt
 from clint.textui import puts, colored, columns, indent
 from blessings import Terminal
 from requests import get
-
 from client import TestingAdapterClient
+
+
+def get_cluster_id():
+    try:
+        r = get('http://localhost:8000/api/clusters').json()
+    except:
+        return 0
+    return next(item['id'] for item in r)
 
 
 def main():
@@ -91,13 +98,6 @@ def main():
         for test_set in result:
             puts(columns([test_set['id'], col], [test_set['name'], None]))
         return 0
-
-    def get_cluster_id():
-        try:
-            r = get('http://localhost:8000/api/clusters').json()
-        except:
-            return 0
-        return next(item['id'] for item in r)
 
     if args['run']:
         run()
