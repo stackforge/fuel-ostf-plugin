@@ -15,7 +15,7 @@
 from functools import wraps
 from unittest import TestCase
 
-from ostf_client.client import TestingAdapterClient
+from ostf_client.ostf_client.client import TestingAdapterClient
 
 
 class EmptyResponseError(Exception):
