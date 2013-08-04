@@ -23,8 +23,7 @@ class TestingAdapterClient(object):
 
     def _request(self, method, url, data=None):
         headers = {'content-type': 'application/json'}
-        if data:
-            print data
+
         r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
         if 2 != r.status_code/100:
             raise AssertionError('{method} "{url}" responded with "{code}" status code'

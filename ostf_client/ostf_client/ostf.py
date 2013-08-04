@@ -71,10 +71,11 @@ def main():
                 puts(columns([((test['id'].split('.')[-1])), col], [statused[test['status']], col]))
 
         try:
-            client.run_testset_with_timeout(test_set, cluster_id, timeout, 2, polling_hook)
+            r = client.run_testset_with_timeout(test_set, cluster_id, timeout, 2, polling_hook)
         except AssertionError as e:
             return 1
-        return 0
+        tests = next(item['tests'] for item in r.json())
+        return any(item['status'] != 'success' for item in tests)
 
     def list_tests():
         result = client.tests().json()
