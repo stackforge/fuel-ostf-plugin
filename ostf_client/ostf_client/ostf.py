@@ -100,10 +100,10 @@ def main():
         return 0
 
     if args['run']:
-        run()
+        return run()
     if test_set:
-        list_tests()
-    list_test_sets()
+        return list_tests()
+    return list_test_sets()
 
 if __name__ == '__main__':
     sys.exit(main())
