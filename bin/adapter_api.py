@@ -14,9 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
 import os
-import argparse
 from ostf_adapter import cli_config
 from ostf_adapter.storage.sql.cli import do_apply_migrations
 from ostf_adapter.common import logger
@@ -24,17 +22,18 @@ from gevent import pywsgi
 from ostf_adapter.wsgi import app
 import logging
 import signal
+import pecan
 
 
 def main():
 
     cli_args = cli_config.parse_cli()
 
-    config = {'server':
-            {
-                'host': cli_args.host,
-                'port': cli_args.port
-            },
+    config = {
+        'server': {
+            'host': cli_args.host,
+            'port': cli_args.port
+        },
         'dbpath': cli_args.dbpath,
         'debug': cli_args.debug
     }
@@ -50,15 +49,11 @@ def main():
 
     root = app.setup_app()
 
-    host, port = app.pecan_config_dict['server'].values()
+    host, port = pecan.conf.server.host, pecan.conf.server.port
     srv = pywsgi.WSGIServer((host, int(port)), root)
-    log.info('Starting server in PID %s' % os.getpid())
+    log.info('Starting server in PID %s', os.getpid())
 
-    if host == '0.0.0.0':
-        log.info('serving on 0.0.0.0:%s,'
-                 ' view at http://127.0.0.1:%s' % (port, port))
-    else:
-        log.info("serving on http://%s:%s" % (host, port))
+    log.info("serving on http://%s:%s", host, port)
 
     try:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)

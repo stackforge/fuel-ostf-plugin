@@ -18,7 +18,6 @@ from sqlalchemy import pool
 from datetime import datetime
 
 from ostf_adapter.storage.sql import models
-from ostf_adapter import exceptions as exc
 
 import json
 import logging

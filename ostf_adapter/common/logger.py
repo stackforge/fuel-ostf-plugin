@@ -17,10 +17,6 @@ import logging
 import logging.handlers
 
 
-_DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)8s [%(name)s] %(message)s"
-_DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
 def setup(log_file=None):
     log = logging.getLogger(None)
     stream_handler = logging.StreamHandler()

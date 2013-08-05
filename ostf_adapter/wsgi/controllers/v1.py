@@ -12,15 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pecan import rest, expose, request, response
-from pecan.core import abort
+from pecan import rest, expose, request
 import json
 from ostf_adapter.api import API
-import logging
-from ostf_adapter import exceptions as exc
-
-
-log = logging.getLogger(__name__)
 
 
 class BaseRestController(rest.RestController):
@@ -45,6 +39,7 @@ class BaseRestController(rest.RestController):
                 if controller:
                     return controller, []
         return super(BaseRestController, self)._handle_get(method, remainder)
+
 
 class V1Controller(BaseRestController):
     """

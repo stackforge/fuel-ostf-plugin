@@ -12,11 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
 class OstfException(Exception):
 
     code = 400
 
     def __init__(self, message='', argv=()):
+        super(OstfException, self).__init__(self)
         self.message = message
         self.argv = argv
 
@@ -24,8 +26,10 @@ class OstfException(Exception):
 class OstfDBException(OstfException):
     pass
 
+
 class OstfCommandsException(OstfException):
     pass
+
 
 class OstfNoseException(OstfException):
     pass

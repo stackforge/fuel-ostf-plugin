@@ -64,24 +64,6 @@ class TestNoseAdapters(unittest.TestCase):
 
 class TestNoseUtils(unittest.TestCase):
 
-
-    def test_config_name_generator_module(self):
-        test_path = 'fuel_health.tests'
-        external_id = 12
-        test_set = 'fuel_health'
-        test_path = nose_utils.config_name_generator(
-            test_path, test_set, external_id)
-        self.assertEqual(test_path.split('/')[-1], 'test_fuel_health_12.conf')
-
-    def test_config_name_generator_relative_path(self):
-        test_path = 'functional/dummy_tests/general_test.py'
-        external_id = 12
-        test_set = 'plugin_general'
-        test_path = nose_utils.config_name_generator(
-            test_path, test_set, external_id)
-        self.assertEqual(test_path.split('/')[-1],
-                         'test_plugin_general_12.conf')
-
     def test_message_matcher(self):
         ex1 = 'Step 2 Failed: Some Message'
         ex2 = 'Step 1 Failed . What is going on'

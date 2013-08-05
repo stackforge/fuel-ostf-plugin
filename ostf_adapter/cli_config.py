@@ -22,7 +22,8 @@ def parse_cli():
                         action='store_true', dest='after_init_hook')
     parser.add_argument('--debug',
                         action='store_true', dest='debug')
-    parser.add_argument('--dbpath', metavar='DB_PATH',
+    parser.add_argument(
+        '--dbpath', metavar='DB_PATH',
         default='postgresql+psycopg2://adapter:demo@localhost/testing_adapter')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', default='8989')

@@ -22,10 +22,7 @@ import os
 from pecan import conf
 
 
-TESTS_PROCESS = {}
-
-
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class StoragePlugin(Plugin):
@@ -42,13 +39,12 @@ class StoragePlugin(Plugin):
         self.storage = get_storage()
         self.discovery = discovery
         super(StoragePlugin, self).__init__()
-        log.info('Storage Plugin initialized')
         self._start_time = None
         self._started = False
 
     def options(self, parser, env=os.environ):
-        log.info('NAILGUN HOST %s '
-                 'AND PORT %s' % (conf.nailgun.host, conf.nailgun.port))
+        LOG.info('NAILGUN HOST %s '
+                 'AND PORT %s', conf.nailgun.host, conf.nailgun.port)
         env['NAILGUN_HOST'] = str(conf.nailgun.host)
         env['NAILGUN_PORT'] = str(conf.nailgun.port)
         if self.cluster_id:
@@ -88,7 +84,7 @@ class StoragePlugin(Plugin):
                 self.test_run_id, test.id(), status, taken, data)
 
     def addSuccess(self, test, capt=None):
-        log.info('SUCCESS for %s' % test)
+        LOG.info('SUCCESS for %s', test)
         if self.discovery:
             data = dict()
             data['name'], data['description'], data['duration'] =\
@@ -96,19 +92,19 @@ class StoragePlugin(Plugin):
             data['message'] = None
             data['step'] = None
             data['traceback'] = None
-            log.info('DISCOVERY FOR %s WITH DATA %s' % (test.id(), data))
+            LOG.info('DISCOVERY FOR %s WITH DATA %s', test.id(), data)
             self.storage.add_sets_test(self.test_run_id, test.id(), data)
         else:
-            log.info('UPDATING TEST %s' % test)
+            LOG.info('UPDATING TEST %s', test)
             self._add_message(test, status='success', taken=self.taken)
 
     def addFailure(self, test, err, capt=None, tb_info=None):
-        log.info('FAILURE for %s' % test)
+        LOG.info('FAILURE for %s', test)
         self._add_message(test, err=err, status='failure', taken=self.taken)
 
     def addError(self, test, err, capt=None, tb_info=None):
-        log.info('TEST NAME: %s\n'
-                 'ERROR: %s' % (test, err))
+        LOG.info('TEST NAME: %s\n'
+                 'ERROR: %s', test, err)
         if err[0] == AssertionError:
             self._add_message(
                 test, err=err, status='failure', taken=self.taken)
@@ -120,8 +116,8 @@ class StoragePlugin(Plugin):
         self._add_message(test, status='running')
 
     def describeTest(self, test):
-        log.info('CALLED FOR TEST %s '
-                 'DESC %s' % (test.id(), test.test._testMethodDoc))
+        LOG.info('CALLED FOR TEST %s '
+                 'DESC %s', test.id(), test.test._testMethodDoc)
         return test.test._testMethodDoc
 
     @property

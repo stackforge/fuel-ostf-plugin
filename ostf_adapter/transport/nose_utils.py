@@ -12,13 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
 from nose import case
-import os
 import traceback
 import re
-
-log = logging.getLogger(__name__)
 
 
 def get_exc_message(exception_value):
@@ -38,7 +34,6 @@ def get_description(test_obj):
         if docstring:
             duration_pattern = r'Duration:.?(?P<duration>.+)'
             duration_matcher = re.search(duration_pattern, docstring)
-            log.info('DOCSTRING %s %s' % (docstring, duration_matcher))
             if duration_matcher:
                 duration = duration_matcher.group(1)
                 docstring = docstring[:duration_matcher.start()]
@@ -50,23 +45,6 @@ def get_description(test_obj):
 
             return name, description, duration
     return u"", u"", u""
-
-
-def config_name_generator(test_path, test_set, external_id):
-    log.info('CALLED WITH %s' % locals())
-    try:
-        module_path = os.path.dirname(__import__(test_path).__file__)
-        log.info('MODULE PATH IS %s' % module_path)
-        return os.path.join(
-            module_path,
-            'test_{0}_{1}.conf'.format(test_set, external_id))
-    except Exception, e:
-        log.info('ERROR IN PARSING CONFIG PATH %s' % e)
-        current_path = os.path.join(os.path.realpath('.'), test_path)
-        dir_path = os.path.dirname(current_path)
-        return os.path.join(
-            dir_path,
-            'test_{0}_{1}.conf'.format(test_set, external_id))
 
 
 def modify_test_name_for_nose(test_path):

@@ -18,10 +18,10 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 
-Base = declarative_base()
+BASE = declarative_base()
 
 
-class TestRun(Base):
+class TestRun(BASE):
 
     __tablename__ = 'test_runs'
 
@@ -37,7 +37,7 @@ class TestRun(Base):
     tests = relationship('Test', backref='test_run', order_by='Test.name')
 
 
-class TestSet(Base):
+class TestSet(BASE):
 
     __tablename__ = 'test_sets'
 
@@ -48,7 +48,7 @@ class TestSet(Base):
     tests = relationship('Test', backref='test_set', order_by='Test.name')
 
 
-class Test(Base):
+class Test(BASE):
 
     __tablename__ = 'tests'
 

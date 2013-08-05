@@ -16,7 +16,7 @@ import pecan
 from ostf_adapter.wsgi import hooks
 
 
-pecan_config_dict = {
+PECAN_DEFAULT = {
     'server': {
         'host': '0.0.0.0',
         'port': 8989
@@ -29,17 +29,18 @@ pecan_config_dict = {
     'nailgun': {
         'host': '127.0.0.1',
         'port': 8000
-    }
+    },
+    'dbpath': 'postgresql+psycopg2://postgres:demo@localhost/testing_adapter'
 }
 
 
 def setup_config(pecan_config=None):
     if pecan_config:
-        pecan_config_dict.update(pecan_config)
-    pecan.conf.update(pecan_config_dict)
+        PECAN_DEFAULT.update(pecan_config)
+    pecan.conf.update(PECAN_DEFAULT)
 
 
-def setup_app(pecan_config=None, extra_hooks=None):
+def setup_app():
     app_hooks = [hooks.ExceptionHandlingHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
