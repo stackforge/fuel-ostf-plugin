@@ -64,7 +64,7 @@ class StoragePlugin(Plugin):
             nose_utils.get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
-            log.info('Error %s' % exc_value)
+            LOG.info('Error %s', exc_value)
             data['message'] = u''
             if not status == 'error':
                 data['step'], data['message'] =\
