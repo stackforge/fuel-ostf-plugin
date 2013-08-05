@@ -125,7 +125,6 @@ class NoseDriver(object):
                     args=(test_run_id, external_id, cleanup))
                 proc.daemon = True
                 proc.start()
-                self._named_threads[int(test_run_id)] = proc
             else:
                 self.storage.update_test_run(test_run_id, status='finished')
 

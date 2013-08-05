@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from functional.base import BaseAdapterTest, Response
-from functional.client import TestingAdapterClient as adapter
-
 import time
+
+from functional.base import BaseAdapterTest, Response
+from ostf_client.ostf_client.client import TestingAdapterClient as adapter
 
 
 class AdapterTests(BaseAdapterTest):

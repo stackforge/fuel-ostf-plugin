@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from functional.client import TestingAdapterClient
 from functools import wraps
 from unittest import TestCase
+
+from ostf_client.ostf_client.client import TestingAdapterClient
 
 
 class EmptyResponseError(Exception):

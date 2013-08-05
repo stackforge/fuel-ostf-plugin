@@ -32,8 +32,7 @@ COMMANDS = {
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
         "description": "Sanity tests. Duration 30sec - 2 min",
-        "argv": [],
-        "cleanup": "fuel_health.cleanup"
+        "argv": []
     },
     "fuel_smoke": {
         "test_path": "fuel_health.tests.smoke",

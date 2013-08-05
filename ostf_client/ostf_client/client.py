@@ -23,12 +23,11 @@ class TestingAdapterClient(object):
 
     def _request(self, method, url, data=None):
         headers = {'content-type': 'application/json'}
-        if data:
-            print data
+
         r = requests.request(method, url, data=data, headers=headers, timeout=30.0)
         if 2 != r.status_code/100:
             raise AssertionError('{method} "{url}" responded with "{code}" status code'
-                                    .format(method=method.upper(), url=url, code=r.status_code))
+                                  .format(method=method.upper(), url=url, code=r.status_code))
         return r
 
     def __getattr__(self, item):
@@ -44,12 +43,6 @@ class TestingAdapterClient(object):
 
     def start_testrun(self, testset, cluster_id):
         return self.start_testrun_tests(testset, [], cluster_id)
-
-        '''url = ''.join([self.url, '/testruns'])
-        data = [{'testset': testset,
-                'metadata': {'cluster_id': str(cluster_id)}}]
-
-        return self._request('POST', url, data=dumps(data))'''
 
     def start_testrun_tests(self, testset, tests, cluster_id):
         url = ''.join([self.url, '/testruns'])
@@ -81,7 +74,7 @@ class TestingAdapterClient(object):
         testrun_id = [item['id'] for item in latest if item['testset'] == testset][0]
         return self.restart_tests(tests, testrun_id)
 
-    def _with_timeout(self, action, testset, cluster_id, timeout):
+    def _with_timeout(self, action, testset, cluster_id, timeout, polling=5, polling_hook=None):
         start_time = time.time()
         json = action().json()
 
@@ -91,16 +84,20 @@ class TestingAdapterClient(object):
             action()
 
         while time.time() - start_time <= timeout:
-            time.sleep(5)
+            time.sleep(polling)
 
             current_response = self.testruns_last(cluster_id)
+            if polling_hook:
+                polling_hook(current_response)
             current_status, current_tests = [(item['status'], item['tests']) for item in current_response.json()
                                              if item['testset'] == testset][0]
 
             if current_status == 'finished':
                 break
         else:
-            self.stop_testrun_last(testset, cluster_id)
+            stopped_response = self.stop_testrun_last(testset, cluster_id)
+            if polling_hook:
+                polling_hook(stopped_response)
             stopped_response = self.testruns_last(cluster_id)
             stopped_status = [item['status'] for item in stopped_response.json()
                               if item['testset'] == testset][0]
@@ -110,12 +107,12 @@ class TestingAdapterClient(object):
             raise AssertionError('\n'.join([msg, msg_tests]))
         return current_response
 
-    def run_with_timeout(self, testset, tests, cluster_id, timeout):
+    def run_with_timeout(self, testset, tests, cluster_id, timeout, polling=5, polling_hook=None):
         action = lambda: self.start_testrun_tests(testset, tests, cluster_id)
-        return self._with_timeout(action, testset, cluster_id, timeout)
+        return self._with_timeout(action, testset, cluster_id, timeout, polling, polling_hook)
 
-    def run_testset_with_timeout(self, testset, cluster_id, timeout):
-        return self.run_with_timeout(testset, [], cluster_id, timeout)
+    def run_testset_with_timeout(self, testset, cluster_id, timeout, polling=5, polling_hook=None):
+        return self.run_with_timeout(testset, [], cluster_id, timeout, polling, polling_hook)
 
     def restart_with_timeout(self, testset, tests, cluster_id, timeout):
         action = lambda: self.restart_tests_last(testset, tests, cluster_id)
