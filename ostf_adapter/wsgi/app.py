@@ -14,6 +14,7 @@
 
 import pecan
 from ostf_adapter.wsgi import hooks
+from ostf_adapter import api
 
 
 PECAN_DEFAULT = {
@@ -41,7 +42,7 @@ def setup_config(pecan_config=None):
 
 
 def setup_app():
-    app_hooks = [hooks.ExceptionHandlingHook()]
+    app_hooks = [hooks.ExceptionHandlingHook(), hooks.ApiHook(api.API())]
     app = pecan.make_app(
         pecan.conf.app.root,
         debug=False,

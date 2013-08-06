@@ -46,10 +46,6 @@ class V1Controller(BaseRestController):
         TODO Rewrite it with wsme expose
     """
 
-    def __init__(self, *args, **kwargs):
-        self.api = API()
-        super(V1Controller, self).__init__(*args, **kwargs)
-
     _custom_actions = {
         'testsets': ['GET'],
         'tests': ['GET'],
@@ -63,28 +59,28 @@ class V1Controller(BaseRestController):
 
     @expose('json')
     def get_testsets(self):
-        return self.api.get_test_sets()
+        return request.api.get_test_sets()
 
     @expose('json')
     def get_tests(self):
-        return self.api.get_tests()
+        return request.api.get_tests()
 
     @expose('json')
     def get_testruns(self, id=None):
         if not id:
             return self.api.get_test_runs()
-        return self.api.get_test_run(id)
+        return request.api.get_test_run(id)
 
     @expose('json')
     def get_testruns_last(self, external_id):
-        return self.api.get_last_test_run(external_id)
+        return request.api.get_last_test_run(external_id)
 
     @expose('json')
     def post_testruns(self):
         test_runs = json.loads(request.body)
-        return self.api.run_multiple(test_runs)
+        return request.api.run_multiple(test_runs)
 
     @expose('json')
     def put_testruns(self):
         test_runs = json.loads(request.body)
-        return self.api.update_multiple(test_runs)
+        return request.api.update_multiple(test_runs)

@@ -23,3 +23,15 @@ class ExceptionHandlingHook(hooks.PecanHook):
 
     def on_error(self, state, e):
         LOG.exception('Pecan state %s', state)
+
+
+class ApiHook(hooks.PecanHook):
+
+    def __init__(self, api):
+        super(ApiHook, self).__init__()
+        self.api = api
+
+    def before(self, state):
+        state.request.api = self.api
+
+

@@ -35,7 +35,8 @@ requirements = [
     'six==1.3.0',
     'stevedore==0.10',
     'waitress==0.8.5',
-    'wsgiref==0.1.2'
+    'wsgiref==0.1.2',
+    'WSME==0.5b2'
 ]
 
 setuptools.setup(

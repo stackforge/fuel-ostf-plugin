@@ -13,7 +13,7 @@
 #    under the License.
 
 from pecan import expose
-from ostf_adapter.wsgi.controllers import v1
+from ostf_adapter.wsgi import v1
 
 
 class RootController(object):

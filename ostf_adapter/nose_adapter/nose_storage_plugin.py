@@ -16,7 +16,7 @@ from nose.plugins import Plugin
 from nose.suite import ContextSuite
 from time import time
 import logging
-from ostf_adapter.transport import nose_utils
+from ostf_adapter.nose_adapter import nose_utils
 from ostf_adapter.storage import get_storage
 import os
 from pecan import conf

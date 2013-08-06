@@ -16,8 +16,8 @@ import multiprocessing
 from nose import core
 import os
 from ostf_adapter import storage
-from ostf_adapter.transport import nose_utils
-from ostf_adapter.transport import nose_storage_plugin
+from ostf_adapter.nose_adapter import nose_utils
+from ostf_adapter.nose_adapter import nose_storage_plugin
 import logging
 from pecan import conf
 
@@ -32,13 +32,6 @@ class NoseDriver(object):
         self.storage = storage.get_storage()
         self._named_threads = {}
 
-    def clean_process(self):
-        items = self._named_threads.items()
-        for uid, proc in items:
-            if not proc.is_alive():
-                proc.terminate()
-                self._named_threads.pop(uid)
-
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads
 
@@ -48,7 +41,6 @@ class NoseDriver(object):
             remove unneceserry arguments
             spawn processes and send them tasks as to workers
         """
-        self.clean_process()
         argv_add = argv or []
         tests = tests or []
 
@@ -99,7 +91,6 @@ class NoseDriver(object):
 
     def kill(self, test_run_id, external_id, cleanup=None):
         LOG.info('Trying to stop process %s', test_run_id)
-        self.clean_process()
 
         if test_run_id in self._named_threads:
 
