@@ -15,7 +15,7 @@
 import time
 
 from functional.base import BaseAdapterTest, Response
-from ostf_client.ostf_client.client import TestingAdapterClient as adapter
+from ostf_client.client import TestingAdapterClient as adapter
 
 
 class AdapterTests(BaseAdapterTest):
