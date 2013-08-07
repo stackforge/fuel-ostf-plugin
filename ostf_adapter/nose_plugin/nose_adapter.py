@@ -109,11 +109,8 @@ class NoseDriver(object):
             self.storage.update_test_run(test_run_id, status='finished')
 
     def kill(self, test_run_id, external_id, cleanup=None):
-        LOG.info('Trying to stop process %s', test_run_id)
 
         if test_run_id in self._named_threads:
-
-            LOG.info('Terminating process: %s', test_run_id)
 
             self._named_threads[int(test_run_id)].terminate()
             self._named_threads.pop(int(test_run_id), None)

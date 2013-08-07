@@ -123,7 +123,7 @@ class Test(BASE):
         return {
             'id': self.name,
             'testset': self.test_set_id,
-            'name': test_data['name'],
+            'name': self.name,
             'description': test_data['description'],
             'duration': test_data['duration'],
             'message': test_data['message'],
