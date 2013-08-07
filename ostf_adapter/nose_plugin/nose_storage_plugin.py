@@ -43,8 +43,6 @@ class StoragePlugin(Plugin):
         self._start_time = None
 
     def options(self, parser, env=os.environ):
-        LOG.info('NAILGUN HOST %s '
-                 'AND PORT %s', conf.nailgun.host, conf.nailgun.port)
         env['NAILGUN_HOST'] = str(conf.nailgun.host)
         env['NAILGUN_PORT'] = str(conf.nailgun.port)
         if self.cluster_id:
@@ -54,67 +52,63 @@ class StoragePlugin(Plugin):
         self.conf = conf
 
     def _add_message(
-            self, test, err=None, capt=None,
-            tb_info=None, status=None, taken=0):
-        data = dict()
-        data['name'], data['description'], data['duration'] = \
+            self, test, err=None, status=None):
+        data = {
+            'status': status,
+            'time_taken': self.taken
+        }
+        data['title'], data['description'], data['duration'] = \
             nose_utils.get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
-            LOG.info('Error %s', exc_value)
             data['step'], data['message'] = None, u''
             if not status == 'error':
                 data['step'], data['message'] = \
                     nose_utils.format_failure_message(exc_value)
-            data['traceback'] = None
+            data['traceback'] = u''
         else:
-            data['step'], data['message'] = None, None
-            data['traceback'] = None
+            data['step'], data['message'] = None, u''
+            data['traceback'] = u''
         if isinstance(test, ContextSuite):
             for sub_test in test._tests:
-                data['name'], data['description'], data['duration'] = \
+                data['title'], data['description'], data['duration'] = \
                     nose_utils.get_description(test)
                 self.storage.add_test_result(
-                    self.test_run_id, sub_test.id(), status, taken, data)
+                    self.test_run_id, sub_test.id(), data)
         else:
             self.storage.add_test_result(
-                self.test_run_id, test.id(), status, taken, data)
+                self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
-        LOG.info('SUCCESS for %s', test)
         if self.discovery:
             data = dict()
-            data['name'], data['description'], data['duration'] = \
+            data['title'], data['description'], data['duration'] = \
                 nose_utils.get_description(test)
             data['message'] = None
             data['step'] = None
             data['traceback'] = None
-            LOG.info('DISCOVERY FOR %s WITH DATA %s', test.id(), data)
-            self.storage.add_test_for_testset(self.test_run_id, test.id(), data)
+            self.storage.add_test_for_testset(
+                self.test_run_id, test.id(), data)
         else:
             LOG.info('UPDATING TEST %s', test)
-            self._add_message(test, status='success', taken=self.taken)
+            self._add_message(test, status='success')
 
     def addFailure(self, test, err, capt=None, tb_info=None):
         LOG.info('FAILURE for %s', test)
-        self._add_message(test, err=err, status='failure', taken=self.taken)
+        self._add_message(test, err=err, status='failure')
 
     def addError(self, test, err, capt=None, tb_info=None):
-        LOG.info('TEST NAME: %s\n'
-                 'ERROR: %s', test, err)
         if err[0] == AssertionError:
             self._add_message(
-                test, err=err, status='failure', taken=self.taken)
+                test, err=err, status='failure')
         else:
-            self._add_message(test, err=err, status='error', taken=self.taken)
+            self._add_message(test, err=err, status='error')
 
     def beforeTest(self, test):
         self._start_time = time()
         self._add_message(test, status='running')
 
     def describeTest(self, test):
-        LOG.info('CALLED FOR TEST %s '
-                 'DESC %s', test.id(), test.test._testMethodDoc)
         return test.test._testMethodDoc
 
     @property

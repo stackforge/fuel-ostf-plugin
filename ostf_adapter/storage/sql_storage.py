@@ -17,7 +17,7 @@ import json
 import logging
 
 from sqlalchemy import create_engine, exc, desc, func, asc
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import sessionmaker, joinedload, object_mapper
 from sqlalchemy import pool
 
 from ostf_adapter.storage import models
@@ -38,24 +38,28 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_set, external_id, data, status='running',
+    def add_test_run(self, test_set, cluster_id, status='running',
                      tests=None):
         log.info('ADD test run - %s' % test_set)
         predefined_tests = tests or []
         session = self.get_session()
-        tests = session.query(models.Test).filter_by(test_set_id=test_set)
-        test_run = models.TestRun(type=test_set, external_id=external_id,
-                                  data=json.dumps(data), status=status)
+        tests = session.query(models.Test).filter_by(
+            test_set_id=test_set, test_run_id=None)
+        test_run = models.TestRun(test_set_id=test_set, cluster_id=cluster_id,
+                                  status=status)
         session.add(test_run)
         for test in tests:
-            test_data = {'test_run_id': test_run.id,
-                         'name': test.name,
-                         'data': test.data,
-                         'status': 'wait_running'}
-            if predefined_tests and test.name not in predefined_tests:
-                log.info('PREDEFINED TEST %s' % test.name)
-                test_data.update({'status': 'disabled'})
-            new_test = models.Test(**test_data)
+            new_test = models.Test()
+            mapper = object_mapper(test)
+            primary_keys = set([col.key for col in mapper.primary_key])
+            for column in mapper.iterate_properties:
+                if column.key not in primary_keys:
+                    setattr(new_test, column.key, getattr(test, column.key))
+            new_test.test_run_id = test_run.id
+            if predefined_tests and new_test.name not in predefined_tests:
+                new_test.status = 'disabled'
+            else:
+                new_test.status = 'wait_running'
             session.add(new_test)
         session.commit()
         return test_run, session
@@ -94,15 +98,11 @@ class SqlStorage(object):
         return tests
 
     def add_test_for_testset(self, test_set, test_name, data):
-        log.info('Data received %s' % data)
         session = self.get_session()
         old_test_obj = session.query(models.Test).filter_by(
             name=test_name, test_set_id=test_set, test_run_id=None).\
             update(data, synchronize_session=False)
-        if old_test_obj:
-            old_test_obj(**data)
-            session.add(old_test_obj)
-        else:
+        if not old_test_obj:
             data.update({'test_set_id': test_set,
                          'name': test_name})
             test_obj = models.Test(**data)
@@ -110,10 +110,10 @@ class SqlStorage(object):
         session.commit()
         session.close()
 
-    def get_last_test_run(self, test_set, external_id):
+    def get_last_test_run(self, test_set, cluster_id):
         session = self.get_session()
         test_run = session.query(models.TestRun). \
-            filter_by(external_id=str(external_id), type=test_set). \
+            filter_by(cluster_id=cluster_id, test_set_id=test_set). \
             order_by(desc(models.TestRun.id)).first()
         session.commit()
         session.close()
@@ -128,10 +128,11 @@ class SqlStorage(object):
         session.close()
         return test_runs
 
-    def get_last_test_results(self, external_id):
+    def get_last_test_results(self, cluster_id):
         session = self.get_session()
         test_run_ids = session.query(func.max(models.TestRun.id)) \
-            .group_by(models.TestRun.type).filter_by(external_id=external_id)
+            .group_by(models.TestRun.test_set_id).\
+            filter_by(cluster_id=cluster_id)
         log.info('LASR TEST RUN IDS %s' % test_run_ids)
         test_runs = session.query(models.TestRun). \
             options(joinedload('tests')). \
@@ -140,7 +141,7 @@ class SqlStorage(object):
         session.close()
         if not test_runs:
             msg = 'Database does not contains ' \
-                  'Test Run with ID %s' % external_id
+                  'Test Run with ID %s' % cluster_id
             log.warning(msg)
             raise exc.OstfDBException(message=msg)
         return test_runs
@@ -159,18 +160,12 @@ class SqlStorage(object):
         return test_run
 
     def add_test_result(
-            self, test_run_id, test_name, status, time_taken, data):
-        log.info('Add test result for: ID: %s\n'
-                 'TEST NAME: %s\n'
-                 'DATA: %s' % (test_run_id, test_name, data))
+            self, test_run_id, test_name, data):
+        log.info('{0}{1}{2}'.format(test_run_id, test_name, data))
         session = self.get_session()
         session.query(models.Test). \
             filter_by(name=test_name, test_run_id=test_run_id). \
-            update({
-            'status': status,
-            'taken': time_taken,
-            'data': json.dumps(data)
-        })
+            update(data, synchronize_session=False)
         session.commit()
         session.close()
 
@@ -179,7 +174,7 @@ class SqlStorage(object):
         updated_data = {}
         if status:
             updated_data['status'] = status
-        if status in ['finished', 'error', 'error_on_cleanup']:
+        if status in ['finished']:
             updated_data['ended_at'] = datetime.utcnow()
         session.query(models.TestRun). \
             filter(models.TestRun.id == test_run_id). \
@@ -206,7 +201,7 @@ class SqlStorage(object):
     def update_all_running_test_runs(self, status='finished'):
         session = self.get_session()
         session.query(models.TestRun). \
-            filter(models.TestRun.status.in_(('started', 'running'))). \
+            filter_by(status='running'). \
             update({'status': 'finished'}, synchronize_session=False)
         session.query(models.Test). \
             filter(models.Test.status.in_(('running', 'wait_running'))). \

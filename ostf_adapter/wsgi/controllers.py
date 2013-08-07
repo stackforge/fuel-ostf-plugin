@@ -97,29 +97,28 @@ class TestrunsController(BaseRestController):
                 item in request.storage.get_last_test_results(cluster_id)]
 
     def _run(self, test_set, metadata, tests):
-        external_id = metadata['cluster_id']
+        cluster_id = metadata['cluster_id']
         test_set = request.storage.get_test_set(test_set)
-        test_set_data = json.loads(test_set.data)
-        transport = request.plugin_manager[test_set_data['driver']]
+        transport = request.plugin_manager[test_set.driver]
         data = {}
-        if self._check_last_running(test_set.id, external_id):
+        if self._check_last_running(test_set.id, cluster_id):
             test_run, session = request.storage.add_test_run(
-                test_set.id, external_id, metadata, tests=tests)
+                test_set.id, cluster_id, tests=tests)
             transport.obj.run(
                 test_run.id,
-                test_run.external_id,
+                test_run.cluster_id,
                 {},
-                test_set_data,
+                test_set,
                 tests,
-                test_path=test_set_data.get('test_path'),
-                argv=test_set_data.get('argv', [])
+                test_path=test_set.test_path,
+                argv=test_set.additional_arguments
             )
             data = test_run.frontend
             session.close()
         return data
 
-    def _check_last_running(self, test_set, external_id):
-        test_run = request.storage.get_last_test_run(test_set, external_id)
+    def _check_last_running(self, test_set, cluster_id):
+        test_run = request.storage.get_last_test_run(test_set, cluster_id)
         if not test_run:
             return True
         return test_run.status not in ['running']
@@ -127,21 +126,20 @@ class TestrunsController(BaseRestController):
     def _restart(self, test_run):
         tests = test_run.get('tests', [])
         test_run = request.storage.get_test_run(test_run['id'])
-        if self._check_last_running(test_run.type, test_run.external_id):
-            test_set = request.storage.get_test_set(test_run.type)
-            test_set_data = json.loads(test_set.data)
-            transport = request.plugin_manager[test_set_data['driver']]
+        if self._check_last_running(test_run.test_set_id, test_run.cluster_id):
+            test_set = request.storage.get_test_set(test_run.test_set_id)
+            transport = request.plugin_manager[test_set.driver]
             request.storage.update_test_run(test_run.id, status='running')
             if tests:
                 request.storage.update_test_run_tests(test_run.id, tests)
             transport.obj.run(
                 test_run.id,
-                test_run.external_id,
+                test_run.cluster_id,
                 {},
-                test_set_data,
+                test_set,
                 tests,
-                test_path=test_set_data.get('test_path'),
-                argv=test_set_data.get('argv', [])
+                test_path=test_set.test_path,
+                argv=test_set.additional_arguments
             )
             return request.storage.get_test_run(
                 test_run.id, joined=True).frontend
@@ -149,12 +147,11 @@ class TestrunsController(BaseRestController):
 
     def _kill(self, test_run):
         test_run = request.storage.get_test_run(test_run['id'])
-        test_set = request.storage.get_test_set(test_run.type)
-        test_set_data = json.loads(test_set.data)
-        transport = request.plugin_manager[test_set_data['driver']]
-        cleanup = test_set_data.get('cleanup')
+        test_set = request.storage.get_test_set(test_run.test_set_id)
+        transport = request.plugin_manager[test_set.driver]
+        cleanup = test_set.cleanup_path
         killed = transport.obj.kill(
-            test_run.id, test_run.external_id, cleanup=cleanup)
+            test_run.id, test_run.cluster_id, cleanup=cleanup)
         if killed:
             request.storage.update_running_tests(test_run.id, status='stopped')
         return request.storage.get_test_run(test_run.id, joined=True).frontend

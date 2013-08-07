@@ -51,7 +51,7 @@ def upgrade():
                   sa.Column('duration', sa.String(length=512), nullable=True))
     op.add_column('tests', sa.Column('message', sa.Text(), nullable=True))
     op.add_column('tests',
-                  sa.Column('time_taken', sa.Interval(), nullable=True))
+                  sa.Column('time_taken', sa.Float(), nullable=True))
     op.drop_column('tests', u'taken')
     op.drop_column('tests', u'data')
     ### end Alembic commands ###

@@ -86,7 +86,7 @@ def format_failure_message(message):
     if matcher:
         step, msg = matcher.groups()
         return int(step), msg
-    return '', message
+    return None, message
 
 
 def run_proc(func, *args):

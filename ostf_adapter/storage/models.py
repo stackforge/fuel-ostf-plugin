@@ -50,22 +50,16 @@ class TestRun(BASE):
     def frontend(self):
         test_run_data = {
             'id': self.id,
-            'testset': self.type,
-            'metadata': json.loads(self.data),
+            'testset': self.test_set_id,
+            'meta': self.meta,
+            'cluster_id': self.cluster_id,
             'status': self.status,
             'started_at': self.started_at,
-            'ended_at': self.ended_at
+            'ended_at': self.ended_at,
+            'tests': []
         }
-        tests = []
         if self.tests:
-            for test in self.tests:
-                test_data = {'id': test.name,
-                             'taken': test.taken,
-                             'status': test.status}
-                if test_data:
-                    test_data.update(json.loads(test.data))
-                tests.append(test_data)
-            test_run_data['tests'] = tests
+            test_run_data['tests'] = [test.frontend for test in self.tests]
         return test_run_data
 
 
@@ -104,13 +98,14 @@ class Test(BASE):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(512))
+    title = sa.Column(sa.String(512))
     description = sa.Column(sa.Text())
     duration = sa.Column(sa.String(512))
     message = sa.Column(sa.Text())
     traceback = sa.Column(sa.Text())
     status = sa.Column(sa.Enum(*STATES, name='test_states'))
     step = sa.Column(sa.Integer())
-    time_taken = sa.Column(sa.Interval(second_precision=True))
+    time_taken = sa.Column(sa.Float())
     meta = sa.Column(fields.JsonField())
 
     test_set_id = sa.Column(sa.String(128), sa.ForeignKey('test_sets.id'))
@@ -119,15 +114,14 @@ class Test(BASE):
 
     @property
     def frontend(self):
-        test_data = json.loads(self.data)
         return {
             'id': self.name,
             'testset': self.test_set_id,
-            'name': self.name,
-            'description': test_data['description'],
-            'duration': test_data['duration'],
-            'message': test_data['message'],
-            'step': test_data['step'],
+            'name': self.title,
+            'description': self.description,
+            'duration': self.duration,
+            'message': self.message,
+            'step': self.step,
             'status': self.status,
-            'taken': self.taken
+            'taken': self.time_taken
         }
