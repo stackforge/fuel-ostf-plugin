@@ -73,7 +73,7 @@ setuptools.setup(
 
     entry_points={
         'plugins': [
-            'nose = ostf_adapter.transport.nose_adapter:NoseDriver'
+            'nose = ostf_adapter.nose_plugin.nose_adapter:NoseDriver'
         ],
         'console_scripts': [
             'ostf-server = bin.adapter_api:main',

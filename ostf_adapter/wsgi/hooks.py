@@ -14,6 +14,8 @@
 
 from pecan import hooks
 import logging
+from stevedore import extension
+from ostf_adapter import storage
 
 
 LOG = logging.getLogger(__name__)
@@ -25,13 +27,27 @@ class ExceptionHandlingHook(hooks.PecanHook):
         LOG.exception('Pecan state %s', state)
 
 
-class ApiHook(hooks.PecanHook):
+class StorageHook(hooks.PecanHook):
 
-    def __init__(self, api):
-        super(ApiHook, self).__init__()
-        self.api = api
+    def __init__(self):
+        super(StorageHook, self).__init__()
+        self.storage = storage.get_storage()
 
     def before(self, state):
-        state.request.api = self.api
+        state.request.storage = self.storage
+
+
+class PluginsHook(hooks.PecanHook):
+
+    PLUGINS_NAMESPACE = 'plugins'
+
+    def __init__(self):
+        super(PluginsHook, self).__init__()
+        self.plugin_manager = extension.ExtensionManager(
+            self.PLUGINS_NAMESPACE, invoke_on_load=True)
+
+    def before(self, state):
+        state.request.plugin_manager = self.plugin_manager
+
 
 

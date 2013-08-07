@@ -17,7 +17,7 @@ from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy import pool
 from datetime import datetime
 
-from ostf_adapter.storage.sql import models
+from ostf_adapter.storage import models
 
 import json
 import logging
@@ -81,26 +81,21 @@ class SqlStorage(object):
         session.close()
         return test_sets
 
+    def get_test_set(self, test_set):
+        session = self.get_session()
+        test_set = session.query(models.TestSet).filter_by(id=test_set).first()
+        session.commit()
+        session.close()
+        return test_set
+
     def get_tests(self):
         session = self.get_session()
         tests = session.query(models.Test).order_by(
             asc(models.Test.test_set_id), asc(models.Test.name)).\
             filter_by(test_run_id=None)
-        log.info('Tests received %s' % tests.count())
         session.commit()
         session.close()
-        tests_data = []
-        for t in tests:
-            test_data = json.loads(t.data)
-            tests_data.append({'id': t.name, 'testset': t.test_set_id,
-                               'name': test_data['name'],
-                               'description': test_data['description'],
-                               'duration': test_data['duration'],
-                               'message': test_data['message'],
-                               'step': test_data['step'],
-                               'status': t.status,
-                               'taken': t.taken})
-        return tests_data
+        return tests
 
     def add_sets_test(self, test_set, test_name, data):
         log.info('Data received %s' % data)

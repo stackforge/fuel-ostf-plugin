@@ -16,8 +16,8 @@
 
 import os
 from ostf_adapter import cli_config
-from ostf_adapter.storage.sql.cli import do_apply_migrations
-from ostf_adapter.common import logger
+from ostf_adapter.storage.cli import do_apply_migrations
+from ostf_adapter import logger
 from gevent import pywsgi
 from ostf_adapter.wsgi import app
 import logging

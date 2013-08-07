@@ -14,9 +14,9 @@
 
 import os
 import unittest
-from ostf_adapter.nose_adapter import nose_adapter
-from ostf_adapter.nose_adapter import nose_utils
-from ostf_adapter.nose_adapter import nose_storage_plugin
+from ostf_adapter.nose_plugin import nose_adapter
+from ostf_adapter.nose_plugin import nose_utils
+from ostf_adapter.nose_plugin import nose_storage_plugin
 import io
 from mock import patch, MagicMock
 from time import time

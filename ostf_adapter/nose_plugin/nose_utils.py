@@ -15,7 +15,33 @@
 from nose import case
 import traceback
 import re
+import json
+import os
 
+
+COMMANDS = {
+    "fuel_sanity": {
+        "test_path": "fuel_health.tests.sanity",
+        "driver": "nose",
+        "description": "Sanity tests. Duration 30sec - 2 min",
+        "argv": []
+    },
+    "fuel_smoke": {
+        "test_path": "fuel_health.tests.smoke",
+        "driver": "nose",
+        "description": "Smoke tests. Duration 3 min - 14 min",
+        "argv": [],
+        "cleanup": "fuel_health.cleanup"
+    }
+}
+
+
+def parse_json_file(file_path):
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    commands_path = os.path.join(
+        current_directory, file_path)
+    with open(commands_path, 'r') as f:
+        return json.load(f)
 
 def get_exc_message(exception_value):
     """

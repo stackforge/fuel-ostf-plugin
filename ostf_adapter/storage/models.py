@@ -16,6 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
+import json
 
 
 BASE = declarative_base()
@@ -36,6 +37,27 @@ class TestRun(BASE):
 
     tests = relationship('Test', backref='test_run', order_by='Test.name')
 
+    @property
+    def frontend(self):
+        test_run_data = {
+            'id': self.id,
+            'testset': self.type,
+            'metadata': json.loads(self.data),
+            'status': self.status,
+            'started_at': self.started_at,
+            'ended_at': self.ended_at
+        }
+        tests = []
+        if self.tests:
+            for test in self.tests:
+                test_data = {'id': test.name,
+                             'taken': test.taken,
+                             'status': test.status}
+                if test_data:
+                    test_data.update(json.loads(test.data))
+                tests.append(test_data)
+            test_run_data['tests'] = tests
+        return test_run_data
 
 class TestSet(BASE):
 
@@ -46,6 +68,10 @@ class TestSet(BASE):
     data = sa.Column(sa.Text())
 
     tests = relationship('Test', backref='test_set', order_by='Test.name')
+
+    @property
+    def frontend(self):
+        return {'id': self.id, 'name': self.description}
 
 
 class Test(BASE):
@@ -60,3 +86,19 @@ class Test(BASE):
 
     test_set_id = sa.Column(sa.String(128), sa.ForeignKey('test_sets.id'))
     test_run_id = sa.Column(sa.Integer(), sa.ForeignKey('test_runs.id'))
+
+
+    @property
+    def frontend(self):
+        test_data = json.loads(self.data)
+        return {
+            'id': self.name,
+            'testset': self.test_set_id,
+            'name': test_data['name'],
+            'description': test_data['description'],
+            'duration': test_data['duration'],
+            'message': test_data['message'],
+            'step': test_data['step'],
+            'status': self.status,
+            'taken': self.taken
+        }

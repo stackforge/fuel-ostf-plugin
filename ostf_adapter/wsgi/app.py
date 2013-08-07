@@ -14,7 +14,6 @@
 
 import pecan
 from ostf_adapter.wsgi import hooks
-from ostf_adapter import api
 
 
 PECAN_DEFAULT = {
@@ -23,7 +22,7 @@ PECAN_DEFAULT = {
         'port': 8989
     },
     'app': {
-        'root': 'ostf_adapter.wsgi.controllers.root.RootController',
+        'root': 'ostf_adapter.wsgi.root.RootController',
         'modules': ['ostf_adapter.wsgi'],
         'debug': False,
     },
@@ -42,7 +41,9 @@ def setup_config(pecan_config=None):
 
 
 def setup_app():
-    app_hooks = [hooks.ExceptionHandlingHook(), hooks.ApiHook(api.API())]
+    app_hooks = [hooks.ExceptionHandlingHook(),
+                 hooks.StorageHook(),
+                 hooks.PluginsHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
         debug=False,

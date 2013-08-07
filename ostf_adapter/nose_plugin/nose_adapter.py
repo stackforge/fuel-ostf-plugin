@@ -16,11 +16,27 @@ import multiprocessing
 from nose import core
 import os
 from ostf_adapter import storage
-from ostf_adapter.nose_adapter import nose_utils
-from ostf_adapter.nose_adapter import nose_storage_plugin
+from ostf_adapter.nose_plugin import nose_utils
+from ostf_adapter.nose_plugin import nose_storage_plugin
 import logging
 from pecan import conf
 
+
+COMMANDS = {
+    "fuel_sanity": {
+        "test_path": "fuel_health.tests.sanity",
+        "driver": "nose",
+        "description": "Sanity tests. Duration 30sec - 2 min",
+        "argv": []
+    },
+    "fuel_smoke": {
+        "test_path": "fuel_health.tests.smoke",
+        "driver": "nose",
+        "description": "Smoke tests. Duration 3 min - 14 min",
+        "argv": [],
+        "cleanup": "fuel_health.cleanup"
+    }
+}
 
 LOG = logging.getLogger(__name__)
 
@@ -31,6 +47,23 @@ class NoseDriver(object):
         LOG.info('NoseDriver initialized')
         self.storage = storage.get_storage()
         self._named_threads = {}
+        self.discovery()
+
+    def discovery(self):
+        LOG.info('Started general tests discovery')
+        self.storage.flush_testsets()
+        if conf.debug:
+            self.commands = nose_utils.parse_json_file('commands.json')
+        else:
+            self.commands = COMMANDS
+        for test_set, test_set_data in self.commands.iteritems():
+            argv_add = test_set_data.get('argv', [])
+            self.storage.add_test_set(test_set, test_set_data)
+            self.tests_discovery(
+                test_set,
+                test_set_data['test_path'],
+                argv_add)
+        self.storage.update_all_running_test_runs()
 
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads
