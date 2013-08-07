@@ -92,7 +92,7 @@ class SqlStorage(object):
         session = self.get_session()
         tests = session.query(models.Test).order_by(
             asc(models.Test.test_set_id), asc(models.Test.name)).\
-            filter_by(test_run_id=None)
+            filter_by(test_run_id=None).all()
         session.commit()
         session.close()
         return tests

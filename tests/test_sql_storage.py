@@ -34,7 +34,7 @@ class SqlStorageTests(unittest.TestCase):
                                 'duration': '',
                                 'step': None}]
         self.storage = SqlStorage('sqlite://', poolclass=pool.QueuePool)
-        models.Base.metadata.create_all(self.storage._engine)
+        models.BASE.metadata.create_all(self.storage._engine)
         self.storage.add_test_set(*self.test_set_fixtures.items()[0])
         for test in self.tests_fixtures:
             self.storage.add_sets_test('test_health', test['name'], test)
@@ -53,7 +53,7 @@ class SqlStorageTests(unittest.TestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].id, 'test_health')
 
-    def test_get_sets(self):
+    def test_get_tests(self):
         res = self.storage.get_tests()
         self.assertEqual(len(res), 2)
 

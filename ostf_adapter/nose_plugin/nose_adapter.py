@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import multiprocessing
 from nose import core
 import os
 from ostf_adapter import storage
