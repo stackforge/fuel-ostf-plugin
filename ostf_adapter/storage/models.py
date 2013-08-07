@@ -17,6 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import json
+from ostf_adapter.storage import fields
 
 
 BASE = declarative_base()
@@ -26,15 +27,21 @@ class TestRun(BASE):
 
     __tablename__ = 'test_runs'
 
+    STATES = (
+        'running',
+        'finished'
+        )
+
     id = sa.Column(sa.Integer(), primary_key=True)
-    external_id = sa.Column(sa.String(128))
-    type = sa.Column(sa.String(128))
-    status = sa.Column(sa.String(128))
-    stats = sa.Column(sa.Text())
-    data = sa.Column(sa.Text())
+    cluster_id = sa.Column(sa.Integer(), nullable=False)
+    status = sa.Column(sa.Enum(*STATES, name='test_run_states'),
+        nullable=False)
+    meta = sa.Column(fields.JsonField())
     started_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     ended_at = sa.Column(sa.DateTime)
+    test_set_id = sa.Column(sa.String(128), sa.ForeignKey('test_sets.id'))
 
+    test_set = relationship('TestSet', backref='test_runs')
     tests = relationship('Test', backref='test_run', order_by='Test.name')
 
     @property
@@ -64,10 +71,15 @@ class TestSet(BASE):
     __tablename__ = 'test_sets'
 
     id = sa.Column(sa.String(128), primary_key=True)
-    description = sa.Column(sa.String(128))
-    data = sa.Column(sa.Text())
+    description = sa.Column(sa.String(256))
+    test_path = sa.Column(sa.String(256))
+    driver = sa.Column(sa.String(128))
+    additional_arguments = sa.Column(fields.ListField())
+    cleanup_path = sa.Column(sa.String(128))
+    meta = sa.Column(fields.JsonField())
 
-    tests = relationship('Test', backref='test_set', order_by='Test.name')
+    tests = relationship('Test',
+        backref='test_set', order_by='Test.name')
 
     @property
     def frontend(self):
@@ -78,11 +90,25 @@ class Test(BASE):
 
     __tablename__ = 'tests'
 
+    STATES = (
+        'wait_running',
+        'running',
+        'failure',
+        'success',
+        'error',
+        'stopped'
+    )
+
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(512))
-    status = sa.Column(sa.String(128))
-    taken = sa.Column(sa.Float())
-    data = sa.Column(sa.Text())
+    description = sa.Column(sa.Text())
+    duration = sa.Column(sa.String(512))
+    message = sa.Column(sa.Text())
+    traceback = sa.Column(sa.Text())
+    status = sa.Column(sa.Enum(*STATES, name='test_states'))
+    step = sa.Column(sa.Integer())
+    time_taken = sa.Column(sa.Interval(second_precision=True))
+    meta = sa.Column(fields.JsonField())
 
     test_set_id = sa.Column(sa.String(128), sa.ForeignKey('test_sets.id'))
     test_run_id = sa.Column(sa.Integer(), sa.ForeignKey('test_runs.id'))
