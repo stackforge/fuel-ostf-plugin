@@ -12,13 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nose import core
 import os
+import logging
+
+from nose import core
+from pecan import conf
+
 from ostf_adapter import storage
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
-import logging
-from pecan import conf
 
 
 COMMANDS = {
@@ -41,7 +43,6 @@ LOG = logging.getLogger(__name__)
 
 
 class NoseDriver(object):
-
     def __init__(self):
         LOG.info('NoseDriver initialized')
         self.storage = storage.get_storage()
@@ -97,14 +98,14 @@ class NoseDriver(object):
 
     def _run_tests(self, test_run_id, external_id, argv_add, command):
         LOG.info('Nose Driver spawn process for TEST RUN: %s\n'
-                     'ARGS: %s' ,test_run_id, argv_add)
+                 'ARGS: %s', test_run_id, argv_add)
 
         try:
             core.TestProgram(
                 addplugins=[nose_storage_plugin.StoragePlugin(
                     test_run_id, str(external_id))],
                 exit=False,
-                argv=['tests']+argv_add)
+                argv=['tests'] + argv_add)
             self._named_threads.pop(int(test_run_id), None)
         except Exception, e:
             LOG.exception('Close process TEST_RUN: %s\n', test_run_id)

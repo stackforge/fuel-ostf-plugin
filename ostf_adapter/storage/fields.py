@@ -1,9 +1,9 @@
-from sqlalchemy.types import TypeDecorator, VARCHAR
 import json
+
+from sqlalchemy.types import TypeDecorator, VARCHAR
 
 
 class JsonField(TypeDecorator):
-
     impl = VARCHAR
 
     def process_bind_param(self, value, dialect):
@@ -19,7 +19,6 @@ class JsonField(TypeDecorator):
 
 
 class ListField(JsonField):
-
     def process_bind_param(self, value, dialect):
         value = list(value)
         super(ListField, self).process_bind_param(value, dialect)

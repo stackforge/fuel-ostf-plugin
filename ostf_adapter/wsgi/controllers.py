@@ -12,12 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pecan import rest, expose, request
 import json
+
+from pecan import rest, expose, request
 
 
 class BaseRestController(rest.RestController):
-
     def _handle_get(self, method, remainder):
         if len(remainder):
             method_name = remainder[0]
@@ -32,7 +32,6 @@ class BaseRestController(rest.RestController):
 
 
 class TestsController(BaseRestController):
-
     @expose('json')
     def get_one(self, test_name):
         return {}
@@ -43,7 +42,6 @@ class TestsController(BaseRestController):
 
 
 class TestsetsController(BaseRestController):
-
     @expose('json')
     def get_one(self, test_set):
         return {}
@@ -54,7 +52,6 @@ class TestsetsController(BaseRestController):
 
 
 class TestrunsController(BaseRestController):
-
     _custom_actions = {
         'last': ['GET'],
     }
@@ -135,7 +132,7 @@ class TestrunsController(BaseRestController):
                 request.storage.update_test_run_tests(test_run.id, tests)
             transport.obj.run(test_run.id,
                               test_run.external_id,
-                              {},
+                {},
                               test_set_data,
                               tests,
                               test_path=test_set_data.get('test_path'),

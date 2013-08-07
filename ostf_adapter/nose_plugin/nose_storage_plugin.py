@@ -12,21 +12,22 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nose.plugins import Plugin
-from nose.suite import ContextSuite
 from time import time
 import logging
+import os
+
+from nose.plugins import Plugin
+from nose.suite import ContextSuite
+from pecan import conf
+
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.storage import get_storage
-import os
-from pecan import conf
 
 
 LOG = logging.getLogger(__name__)
 
 
 class StoragePlugin(Plugin):
-
     enabled = True
     name = 'storage'
     score = 15000
@@ -56,14 +57,14 @@ class StoragePlugin(Plugin):
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
         data = dict()
-        data['name'], data['description'], data['duration'] =\
+        data['name'], data['description'], data['duration'] = \
             nose_utils.get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
             LOG.info('Error %s', exc_value)
             data['step'], data['message'] = None, u''
             if not status == 'error':
-                data['step'], data['message'] =\
+                data['step'], data['message'] = \
                     nose_utils.format_failure_message(exc_value)
             data['traceback'] = None
         else:
@@ -71,7 +72,7 @@ class StoragePlugin(Plugin):
             data['traceback'] = None
         if isinstance(test, ContextSuite):
             for sub_test in test._tests:
-                data['name'], data['description'], data['duration'] =\
+                data['name'], data['description'], data['duration'] = \
                     nose_utils.get_description(test)
                 self.storage.add_test_result(
                     self.test_run_id, sub_test.id(), status, taken, data)
@@ -83,7 +84,7 @@ class StoragePlugin(Plugin):
         LOG.info('SUCCESS for %s', test)
         if self.discovery:
             data = dict()
-            data['name'], data['description'], data['duration'] =\
+            data['name'], data['description'], data['duration'] = \
                 nose_utils.get_description(test)
             data['message'] = None
             data['step'] = None

@@ -12,21 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
+import json
+import logging
+
 from sqlalchemy import create_engine, exc, desc, func, asc
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy import pool
-from datetime import datetime
 
 from ostf_adapter.storage import models
 
-import json
-import logging
 
 log = logging.getLogger(__name__)
 
 
 class SqlStorage(object):
-
     def __init__(self, engine_url, poolclass=pool.NullPool):
         log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(
@@ -91,7 +91,7 @@ class SqlStorage(object):
     def get_tests(self):
         session = self.get_session()
         tests = session.query(models.Test).order_by(
-            asc(models.Test.test_set_id), asc(models.Test.name)).\
+            asc(models.Test.test_set_id), asc(models.Test.name)). \
             filter_by(test_run_id=None).all()
         session.commit()
         session.close()
@@ -114,8 +114,8 @@ class SqlStorage(object):
 
     def get_last_test_run(self, test_set, external_id):
         session = self.get_session()
-        test_run = session.query(models.TestRun).\
-            filter_by(external_id=str(external_id), type=test_set).\
+        test_run = session.query(models.TestRun). \
+            filter_by(external_id=str(external_id), type=test_set). \
             order_by(desc(models.TestRun.id)).first()
         session.commit()
         session.close()
@@ -123,8 +123,8 @@ class SqlStorage(object):
 
     def get_test_results(self):
         session = self.get_session()
-        test_runs = session.query(models.TestRun).\
-            options(joinedload('tests')).\
+        test_runs = session.query(models.TestRun). \
+            options(joinedload('tests')). \
             order_by(desc(models.TestRun.id))
         session.commit()
         session.close()
@@ -132,11 +132,11 @@ class SqlStorage(object):
 
     def get_last_test_results(self, external_id):
         session = self.get_session()
-        test_run_ids = session.query(func.max(models.TestRun.id))\
+        test_run_ids = session.query(func.max(models.TestRun.id)) \
             .group_by(models.TestRun.type).filter_by(external_id=external_id)
         log.info('LASR TEST RUN IDS %s' % test_run_ids)
-        test_runs = session.query(models.TestRun).\
-            options(joinedload('tests')).\
+        test_runs = session.query(models.TestRun). \
+            options(joinedload('tests')). \
             filter(models.TestRun.id.in_((test_run_ids)))
         session.commit()
         session.close()
@@ -150,11 +150,11 @@ class SqlStorage(object):
     def get_test_run(self, test_run_id, joined=False):
         session = self.get_session()
         if not joined:
-            test_run = session.query(models.TestRun).\
+            test_run = session.query(models.TestRun). \
                 filter_by(id=test_run_id).first()
         else:
-            test_run = session.query(models.TestRun).\
-                options(joinedload('tests')).\
+            test_run = session.query(models.TestRun). \
+                options(joinedload('tests')). \
                 filter_by(id=test_run_id).first()
         session.commit()
         session.close()
@@ -166,13 +166,13 @@ class SqlStorage(object):
                  'TEST NAME: %s\n'
                  'DATA: %s' % (test_run_id, test_name, data))
         session = self.get_session()
-        session.query(models.Test).\
-            filter_by(name=test_name, test_run_id=test_run_id).\
+        session.query(models.Test). \
+            filter_by(name=test_name, test_run_id=test_run_id). \
             update({
-                'status': status,
-                'taken': time_taken,
-                'data': json.dumps(data)
-            })
+            'status': status,
+            'taken': time_taken,
+            'data': json.dumps(data)
+        })
         session.commit()
         session.close()
 
@@ -183,17 +183,17 @@ class SqlStorage(object):
             updated_data['status'] = status
         if status in ['finished', 'error', 'error_on_cleanup']:
             updated_data['ended_at'] = datetime.utcnow()
-        session.query(models.TestRun).\
-            filter(models.TestRun.id == test_run_id).\
+        session.query(models.TestRun). \
+            filter(models.TestRun.id == test_run_id). \
             update(updated_data, synchronize_session=False)
         session.commit()
         session.close()
 
     def update_running_tests(self, test_run_id, status='stopped'):
         session = self.get_session()
-        session.query(models.Test).\
+        session.query(models.Test). \
             filter(models.Test.test_run_id == test_run_id,
-                   models.Test.status.in_(('running', 'wait_running'))).\
+                   models.Test.status.in_(('running', 'wait_running'))). \
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()
@@ -207,11 +207,11 @@ class SqlStorage(object):
 
     def update_all_running_test_runs(self, status='finished'):
         session = self.get_session()
-        session.query(models.TestRun).\
-            filter(models.TestRun.status.in_(('started', 'running'))).\
-            update({'status': 'finished'}, synchronize_session=False )
-        session.query(models.Test).\
-            filter(models.Test.status.in_(('running', 'wait_running'))).\
+        session.query(models.TestRun). \
+            filter(models.TestRun.status.in_(('started', 'running'))). \
+            update({'status': 'finished'}, synchronize_session=False)
+        session.query(models.Test). \
+            filter(models.Test.status.in_(('running', 'wait_running'))). \
             update({'status': 'stopped'}, synchronize_session=False)
         session.commit()
         session.close()
@@ -219,9 +219,9 @@ class SqlStorage(object):
     def update_test_run_tests(self, test_run_id,
                               tests_names, status='wait_running'):
         session = self.get_session()
-        session.query(models.Test).\
+        session.query(models.Test). \
             filter(models.Test.name.in_(tests_names),
-                   models.Test.test_run_id == test_run_id).\
+                   models.Test.test_run_id == test_run_id). \
             update({'status': status}, synchronize_session=False)
         session.commit()
         session.close()

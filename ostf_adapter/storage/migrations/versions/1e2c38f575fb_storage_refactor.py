@@ -37,9 +37,11 @@ def upgrade():
         sa.Column('data', sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
-    op.add_column(u'test_runs', sa.Column('external_id', sa.String(length=128), nullable=True))
+    op.add_column(u'test_runs', sa.Column('external_id', sa.String(length=128),
+                                          nullable=True))
     op.add_column(u'test_runs', sa.Column('stats', sa.Text(), nullable=True))
-    op.add_column(u'tests', sa.Column('test_set_id', sa.String(length=128), nullable=True))
+    op.add_column(u'tests', sa.Column('test_set_id', sa.String(length=128),
+                                      nullable=True))
     ### end Alembic commands ###
 
 

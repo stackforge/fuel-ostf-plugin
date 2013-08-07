@@ -12,11 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from datetime import datetime
+import json
+
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import json
+
 from ostf_adapter.storage import fields
 
 
@@ -24,18 +26,17 @@ BASE = declarative_base()
 
 
 class TestRun(BASE):
-
     __tablename__ = 'test_runs'
 
     STATES = (
         'running',
         'finished'
-        )
+    )
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cluster_id = sa.Column(sa.Integer(), nullable=False)
     status = sa.Column(sa.Enum(*STATES, name='test_run_states'),
-        nullable=False)
+                       nullable=False)
     meta = sa.Column(fields.JsonField())
     started_at = sa.Column(sa.DateTime, default=datetime.utcnow)
     ended_at = sa.Column(sa.DateTime)
@@ -66,8 +67,8 @@ class TestRun(BASE):
             test_run_data['tests'] = tests
         return test_run_data
 
-class TestSet(BASE):
 
+class TestSet(BASE):
     __tablename__ = 'test_sets'
 
     id = sa.Column(sa.String(128), primary_key=True)
@@ -79,7 +80,7 @@ class TestSet(BASE):
     meta = sa.Column(fields.JsonField())
 
     tests = relationship('Test',
-        backref='test_set', order_by='Test.name')
+                         backref='test_set', order_by='Test.name')
 
     @property
     def frontend(self):
@@ -87,7 +88,6 @@ class TestSet(BASE):
 
 
 class Test(BASE):
-
     __tablename__ = 'tests'
 
     STATES = (

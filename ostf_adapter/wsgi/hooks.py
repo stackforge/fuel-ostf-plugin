@@ -12,9 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from pecan import hooks
 import logging
+
+from pecan import hooks
 from stevedore import extension
+
 from ostf_adapter import storage
 
 
@@ -22,13 +24,11 @@ LOG = logging.getLogger(__name__)
 
 
 class ExceptionHandlingHook(hooks.PecanHook):
-
     def on_error(self, state, e):
         LOG.exception('Pecan state %s', state)
 
 
 class StorageHook(hooks.PecanHook):
-
     def __init__(self):
         super(StorageHook, self).__init__()
         self.storage = storage.get_storage()
@@ -38,7 +38,6 @@ class StorageHook(hooks.PecanHook):
 
 
 class PluginsHook(hooks.PecanHook):
-
     PLUGINS_NAMESPACE = 'plugins'
 
     def __init__(self):

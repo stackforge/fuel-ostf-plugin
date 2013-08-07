@@ -27,9 +27,8 @@ class V1Controller(object):
 
 
 class RootController(object):
-
     v1 = V1Controller()
 
     @expose('json', generic=True)
-    def index(self): 
+    def index(self):
         return {}

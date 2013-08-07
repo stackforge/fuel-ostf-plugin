@@ -12,12 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from nose import case
 import traceback
 import re
 import json
 import os
 import multiprocessing
+
+from nose import case
 
 
 def parse_json_file(file_path):
