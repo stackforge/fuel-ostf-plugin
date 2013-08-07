@@ -26,6 +26,7 @@ BASE = declarative_base()
 
 
 class TestRun(BASE):
+
     __tablename__ = 'test_runs'
 
     STATES = (
@@ -69,6 +70,7 @@ class TestRun(BASE):
 
 
 class TestSet(BASE):
+
     __tablename__ = 'test_sets'
 
     id = sa.Column(sa.String(128), primary_key=True)
@@ -88,6 +90,7 @@ class TestSet(BASE):
 
 
 class Test(BASE):
+
     __tablename__ = 'tests'
 
     STATES = (

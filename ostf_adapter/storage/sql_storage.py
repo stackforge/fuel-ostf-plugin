@@ -60,19 +60,15 @@ class SqlStorage(object):
         session.commit()
         return test_run, session
 
-    def add_test_set(self, test_set, test_set_data):
+    def add_test_set(self, test_set):
         log.info('Inserting test set %s' % test_set)
         session = self.get_session()
-        description = test_set_data.pop("description", "")
-
-        test_set_obj = models.TestSet(
-            id=test_set, description=description,
-            data=json.dumps(test_set_data))
+        test_set_obj = models.TestSet(**test_set)
         new_obj = session.merge(test_set_obj)
         session.add(new_obj)
         session.commit()
         session.close()
-        return True
+        return new_obj
 
     def get_test_sets(self):
         session = self.get_session()
@@ -97,17 +93,19 @@ class SqlStorage(object):
         session.close()
         return tests
 
-    def add_sets_test(self, test_set, test_name, data):
+    def add_test_for_testset(self, test_set, test_name, data):
         log.info('Data received %s' % data)
         session = self.get_session()
         old_test_obj = session.query(models.Test).filter_by(
-            name=test_name, test_set_id=test_set).first()
+            name=test_name, test_set_id=test_set, test_run_id=None).\
+            update(data, synchronize_session=False)
         if old_test_obj:
-            old_test_obj.data = json.dumps(data)
+            old_test_obj(**data)
             session.add(old_test_obj)
         else:
-            test_obj = models.Test(
-                name=test_name, data=json.dumps(data), test_set_id=test_set)
+            data.update({'test_set_id': test_set,
+                         'name': test_name})
+            test_obj = models.Test(**data)
             session.add(test_obj)
         session.commit()
         session.close()

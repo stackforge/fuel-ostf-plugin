@@ -90,7 +90,7 @@ class StoragePlugin(Plugin):
             data['step'] = None
             data['traceback'] = None
             LOG.info('DISCOVERY FOR %s WITH DATA %s', test.id(), data)
-            self.storage.add_sets_test(self.test_run_id, test.id(), data)
+            self.storage.add_test_for_testset(self.test_run_id, test.id(), data)
         else:
             LOG.info('UPDATING TEST %s', test)
             self._add_message(test, status='success', taken=self.taken)

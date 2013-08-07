@@ -20,10 +20,10 @@ class JsonField(TypeDecorator):
 
 class ListField(JsonField):
     def process_bind_param(self, value, dialect):
-        value = list(value)
+        value = list(value) if value else []
         super(ListField, self).process_bind_param(value, dialect)
 
 
     def process_result_value(self, value, dialect):
         value = super(ListField, self).process_bind_param(value, dialect)
-        return list(value)
+        return list(value) if value else []

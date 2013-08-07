@@ -32,9 +32,10 @@ class BaseRestController(rest.RestController):
 
 
 class TestsController(BaseRestController):
+
     @expose('json')
     def get_one(self, test_name):
-        return {}
+        raise NotImplementedError()
 
     @expose('json')
     def get(self):
@@ -42,9 +43,10 @@ class TestsController(BaseRestController):
 
 
 class TestsetsController(BaseRestController):
+
     @expose('json')
     def get_one(self, test_set):
-        return {}
+        raise NotImplementedError()
 
     @expose('json')
     def get_all(self):
@@ -52,17 +54,18 @@ class TestsetsController(BaseRestController):
 
 
 class TestrunsController(BaseRestController):
+
     _custom_actions = {
         'last': ['GET'],
     }
 
     @expose('json')
     def get_all(self):
-        return {}
+        raise NotImplementedError()
 
     @expose('json')
     def get_one(self, test_run_id):
-        return {}
+        raise NotImplementedError()
 
     @expose('json')
     def post(self):
@@ -109,7 +112,8 @@ class TestrunsController(BaseRestController):
                 test_set_data,
                 tests,
                 test_path=test_set_data.get('test_path'),
-                argv=test_set_data.get('argv', []))
+                argv=test_set_data.get('argv', [])
+            )
             data = test_run.frontend
             session.close()
         return data
@@ -130,13 +134,15 @@ class TestrunsController(BaseRestController):
             request.storage.update_test_run(test_run.id, status='running')
             if tests:
                 request.storage.update_test_run_tests(test_run.id, tests)
-            transport.obj.run(test_run.id,
-                              test_run.external_id,
+            transport.obj.run(
+                test_run.id,
+                test_run.external_id,
                 {},
-                              test_set_data,
-                              tests,
-                              test_path=test_set_data.get('test_path'),
-                              argv=test_set_data.get('argv', []))
+                test_set_data,
+                tests,
+                test_path=test_set_data.get('test_path'),
+                argv=test_set_data.get('argv', [])
+            )
             return request.storage.get_test_run(
                 test_run.id, joined=True).frontend
         return {}

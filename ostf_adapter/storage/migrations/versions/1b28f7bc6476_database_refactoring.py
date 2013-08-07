@@ -13,6 +13,7 @@ down_revision = '4e9905279776'
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from ostf_adapter.storage import fields
 
 
 def upgrade():
@@ -20,7 +21,7 @@ def upgrade():
     op.add_column('test_runs', sa.Column('test_set_id', sa.String(length=128),
                                          nullable=True))
     op.add_column('test_runs',
-                  sa.Column('meta', sa.JsonField(), nullable=True))
+                  sa.Column('meta', fields.JsonField(), nullable=True))
     op.add_column('test_runs',
                   sa.Column('cluster_id', sa.Integer(), nullable=False))
     op.drop_column('test_runs', u'type')
@@ -33,11 +34,11 @@ def upgrade():
     op.add_column('test_sets', sa.Column('cleanup_path', sa.String(length=128),
                                          nullable=True))
     op.add_column('test_sets',
-                  sa.Column('meta', sa.JsonField(), nullable=True))
+                  sa.Column('meta', fields.JsonField(), nullable=True))
     op.add_column('test_sets',
                   sa.Column('driver', sa.String(length=128), nullable=True))
     op.add_column('test_sets',
-                  sa.Column('additional_arguments', sa.ListField(),
+                  sa.Column('additional_arguments', fields.ListField(),
                             nullable=True))
     op.add_column('test_sets',
                   sa.Column('test_path', sa.String(length=256), nullable=True))
@@ -45,7 +46,7 @@ def upgrade():
     op.add_column('tests', sa.Column('description', sa.Text(), nullable=True))
     op.add_column('tests', sa.Column('traceback', sa.Text(), nullable=True))
     op.add_column('tests', sa.Column('step', sa.Integer(), nullable=True))
-    op.add_column('tests', sa.Column('meta', sa.JsonField(), nullable=True))
+    op.add_column('tests', sa.Column('meta', fields.JsonField(), nullable=True))
     op.add_column('tests',
                   sa.Column('duration', sa.String(length=512), nullable=True))
     op.add_column('tests', sa.Column('message', sa.Text(), nullable=True))

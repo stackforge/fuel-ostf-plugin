@@ -23,21 +23,21 @@ from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
 
 
-COMMANDS = {
-    "fuel_sanity": {
-        "test_path": "fuel_health.tests.sanity",
-        "driver": "nose",
-        "description": "Sanity tests. Duration 30sec - 2 min",
-        "argv": []
-    },
-    "fuel_smoke": {
+COMMANDS = [
+    {
+        "id": "fuel_smoke",
         "test_path": "fuel_health.tests.smoke",
         "driver": "nose",
-        "description": "Smoke tests. Duration 3 min - 14 min",
-        "argv": [],
-        "cleanup": "fuel_health.cleanup"
+        "description": "Smoke tests. Runs 3 min - 8 min",
+        "cleanup_path": "fuel_health.cleanup"
+    },
+    {
+        "id": "fuel_sanity",
+        "test_path": "fuel_health.tests.sanity",
+        "driver": "nose",
+        "description": "Sanity tests. Runs 30sec - 2 min",
     }
-}
+]
 
 LOG = logging.getLogger(__name__)
 
@@ -51,19 +51,24 @@ class NoseDriver(object):
 
     def discovery(self):
         LOG.info('Started general tests discovery')
-        self.storage.flush_testsets()
         if conf.debug:
-            self.commands = nose_utils.parse_json_file('commands.json')
+            test_sets = nose_utils.parse_json_file('commands.json')
         else:
-            self.commands = COMMANDS
-        for test_set, test_set_data in self.commands.iteritems():
-            argv_add = test_set_data.get('argv', [])
-            self.storage.add_test_set(test_set, test_set_data)
-            self.tests_discovery(
-                test_set,
-                test_set_data['test_path'],
-                argv_add)
+            test_sets = COMMANDS
+        for test_set in test_sets:
+            test_set = self.storage.add_test_set(test_set)
+            self.tests_discovery(test_set)
         self.storage.update_all_running_test_runs()
+
+    def tests_discovery(self, test_set):
+        LOG.info('Started test discovery %s', test_set)
+
+        core.TestProgram(
+            defaultTest=test_set.test_path,
+            addplugins=[nose_storage_plugin.StoragePlugin(
+                test_set.id, '', discovery=True)],
+            exit=False,
+            argv=['tests_discovery', '--collect-only'])
 
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads
@@ -86,15 +91,6 @@ class NoseDriver(object):
         self._named_threads[int(test_run_id)] = nose_utils.run_proc(
             self._run_tests, test_run_id, external_id, argv_add, command)
 
-    def tests_discovery(self, test_set, test_path, argv_add):
-        LOG.info('Started test discovery %s', test_set)
-
-        core.TestProgram(
-            defaultTest=test_path,
-            addplugins=[nose_storage_plugin.StoragePlugin(
-                test_set, '', discovery=True)],
-            exit=False,
-            argv=['tests', '--collect-only'] + argv_add)
 
     def _run_tests(self, test_run_id, external_id, argv_add, command):
         LOG.info('Nose Driver spawn process for TEST RUN: %s\n'

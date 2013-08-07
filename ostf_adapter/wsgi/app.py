@@ -30,7 +30,7 @@ PECAN_DEFAULT = {
         'host': '127.0.0.1',
         'port': 8000
     },
-    'dbpath': 'postgresql+psycopg2://postgres:demo@localhost/testing_adapter'
+    'dbpath': 'postgresql+psycopg2://ostf:ostf@localhost/ostf'
 }
 
 
