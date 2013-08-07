@@ -40,7 +40,6 @@ class StoragePlugin(Plugin):
         self.discovery = discovery
         super(StoragePlugin, self).__init__()
         self._start_time = None
-        self._started = False
 
     def options(self, parser, env=os.environ):
         LOG.info('NAILGUN HOST %s '
@@ -56,16 +55,13 @@ class StoragePlugin(Plugin):
     def _add_message(
             self, test, err=None, capt=None,
             tb_info=None, status=None, taken=0):
-        if not self._started:
-            self.storage.update_test_run(self.test_run_id, status='running')
-        self._started = True
         data = dict()
         data['name'], data['description'], data['duration'] =\
             nose_utils.get_description(test)
         if err:
             exc_type, exc_value, exc_traceback = err
             LOG.info('Error %s', exc_value)
-            data['message'] = u''
+            data['step'], data['message'] = None, u''
             if not status == 'error':
                 data['step'], data['message'] =\
                     nose_utils.format_failure_message(exc_value)

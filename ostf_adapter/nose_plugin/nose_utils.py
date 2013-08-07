@@ -17,23 +17,7 @@ import traceback
 import re
 import json
 import os
-
-
-COMMANDS = {
-    "fuel_sanity": {
-        "test_path": "fuel_health.tests.sanity",
-        "driver": "nose",
-        "description": "Sanity tests. Duration 30sec - 2 min",
-        "argv": []
-    },
-    "fuel_smoke": {
-        "test_path": "fuel_health.tests.smoke",
-        "driver": "nose",
-        "description": "Smoke tests. Duration 3 min - 14 min",
-        "argv": [],
-        "cleanup": "fuel_health.cleanup"
-    }
-}
+import multiprocessing
 
 
 def parse_json_file(file_path):
@@ -42,6 +26,7 @@ def parse_json_file(file_path):
         current_directory, file_path)
     with open(commands_path, 'r') as f:
         return json.load(f)
+
 
 def get_exc_message(exception_value):
     """
@@ -101,4 +86,14 @@ def format_failure_message(message):
         step, msg = matcher.groups()
         return int(step), msg
     return '', message
+
+
+def run_proc(func, *args):
+    proc = multiprocessing.Process(
+        target=func,
+        args=args)
+    proc.daemon = True
+    proc.start()
+    return proc
+
 

@@ -14,7 +14,7 @@
 
 import unittest
 from ostf_adapter.storage.sql_storage import SqlStorage
-from ostf_adapter.storage.sql import models
+from ostf_adapter.storage import models
 from sqlalchemy import pool
 
 

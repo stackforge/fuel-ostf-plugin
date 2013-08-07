@@ -82,15 +82,9 @@ class NoseDriver(object):
             argv_add += map(nose_utils.modify_test_name_for_nose, tests)
         else:
             argv_add.append(test_path)
-        LOG.info('Additional args: %s', argv_add)
 
-        proc = multiprocessing.Process(
-            target=self._run_tests,
-            args=(test_run_id, external_id, argv_add, command))
-        proc.daemon = True
-        proc.start()
-
-        self._named_threads[int(test_run_id)] = proc
+        self._named_threads[int(test_run_id)] = nose_utils.run_proc(
+            self._run_tests, test_run_id, external_id, argv_add, command)
 
     def tests_discovery(self, test_set, test_path, argv_add):
         LOG.info('Started test discovery %s', test_set)
@@ -107,20 +101,16 @@ class NoseDriver(object):
                      'ARGS: %s' ,test_run_id, argv_add)
 
         try:
-            core.TestProgram(addplugins=[nose_storage_plugin.StoragePlugin(
-                test_run_id, str(external_id))],
+            core.TestProgram(
+                addplugins=[nose_storage_plugin.StoragePlugin(
+                    test_run_id, str(external_id))],
                 exit=False,
                 argv=['tests']+argv_add)
-            LOG.info('Test run %s finished successfully', test_run_id)
-            self.storage.update_test_run(test_run_id, status='finished')
             self._named_threads.pop(int(test_run_id), None)
-
         except Exception, e:
-
             LOG.exception('Close process TEST_RUN: %s\n', test_run_id)
+        finally:
             self.storage.update_test_run(test_run_id, status='finished')
-            self.storage.update_running_tests(test_run_id,
-                                              status='error')
 
     def kill(self, test_run_id, external_id, cleanup=None):
         LOG.info('Trying to stop process %s', test_run_id)
@@ -133,19 +123,18 @@ class NoseDriver(object):
             self._named_threads.pop(int(test_run_id), None)
 
             if cleanup:
-                proc = multiprocessing.Process(
-                    target=self._clean_up,
-                    args=(test_run_id, external_id, cleanup))
-                proc.daemon = True
-                proc.start()
+                nose_utils.run_proc(
+                    self._clean_up,
+                    test_run_id,
+                    external_id,
+                    cleanup)
             else:
                 self.storage.update_test_run(test_run_id, status='finished')
 
             return True
         return False
 
-    def _clean_up(self,
-                  test_run_id, external_id, cleanup):
+    def _clean_up(self, test_run_id, external_id, cleanup):
         try:
             module_obj = __import__(cleanup, -1)
 
@@ -155,11 +144,10 @@ class NoseDriver(object):
 
             module_obj.cleanup.cleanup()
 
-            self.storage.update_test_run(test_run_id, status='finished')
         except Exception:
-
             LOG.exception('EXCEPTION IN CLEANUP')
 
+        finally:
             self.storage.update_test_run(test_run_id, status='finished')
 
 

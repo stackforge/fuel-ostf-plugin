@@ -16,7 +16,7 @@ import unittest
 from mock import patch, MagicMock
 from webtest import TestApp
 from ostf_adapter.wsgi import app
-import simplejson as json
+import json
 
 
 class ApiV1Tests(unittest.TestCase):
