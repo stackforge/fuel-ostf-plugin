@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """Openstack testing framework client
 
-Usage: ostf.py run <test_set> [--id=<cluster_id>] [--tests=<tests>]  [--url=<url>]  [--timeout=<timeout>]
+Usage: ostf.py run <test_set> [-q] [--id=<cluster_id>] [--tests=<tests>]  [--url=<url>]  [--timeout=<timeout>]
        ostf.py list [<test_set>]
 
+    -q                          Show test run result only after finish
     -h --help                   Show this screen
     --tests=<tests>             Tests to run
     --id=<cluster_id>           Cluster id to use, default: OSTF_CLUSTER_ID or "1"
@@ -36,6 +37,7 @@ def main():
     cluster_id = args['--id'] or os.environ.get('OSTF_CLUSTER_ID') or get_cluster_id() or '1'
     tests = args['--tests'] or []
     timeout = args['--timeout']
+    quite = args['-q']
     url = args['--url'] or os.environ.get('OSTF_URL') or 'http://0.0.0.0:8989/v1'
 
     client = TestingAdapterClient(url)
@@ -53,27 +55,66 @@ def main():
             stopped=colored.red('stopped')
         )
 
-        tests = [test['id'].split('.')[-1] for test in client.tests().json() if test['testset'] == test_set]
+        tests = [test['id'].split('.')[-1]
+                 for test in client.tests().json()
+                 if test['testset'] == test_set]
 
-        puts(columns(["General", col], ['running', col]))
-        for test in tests:
-            puts(columns([test, col], ['wait_running', col]))
+        def print_results(item):
+            if isinstance(item, dict):
+                puts(columns([item['id'].split('.')[-1], col], [statused[item['status']], col]))
+            else:
+                puts(columns([item[0], col], [statused.get(item[1], item[1]), col]))
+
+        def move_up(lines):
+            for _ in range(lines):
+                print t.move_up + t.move_left,
 
         def polling_hook(response):
             current_status, current_tests = next((item['status'], item['tests']) for item in response.json()
                                                  if item['testset'] == test_set)
 
-            for _ in range(len(current_tests)+1):
-                print t.move_up + t.move_left,
+            move_up(len(current_tests) + 1)
 
-            puts(columns(["General", col], [statused[current_status], col]))
             for test in current_tests:
-                puts(columns([((test['id'].split('.')[-1])), col], [statused[test['status']], col]))
+                print_results(test)
+            print_results(['General', current_status])
+
+        def quite_polling_hook(response):
+            if not quite_polling_hook.__dict__.get('published_tests'):
+                quite_polling_hook.__dict__['published_tests'] = []
+
+            current_status, current_tests = next((item['status'], item['tests']) for item in response.json()
+                                                 if item['testset'] == test_set)
+
+            finished_statuses = ['success', 'failure', 'stopped', 'error']
+
+            finished_tests = [item for item in current_tests
+                              if item['status'] in finished_statuses
+                              and item not in quite_polling_hook.__dict__['published_tests']]
+
+            for test in finished_tests:
+                print_results(test)
+                quite_polling_hook.__dict__['published_tests'].append(test)
+
+            if current_status == 'finished':
+                print_results(['General', current_status])
+
+        if quite:
+            polling_hook = quite_polling_hook
+        else:
+            for test in tests:
+                print_results([test, 'wait_running'])
+            print_results(['General', 'running'])
 
         try:
             r = client.run_testset_with_timeout(test_set, cluster_id, timeout, 2, polling_hook)
         except AssertionError as e:
             return 1
+        except KeyboardInterrupt as e:
+            r = client.stop_testrun_last(test_set, cluster_id)
+            print t.move_left + t.move_left,
+            polling_hook(r)
+
         tests = next(item['tests'] for item in r.json())
         return any(item['status'] != 'success' for item in tests)
 
