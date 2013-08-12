@@ -21,6 +21,7 @@ from pecan import conf
 from ostf_adapter import storage
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
+from ostf_adapter.nose_plugin import nose_test_result
 
 
 COMMANDS = [
