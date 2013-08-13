@@ -42,24 +42,22 @@ def main():
     app.setup_config(config)
 
     log = logging.getLogger(__name__)
-    log.info('STARTING SETUP')
 
     if getattr(cli_args, 'after_init_hook'):
         return do_apply_migrations()
 
-    root = app.setup_app()
+    root = app.setup_app(debug=cli_args.debug)
 
     host, port = pecan.conf.server.host, pecan.conf.server.port
     srv = pywsgi.WSGIServer((host, int(port)), root)
-    log.info('Starting server in PID %s', os.getpid())
 
+    log.info('Starting server in PID %s', os.getpid())
     log.info("serving on http://%s:%s", host, port)
 
     try:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         srv.serve_forever()
     except KeyboardInterrupt:
-        # allow CTRL+C to shutdown without an error
         pass
 
 

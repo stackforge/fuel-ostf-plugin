@@ -13,7 +13,6 @@
 #    under the License.
 
 from datetime import datetime
-import json
 import logging
 
 from sqlalchemy import create_engine, exc, desc, func, asc
@@ -28,7 +27,6 @@ log = logging.getLogger(__name__)
 
 class SqlStorage(object):
     def __init__(self, engine_url, poolclass=pool.NullPool):
-        log.info('Create sqlalchemy engine - %s' % engine_url)
         self._engine = create_engine(
             engine_url,
             poolclass=poolclass)
@@ -40,7 +38,6 @@ class SqlStorage(object):
 
     def add_test_run(self, test_set, cluster_id, status='running',
                      tests=None):
-        log.info('ADD test run - %s' % test_set)
         predefined_tests = tests or []
         session = self.get_session()
         tests = session.query(models.Test).filter_by(
@@ -65,7 +62,6 @@ class SqlStorage(object):
         return test_run, session
 
     def add_test_set(self, test_set):
-        log.info('Inserting test set %s' % test_set)
         session = self.get_session()
         test_set_obj = models.TestSet(**test_set)
         new_obj = session.merge(test_set_obj)
@@ -133,7 +129,6 @@ class SqlStorage(object):
         test_run_ids = session.query(func.max(models.TestRun.id)) \
             .group_by(models.TestRun.test_set_id).\
             filter_by(cluster_id=cluster_id)
-        log.info('LASR TEST RUN IDS %s' % test_run_ids)
         test_runs = session.query(models.TestRun). \
             options(joinedload('tests')). \
             filter(models.TestRun.id.in_((test_run_ids)))
@@ -161,7 +156,6 @@ class SqlStorage(object):
 
     def add_test_result(
             self, test_run_id, test_name, data):
-        log.info('{0}{1}{2}'.format(test_run_id, test_name, data))
         session = self.get_session()
         session.query(models.Test). \
             filter_by(name=test_name, test_run_id=test_run_id). \

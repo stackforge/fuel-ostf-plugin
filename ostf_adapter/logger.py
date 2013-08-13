@@ -18,9 +18,12 @@ import logging.handlers
 
 
 def setup(log_file=None):
+    formatter = logging.Formatter(
+        '[%(asctime)s] %(levelname)-8s %(message)s')
     log = logging.getLogger(None)
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
 
     if log_file:
@@ -29,6 +32,7 @@ def setup(log_file=None):
         file_handler.setLevel(logging.DEBUG)
         mode = int('0644', 8)
         os.chmod(log_file, mode)
+        file_handler.setFormatter(formatter)
         log.addHandler(file_handler)
 
     log.setLevel(logging.INFO)

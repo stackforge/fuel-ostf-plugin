@@ -90,18 +90,19 @@ class StoragePlugin(Plugin):
             self.storage.add_test_for_testset(
                 self.test_run_id, test.id(), data)
         else:
-            LOG.info('UPDATING TEST %s', test)
             self._add_message(test, status='success')
 
-    def addFailure(self, test, err, capt=None, tb_info=None):
-        LOG.info('FAILURE for %s', test)
+    def addFailure(self, test, err):
+        LOG.error('%s', test.id(), exc_info=err)
         self._add_message(test, err=err, status='failure')
 
-    def addError(self, test, err, capt=None, tb_info=None):
+    def addError(self, test, err):
         if err[0] == AssertionError:
+            LOG.error('%s', test.id(), exc_info=err)
             self._add_message(
                 test, err=err, status='failure')
         else:
+            LOG.error('%s', test.id(), exc_info=err)
             self._add_message(test, err=err, status='error')
 
     def beforeTest(self, test):

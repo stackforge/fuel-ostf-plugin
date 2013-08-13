@@ -21,7 +21,7 @@ from pecan import conf
 from ostf_adapter import storage
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
-from ostf_adapter.nose_plugin import nose_test_result
+from ostf_adapter.nose_plugin import nose_test_runner
 
 
 COMMANDS = [
@@ -36,7 +36,7 @@ COMMANDS = [
         "id": "fuel_sanity",
         "test_path": "fuel_health.tests.sanity",
         "driver": "nose",
-        "description": "Sanity tests. Runs 30sec - 2 min",
+        "description": "Sanity tests. Runs 30sec - 2 min"
     }
 ]
 
@@ -45,13 +45,11 @@ LOG = logging.getLogger(__name__)
 
 class NoseDriver(object):
     def __init__(self):
-        LOG.info('NoseDriver initialized')
         self.storage = storage.get_storage()
         self._named_threads = {}
         self.discovery()
 
     def discovery(self):
-        LOG.info('Started general tests discovery')
         if conf.debug:
             test_sets = nose_utils.parse_json_file('commands.json')
         else:
@@ -62,14 +60,12 @@ class NoseDriver(object):
         self.storage.update_all_running_test_runs()
 
     def tests_discovery(self, test_set):
-        LOG.info('Started test discovery %s', test_set)
-
-        core.TestProgram(
+        nose_test_runner.SilentTestProgram(
             defaultTest=test_set.test_path,
             addplugins=[nose_storage_plugin.StoragePlugin(
                 test_set.id, '', discovery=True)],
             exit=False,
-            argv=['tests_discovery', '--collect-only'])
+            argv=['tests_discovery', '--collect-only', '-q'])
 
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads
@@ -84,7 +80,6 @@ class NoseDriver(object):
         tests = tests or []
 
         if tests:
-            LOG.info('TESTS RECEIVED %s', tests)
             argv_add += map(nose_utils.modify_test_name_for_nose, tests)
         else:
             argv_add.append(test_path)
@@ -94,11 +89,8 @@ class NoseDriver(object):
 
 
     def _run_tests(self, test_run_id, external_id, argv_add, command):
-        LOG.info('Nose Driver spawn process for TEST RUN: %s\n'
-                 'ARGS: %s', test_run_id, argv_add)
-
         try:
-            core.TestProgram(
+            nose_test_runner.SilentTestProgram(
                 addplugins=[nose_storage_plugin.StoragePlugin(
                     test_run_id, str(external_id))],
                 exit=False,
@@ -110,7 +102,7 @@ class NoseDriver(object):
             self.storage.update_test_run(test_run_id, status='finished')
 
     def kill(self, test_run_id, external_id, cleanup=None):
-        LOG.exception('Trying to terminate')
+
         if test_run_id in self._named_threads:
 
             self._named_threads[int(test_run_id)].terminate()

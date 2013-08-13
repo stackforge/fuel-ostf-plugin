@@ -40,13 +40,13 @@ def setup_config(pecan_config=None):
     pecan.conf.update(PECAN_DEFAULT)
 
 
-def setup_app():
+def setup_app(debug=False):
     app_hooks = [hooks.ExceptionHandlingHook(),
                  hooks.StorageHook(),
                  hooks.PluginsHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
-        debug=False,
+        debug=debug,
         force_canonical=True,
         hooks=app_hooks
     )
