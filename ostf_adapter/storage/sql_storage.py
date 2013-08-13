@@ -13,6 +13,7 @@
 #    under the License.
 
 from datetime import datetime
+import json
 import logging
 
 from sqlalchemy import create_engine, exc, desc, func, asc
@@ -138,7 +139,6 @@ class SqlStorage(object):
             msg = 'Database does not contains ' \
                   'Test Run with ID %s' % cluster_id
             log.warning(msg)
-            raise exc.OstfDBException(message=msg)
         return test_runs
 
     def get_test_run(self, test_run_id, joined=False):

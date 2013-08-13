@@ -16,7 +16,6 @@ from nose import core
 
 
 class SilentTestRunner(core.TextTestRunner):
-
     def run(self, test):
         """Overrides to provide plugin hooks and defer all output to
         the test result class.
@@ -37,15 +36,14 @@ class SilentTestRunner(core.TextTestRunner):
 
 
 class SilentTestProgram(core.TestProgram):
-
     def runTests(self):
         """Run Tests. Returns true on success, false on failure, and sets
         self.success to the same value.
         """
         if self.testRunner is None:
             self.testRunner = SilentTestRunner(stream=self.config.stream,
-                 verbosity=0,
-                 config=self.config)
+                                               verbosity=0,
+                                               config=self.config)
         result = self.testRunner.run(self.test)
         self.success = result.wasSuccessful()
         return self.success

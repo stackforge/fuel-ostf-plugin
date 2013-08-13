@@ -47,6 +47,13 @@ class TestRun(BASE):
     tests = relationship('Test', backref='test_run', order_by='Test.name')
 
     @property
+    def enabled_tests(self):
+        return [test.name for test in self.tests if test.status != 'disabled']
+
+    def is_finished(self):
+        return self.status == 'finished'
+
+    @property
     def frontend(self):
         test_run_data = {
             'id': self.id,

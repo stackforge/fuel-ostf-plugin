@@ -70,49 +70,46 @@ class NoseDriver(object):
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads
 
-    def run(self, test_run_id, external_id,
-            conf, command, tests=None, test_path=None, argv=None):
+    def run(self, test_run, test_set, tests=None):
         """
             remove unneceserry arguments
             spawn processes and send them tasks as to workers
         """
-        argv_add = argv or []
-        tests = tests or []
-
+        tests = tests or test_run.enabled_tests
         if tests:
-            argv_add += map(nose_utils.modify_test_name_for_nose, tests)
+            argv_add = [nose_utils.modify_test_name_for_nose(test) for test in
+                        tests]
         else:
-            argv_add.append(test_path)
+            argv_add = [test_set.test_path] + test_set.additional_arguments
 
-        self._named_threads[int(test_run_id)] = nose_utils.run_proc(
-            self._run_tests, test_run_id, external_id, argv_add, command)
+        self._named_threads[test_run.id] = nose_utils.run_proc(
+            self._run_tests, test_run.id, test_run.cluster_id, argv_add)
 
 
-    def _run_tests(self, test_run_id, external_id, argv_add, command):
+    def _run_tests(self, test_run_id, cluster_id, argv_add):
         try:
             nose_test_runner.SilentTestProgram(
                 addplugins=[nose_storage_plugin.StoragePlugin(
-                    test_run_id, str(external_id))],
+                    test_run_id, str(cluster_id))],
                 exit=False,
-                argv=['tests'] + argv_add)
+                argv=['ostf_tests'] + argv_add)
             self._named_threads.pop(int(test_run_id), None)
         except Exception, e:
-            LOG.exception('Close process TEST_RUN: %s\n', test_run_id)
+            LOG.exception('Test run: %s\n', test_run_id)
         finally:
             self.storage.update_test_run(test_run_id, status='finished')
 
-    def kill(self, test_run_id, external_id, cleanup=None):
-
+    def kill(self, test_run_id, cluster_id, cleanup=None):
         if test_run_id in self._named_threads:
 
-            self._named_threads[int(test_run_id)].terminate()
-            self._named_threads.pop(int(test_run_id), None)
+            self._named_threads[test_run_id].terminate()
+            self._named_threads.pop(test_run_id, None)
 
             if cleanup:
                 nose_utils.run_proc(
                     self._clean_up,
                     test_run_id,
-                    external_id,
+                    cluster_id,
                     cleanup)
             else:
                 self.storage.update_test_run(test_run_id, status='finished')

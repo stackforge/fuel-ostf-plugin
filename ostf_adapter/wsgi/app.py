@@ -23,30 +23,29 @@ PECAN_DEFAULT = {
     },
     'app': {
         'root': 'ostf_adapter.wsgi.root.RootController',
-        'modules': ['ostf_adapter.wsgi'],
-        'debug': False,
+        'modules': ['ostf_adapter.wsgi']
     },
     'nailgun': {
         'host': '127.0.0.1',
         'port': 8000
     },
-    'dbpath': 'postgresql+psycopg2://ostf:ostf@localhost/ostf'
+    'dbpath': 'postgresql+psycopg2://ostf:ostf@localhost/ostf',
+    'debug': False
 }
 
 
-def setup_config(pecan_config=None):
-    if pecan_config:
-        PECAN_DEFAULT.update(pecan_config)
-    pecan.conf.update(PECAN_DEFAULT)
+def setup_config(pecan_config):
+    pecan_config.update(PECAN_DEFAULT)
+    pecan.conf.update(pecan_config)
 
 
-def setup_app(debug=False):
-    app_hooks = [hooks.ExceptionHandlingHook(),
-                 hooks.StorageHook(),
+def setup_app(config=None):
+    setup_config(config or {})
+    app_hooks = [hooks.StorageHook(),
                  hooks.PluginsHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
-        debug=debug,
+        debug=pecan.conf.debug,
         force_canonical=True,
         hooks=app_hooks
     )

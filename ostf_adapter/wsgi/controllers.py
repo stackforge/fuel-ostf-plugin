@@ -38,7 +38,7 @@ class TestsController(BaseRestController):
         raise NotImplementedError()
 
     @expose('json')
-    def get(self):
+    def get_all(self):
         return [item.frontend for item in request.storage.get_tests()]
 
 
@@ -97,31 +97,22 @@ class TestrunsController(BaseRestController):
                 item in request.storage.get_last_test_results(cluster_id)]
 
     def _run(self, test_set, metadata, tests):
-        cluster_id = metadata['cluster_id']
         test_set = request.storage.get_test_set(test_set)
         transport = request.plugin_manager[test_set.driver]
-        data = {}
-        if self._check_last_running(test_set.id, cluster_id):
+        if self._check_last_running(test_set.id, metadata['cluster_id']):
             test_run, session = request.storage.add_test_run(
-                test_set.id, cluster_id, tests=tests)
-            transport.obj.run(
-                test_run.id,
-                test_run.cluster_id,
-                {},
-                test_set,
-                tests,
-                test_path=test_set.test_path,
-                argv=test_set.additional_arguments
-            )
+                test_set.id, metadata['cluster_id'], tests=tests)
+            transport.obj.run(test_run, test_set)
             data = test_run.frontend
             session.close()
-        return data
+            return data
+        return {}
 
     def _check_last_running(self, test_set, cluster_id):
         test_run = request.storage.get_last_test_run(test_set, cluster_id)
         if not test_run:
             return True
-        return test_run.status not in ['running']
+        return test_run.status not in ['running', 'cleanup']
 
     def _restart(self, test_run):
         tests = test_run.get('tests', [])
@@ -132,15 +123,7 @@ class TestrunsController(BaseRestController):
             request.storage.update_test_run(test_run.id, status='running')
             if tests:
                 request.storage.update_test_run_tests(test_run.id, tests)
-            transport.obj.run(
-                test_run.id,
-                test_run.cluster_id,
-                {},
-                test_set,
-                tests,
-                test_path=test_set.test_path,
-                argv=test_set.additional_arguments
-            )
+            transport.obj.run(test_run, test_set, tests)
             return request.storage.get_test_run(
                 test_run.id, joined=True).frontend
         return {}

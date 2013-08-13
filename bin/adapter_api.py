@@ -39,14 +39,13 @@ def main():
     }
 
     logger.setup(log_file=cli_args.log_file)
-    app.setup_config(config)
 
     log = logging.getLogger(__name__)
 
     if getattr(cli_args, 'after_init_hook'):
         return do_apply_migrations()
 
-    root = app.setup_app(debug=cli_args.debug)
+    root = app.setup_app(config=config)
 
     host, port = pecan.conf.server.host, pecan.conf.server.port
     srv = pywsgi.WSGIServer((host, int(port)), root)
