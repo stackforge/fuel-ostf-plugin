@@ -13,7 +13,7 @@
 #    under the License.
 
 import unittest2
-from mock import patch
+from mock import patch, MagicMock
 from webtest import TestApp
 from ostf_adapter.wsgi import app
 import json
@@ -53,18 +53,29 @@ class WsgiInterfaceTests(unittest2.TestCase):
                           '/v1/testruns')
 
     def test_post_testruns(self, request):
-        test_testrun = [
+        testruns = [
             {'testset': 'test_simple',
              'metadata': {'cluster_id': 3}
             },
             {'testset': 'test_simple',
              'metadata': {'cluster_id': 4}
             }]
-        body = json.dumps(test_testrun)
-        pass
+        request.body = json.dumps(testruns)
+        self.app.post_json('/v1/testruns', testruns)
 
     def test_put_testruns(self, request):
-        pass
+        testruns = [
+            {'id': 2,
+             'metadata': {'cluster_id': 3},
+             'status': 'restarted'
+            },
+            {'id': 1,
+             'metadata': {'cluster_id': 4},
+             'status': 'stopped'
+            }]
+        request.body = json.dumps(testruns)
+        request.storage.get_test_run.return_value = MagicMock(frontend={})
+        self.app.put_json('/v1/testruns', testruns)
 
     def test_get_last_testruns(self, request):
-        pass
+        self.app.get('/v1/testruns/last/101')

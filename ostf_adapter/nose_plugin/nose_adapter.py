@@ -15,7 +15,6 @@
 import os
 import logging
 
-from nose import core
 from pecan import conf
 
 from ostf_adapter import storage

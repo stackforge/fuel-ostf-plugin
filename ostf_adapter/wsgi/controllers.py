@@ -68,6 +68,11 @@ class TestrunsController(BaseRestController):
         raise NotImplementedError()
 
     @expose('json')
+    def get_last(self, cluster_id):
+        return [item.frontend for
+                item in request.storage.get_last_test_results(cluster_id)]
+
+    @expose('json')
     def post(self):
         test_runs = json.loads(request.body)
         res = []
@@ -77,24 +82,6 @@ class TestrunsController(BaseRestController):
             tests = test_run.get('tests', [])
             res.append(self._run(test_set, metadata, tests))
         return res
-
-    @expose('json')
-    def put(self):
-        test_runs = json.loads(request.body)
-        data = []
-        for test_run in test_runs:
-            status = test_run.get('status')
-            if status == 'stopped':
-                worker = self._kill(test_run)
-            elif status == 'restarted':
-                worker = self._restart(test_run)
-            data.append(worker)
-        return data
-
-    @expose('json')
-    def get_last(self, cluster_id):
-        return [item.frontend for
-                item in request.storage.get_last_test_results(cluster_id)]
 
     def _run(self, test_set, metadata, tests):
         test_set = request.storage.get_test_set(test_set)
@@ -108,11 +95,21 @@ class TestrunsController(BaseRestController):
             return data
         return {}
 
+    @expose('json')
+    def put(self):
+        test_runs = json.loads(request.body)
+        data = []
+        for test_run in test_runs:
+            status = test_run.get('status')
+            if status == 'stopped':
+                data.append(self._kill(test_run))
+            elif status == 'restarted':
+                data.append(self._restart(test_run))
+        return data
+
     def _check_last_running(self, test_set, cluster_id):
         test_run = request.storage.get_last_test_run(test_set, cluster_id)
-        if not test_run:
-            return True
-        return test_run.status not in ['running', 'cleanup']
+        return not test_run and test_run.is_finished()
 
     def _restart(self, test_run):
         tests = test_run.get('tests', [])

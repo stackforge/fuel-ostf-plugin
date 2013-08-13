@@ -13,7 +13,6 @@
 #    under the License.
 
 from datetime import datetime
-import json
 import logging
 
 from sqlalchemy import create_engine, exc, desc, func, asc
@@ -132,7 +131,7 @@ class SqlStorage(object):
             filter_by(cluster_id=cluster_id)
         test_runs = session.query(models.TestRun). \
             options(joinedload('tests')). \
-            filter(models.TestRun.id.in_((test_run_ids)))
+            filter(models.TestRun.id.in_(test_run_ids))
         session.commit()
         session.close()
         if not test_runs:
