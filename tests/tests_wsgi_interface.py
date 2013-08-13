@@ -61,6 +61,7 @@ class WsgiInterfaceTests(unittest2.TestCase):
              'metadata': {'cluster_id': 4}
             }]
         request.body = json.dumps(testruns)
+        request.storage.add_test_run.return_value = MagicMock(frontend={})
         self.app.post_json('/v1/testruns', testruns)
 
     def test_put_testruns(self, request):

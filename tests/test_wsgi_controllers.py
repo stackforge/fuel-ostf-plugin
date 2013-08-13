@@ -1,7 +1,22 @@
+#    Copyright 2013 Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
 from ostf_adapter.wsgi import controllers
 from ostf_adapter.storage import models
 import unittest2
 from mock import patch, MagicMock
+import json
 
 
 @patch('ostf_adapter.wsgi.controllers.request')
@@ -49,6 +64,7 @@ class TestTestRunsController(unittest2.TestCase):
         self.fixtures = [models.TestRun(), models.TestRun()]
         self.storage = MagicMock()
         self.plugin = MagicMock()
+        self.session = MagicMock()
         self.controller = controllers.TestrunsController()
 
     def test_get_all(self, request):
@@ -57,9 +73,51 @@ class TestTestRunsController(unittest2.TestCase):
 
     def test_post(self, request):
         request.storage = self.storage
+        testruns = [
+            {'testset': 'test_simple',
+             'metadata': {'cluster_id': 3}
+            },
+            {'testset': 'test_simple',
+             'metadata': {'cluster_id': 4}
+            }]
+        request.body = json.dumps(testruns)
+        fixtures_iterable = iter(self.fixtures)
+        with patch.object(self.controller, '_run') as run_mock:
+            run_mock.side_effect = lambda *args, **kwargs: fixtures_iterable.next()
+            res = self.controller.post()
+            self.assertEqual(run_mock.call_count, 2)
+            self.assertEqual(res, self.fixtures)
 
-    def test_put(self, request):
+    def test_put_stopped(self, request):
         request.storage = self.storage
+        testruns = [
+            {'id': 1,
+             'metadata': {'cluster_id': 4},
+             'status': 'stopped'
+            }]
+        request.body = json.dumps(testruns)
+
+        with patch.object(self.controller, '_kill') as kill_mock:
+            kill_mock.side_effect = lambda *args, **kwargs: self.fixtures[0]
+            res = self.controller.put()
+            kill_mock.assert_called_once_with(testruns[0])
+            self.assertEqual(res, [self.fixtures[0]])
+
+
+    def test_put_restarted(self, request):
+        request.storage = self.storage
+        testruns = [
+            {'id': 1,
+             'metadata': {'cluster_id': 4},
+             'status': 'restarted'
+            }]
+        request.body = json.dumps(testruns)
+
+        with patch.object(self.controller, '_restart') as restart_mock:
+            restart_mock.side_effect = lambda *args, **kwargs: self.fixtures[0]
+            res = self.controller.put()
+            restart_mock.assert_called_once_with(testruns[0])
+            self.assertEqual(res, [self.fixtures[0]])
 
     def test_get_last(self, request):
         request.storage = self.storage
@@ -69,8 +127,23 @@ class TestTestRunsController(unittest2.TestCase):
         self.storage.get_last_test_results.assert_called_once_with(cluster_id)
         self.assertEqual(res, [f.frontend for f in self.fixtures])
 
-    def test_run(self, request):
+    def test_run_check_false(self, request):
         request.storage = self.storage
+        self.storage.get_session.return_value = self.session
+        with patch.object(self.controller, '_check_last_running') as check:
+            check.return_value = False
+            res = self.controller._run(
+                'plugin_stopped',  {'cluster_id': 4}, [])
+        self.assertEqual(res, {})
+
+    def test_run_check_true(self, request):
+        request.storage = self.storage
+        self.storage.add_test_run.return_value = self.fixtures[0]
+        with patch.object(self.controller, '_check_last_running') as check:
+            check.return_value = True
+            res = self.controller._run(
+                'plugin_stopped',  {'cluster_id': 4}, [])
+        self.assertEqual(res, self.fixtures[0].frontend)
 
     def test_kill(self, request):
         request.storage = self.storage

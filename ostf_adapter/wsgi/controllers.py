@@ -84,11 +84,12 @@ class TestrunsController(BaseRestController):
         return res
 
     def _run(self, test_set, metadata, tests):
+        session = request.storage.get_session()
         test_set = request.storage.get_test_set(test_set)
         transport = request.plugin_manager[test_set.driver]
         if self._check_last_running(test_set.id, metadata['cluster_id']):
-            test_run, session = request.storage.add_test_run(
-                test_set.id, metadata['cluster_id'], tests=tests)
+            test_run = request.storage.add_test_run(
+                session, test_set.id, metadata['cluster_id'], tests=tests)
             transport.obj.run(test_run, test_set)
             data = test_run.frontend
             session.close()
@@ -109,7 +110,7 @@ class TestrunsController(BaseRestController):
 
     def _check_last_running(self, test_set, cluster_id):
         test_run = request.storage.get_last_test_run(test_set, cluster_id)
-        return not test_run and test_run.is_finished()
+        return test_run and test_run.is_finished()
 
     def _restart(self, test_run):
         tests = test_run.get('tests', [])

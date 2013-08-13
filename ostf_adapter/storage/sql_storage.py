@@ -36,10 +36,9 @@ class SqlStorage(object):
     def get_session(self):
         return self._session()
 
-    def add_test_run(self, test_set, cluster_id, status='running',
+    def add_test_run(self, session, test_set, cluster_id, status='running',
                      tests=None):
         predefined_tests = tests or []
-        session = self.get_session()
         tests = session.query(models.Test).filter_by(
             test_set_id=test_set, test_run_id=None)
         test_run = models.TestRun(test_set_id=test_set, cluster_id=cluster_id,
@@ -59,7 +58,7 @@ class SqlStorage(object):
                 new_test.status = 'wait_running'
             session.add(new_test)
         session.commit()
-        return test_run, session
+        return test_run
 
     def add_test_set(self, test_set):
         session = self.get_session()
