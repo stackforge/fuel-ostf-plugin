@@ -61,7 +61,8 @@ class TestTestSetsController(unittest2.TestCase):
 class TestTestRunsController(unittest2.TestCase):
 
     def setUp(self):
-        self.fixtures = [models.TestRun(), models.TestRun()]
+        self.fixtures = [models.TestRun(status='finished'),
+                         models.TestRun(status='running')]
         self.storage = MagicMock()
         self.plugin = MagicMock()
         self.session = MagicMock()
@@ -146,11 +147,48 @@ class TestTestRunsController(unittest2.TestCase):
         self.assertEqual(res, self.fixtures[0].frontend)
 
     def test_kill(self, request):
+        test_run = {'id': 2,
+             'metadata': {'cluster_id': 3},
+             'status': 'stopped'
+            }
         request.storage = self.storage
+        self.storage.get_test_run.return_value = self.fixtures[0]
+        res = self.controller._kill(test_run)
+        self.assertEqual(res, self.fixtures[0].frontend)
 
     def test_restart(self, request):
+        test_run = {'id': 2,
+            'metadata': {'cluster_id': 3},
+            'status': 'restarted'
+            }
         request.storage = self.storage
+        self.storage.get_test_run.return_value = self.fixtures[0]
+        with patch.object(
+            self.controller, '_check_last_running') as check_mock:
+            check_mock.return_value = True
+            res = self.controller._restart(test_run)
+            self.assertEqual(res, self.fixtures[0].frontend)
 
-    def test_check_last_running(self, request):
+    def test_check_last_running_none(self, request):
+        test_set = 'test_simple'
+        cluster_id = 1
         request.storage = self.storage
+        self.storage.get_last_test_run.return_value = None
+        res = self.controller._check_last_running(test_set, cluster_id)
+        self.assertFalse(res)
 
+    def test_check_last_running_true(self, request):
+        test_set = 'test_simple'
+        cluster_id = 1
+        request.storage = self.storage
+        self.storage.get_last_test_run.return_value = self.fixtures[0]
+        res = self.controller._check_last_running(test_set, cluster_id)
+        self.assertTrue(res)
+
+    def test_check_last_running_false(self, request):
+        test_set = 'test_simple'
+        cluster_id = 1
+        request.storage = self.storage
+        self.storage.get_last_test_run.return_value = self.fixtures[1]
+        res = self.controller._check_last_running(test_set, cluster_id)
+        self.assertFalse(res)

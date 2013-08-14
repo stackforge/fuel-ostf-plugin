@@ -110,7 +110,7 @@ class TestrunsController(BaseRestController):
 
     def _check_last_running(self, test_set, cluster_id):
         test_run = request.storage.get_last_test_run(test_set, cluster_id)
-        return test_run and test_run.is_finished()
+        return bool(test_run) and test_run.is_finished()
 
     def _restart(self, test_run):
         tests = test_run.get('tests', [])
