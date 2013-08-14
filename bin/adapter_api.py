@@ -16,7 +16,7 @@
 
 import os
 from ostf_adapter import cli_config
-from ostf_adapter.storage.alembic_cli import do_apply_migrations
+from ostf_adapter import nailgun_hooks
 from ostf_adapter import logger
 from gevent import pywsgi
 from ostf_adapter.wsgi import app
@@ -35,17 +35,18 @@ def main():
             'port': cli_args.port
         },
         'dbpath': cli_args.dbpath,
-        'debug': cli_args.debug
+        'debug': cli_args.debug,
+        'debug_tests': cli_args.debug_tests
     }
 
     logger.setup(log_file=cli_args.log_file)
 
     log = logging.getLogger(__name__)
 
-    if getattr(cli_args, 'after_init_hook'):
-        return do_apply_migrations()
-
     root = app.setup_app(config=config)
+
+    if getattr(cli_args, 'after_init_hook'):
+        return nailgun_hooks.after_initialization_environment_hook()
 
     host, port = pecan.conf.server.host, pecan.conf.server.port
     srv = pywsgi.WSGIServer((host, int(port)), root)

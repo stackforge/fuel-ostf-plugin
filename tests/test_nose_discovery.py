@@ -12,15 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ostf_adapter import logger
 import unittest2
 from ostf_adapter.nose_plugin import nose_discovery
 from mock import patch, MagicMock
-import logging
 from ostf_adapter.storage import models
 
-logger.setup()
-LOG = logging.getLogger(__name__)
 
 stopped__profile__ = {
     "id": "stopped_test",
@@ -50,4 +46,6 @@ class TestNoseDiscovery(unittest2.TestCase):
         self.storage.add_test_set.side_effect = \
             lambda *args, **kwargs: next(self.fixtures_iter)
         nose_discovery.discovery(path='functional/dummy_tests')
+        self.assertEqual(self.storage.add_test_set.call_count, 2)
+        self.assertEqual(self.storage.add_test_for_testset.call_count, 8)
 

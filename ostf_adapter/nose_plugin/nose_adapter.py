@@ -46,7 +46,6 @@ class NoseDriver(object):
     def __init__(self):
         self.storage = storage.get_storage()
         self._named_threads = {}
-        self.discovery()
         self.storage.update_all_running_test_runs()
 
     def discovery(self):

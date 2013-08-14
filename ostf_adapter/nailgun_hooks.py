@@ -15,15 +15,12 @@
 import logging
 from ostf_adapter.storage import alembic_cli
 from ostf_adapter.nose_plugin import nose_discovery
+from pecan import conf
 
 LOG = logging.getLogger(__name__)
 
 
 def after_initialization_environment_hook():
-    try:
-        alembic_cli.do_apply_migrations()
-        nose_discovery.discovery()
-        return 0
-    except Exception:
-        LOG.exception('Exception on initialization.')
-        return 1
+    alembic_cli.do_apply_migrations()
+    nose_discovery.discovery(conf.debug_tests)
+    return 0

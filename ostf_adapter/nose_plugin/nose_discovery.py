@@ -17,7 +17,6 @@ import logging
 import os
 
 from ostf_adapter import storage
-from ostf_adapter.nose_plugin import nose_storage_plugin
 from ostf_adapter.nose_plugin import nose_test_runner
 from ostf_adapter.nose_plugin import nose_utils
 
@@ -67,8 +66,8 @@ def discovery(path=None):
     """
         function to automaticly discover any test packages
     """
+    tests = [CORE_PATH, path] if path else [CORE_PATH]
     nose_test_runner.SilentTestProgram(
-            defaultTest=path,
             addplugins=[DiscoveryPlugin()],
             exit=False,
-            argv=['tests_discovery','--collect-only', '--q'])
+            argv=['tests_discovery','--collect-only', '--q'] + tests)
