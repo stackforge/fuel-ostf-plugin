@@ -118,7 +118,6 @@ class Test(BASE):
     test_set_id = sa.Column(sa.String(128), sa.ForeignKey('test_sets.id'))
     test_run_id = sa.Column(sa.Integer(), sa.ForeignKey('test_runs.id'))
 
-
     @property
     def frontend(self):
         return {

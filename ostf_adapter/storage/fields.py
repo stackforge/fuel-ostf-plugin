@@ -23,7 +23,6 @@ class ListField(JsonField):
         value = list(value) if value else []
         super(ListField, self).process_bind_param(value, dialect)
 
-
     def process_result_value(self, value, dialect):
         value = super(ListField, self).process_bind_param(value, dialect)
         return list(value) if value else []

@@ -46,7 +46,8 @@ def upgrade():
     op.add_column('tests', sa.Column('description', sa.Text(), nullable=True))
     op.add_column('tests', sa.Column('traceback', sa.Text(), nullable=True))
     op.add_column('tests', sa.Column('step', sa.Integer(), nullable=True))
-    op.add_column('tests', sa.Column('meta', fields.JsonField(), nullable=True))
+    op.add_column('tests', sa.Column('meta', fields.JsonField(),
+                                     nullable=True))
     op.add_column('tests',
                   sa.Column('duration', sa.String(length=512), nullable=True))
     op.add_column('tests', sa.Column('message', sa.Text(), nullable=True))

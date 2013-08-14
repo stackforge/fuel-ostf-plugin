@@ -47,6 +47,3 @@ class PluginsHook(hooks.PecanHook):
 
     def before(self, state):
         state.request.plugin_manager = self.plugin_manager
-
-
-

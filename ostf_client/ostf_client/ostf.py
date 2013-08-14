@@ -34,11 +34,13 @@ def main():
     t = Terminal()
     args = docopt(__doc__, version='0.1')
     test_set = args['<test_set>']
-    cluster_id = args['--id'] or os.environ.get('OSTF_CLUSTER_ID') or get_cluster_id() or '1'
+    cluster_id = args['--id'] or os.environ.get('OSTF_CLUSTER_ID') \
+                     or get_cluster_id() or '1'
     tests = args['--tests'] or []
     timeout = args['--timeout']
     quite = args['-q']
-    url = args['--url'] or os.environ.get('OSTF_URL') or 'http://0.0.0.0:8989/v1'
+    url = args['--url'] or os.environ.get('OSTF_URL') \
+        or 'http://0.0.0.0:8989/v1'
 
     client = TestingAdapterClient(url)
 
@@ -61,17 +63,20 @@ def main():
 
         def print_results(item):
             if isinstance(item, dict):
-                puts(columns([item['id'].split('.')[-1], col], [statused[item['status']], col]))
+                puts(columns([item['id'].split('.')[-1], col],
+                             [statused[item['status']], col]))
             else:
-                puts(columns([item[0], col], [statused.get(item[1], item[1]), col]))
+                puts(columns([item[0], col],
+                             [statused.get(item[1], item[1]), col]))
 
         def move_up(lines):
             for _ in range(lines):
                 print t.move_up + t.move_left,
 
         def polling_hook(response):
-            current_status, current_tests = next((item['status'], item['tests']) for item in response.json()
-                                                 if item['testset'] == test_set)
+            current_status, current_tests = next(
+                (item['status'], item['tests']) for item in response.json()
+                if item['testset'] == test_set)
 
             move_up(len(current_tests) + 1)
 
@@ -83,14 +88,16 @@ def main():
             if not quite_polling_hook.__dict__.get('published_tests'):
                 quite_polling_hook.__dict__['published_tests'] = []
 
-            current_status, current_tests = next((item['status'], item['tests']) for item in response.json()
-                                                 if item['testset'] == test_set)
+            current_status, current_tests = next(
+                (item['status'], item['tests']) for item in response.json()
+                if item['testset'] == test_set)
 
             finished_statuses = ['success', 'failure', 'stopped', 'error']
 
             finished_tests = [item for item in current_tests
-                              if item['status'] in finished_statuses
-                              and item not in quite_polling_hook.__dict__['published_tests']]
+                if item['status'] in finished_statuses
+                and item
+                not in quite_polling_hook.__dict__['published_tests']]
 
             for test in finished_tests:
                 print_results(test)
@@ -107,7 +114,8 @@ def main():
             print_results(['General', 'running'])
 
         try:
-            r = client.run_testset_with_timeout(test_set, cluster_id, timeout, 2, polling_hook)
+            r = client.run_testset_with_timeout(test_set, cluster_id,
+                                                timeout, 2, polling_hook)
         except AssertionError as e:
             return 1
         except KeyboardInterrupt as e:
@@ -123,7 +131,8 @@ def main():
         tests = (test for test in result if test['testset'] == test_set)
 
         col = 60
-        puts(columns([(colored.red("ID")), col], [(colored.red("NAME")), None]))
+        puts(columns([(colored.red("ID")), col],
+                     [(colored.red("NAME")), None]))
 
         for test in tests:
             test_id = test['id'].split('.')[-1]
@@ -135,7 +144,8 @@ def main():
         result = client.testsets().json()
 
         col = 60
-        puts(columns([(colored.red("ID")), col], [(colored.red("NAME")), None]))
+        puts(columns([(colored.red("ID")), col],
+                     [(colored.red("NAME")), None]))
 
         for test_set in result:
             puts(columns([test_set['id'], col], [test_set['name'], None]))

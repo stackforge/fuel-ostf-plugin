@@ -36,6 +36,3 @@ def setup(log_file=None):
         log.addHandler(file_handler)
 
     log.setLevel(logging.INFO)
-
-
-

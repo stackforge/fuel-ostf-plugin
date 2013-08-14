@@ -144,4 +144,3 @@ class TestrunsController(BaseRestController):
         if killed:
             request.storage.update_running_tests(test_run.id, status='stopped')
         return request.storage.get_test_run(test_run.id, joined=True).frontend
-

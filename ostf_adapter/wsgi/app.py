@@ -51,4 +51,3 @@ def setup_app(config=None):
         hooks=app_hooks
     )
     return app
-

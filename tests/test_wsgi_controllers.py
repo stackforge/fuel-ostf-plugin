@@ -84,7 +84,8 @@ class TestTestRunsController(unittest2.TestCase):
         request.body = json.dumps(testruns)
         fixtures_iterable = iter(self.fixtures)
         with patch.object(self.controller, '_run') as run_mock:
-            run_mock.side_effect = lambda *args, **kwargs: fixtures_iterable.next()
+            run_mock.side_effect = \
+                lambda *args, **kwargs: fixtures_iterable.next()
             res = self.controller.post()
             self.assertEqual(run_mock.call_count, 2)
             self.assertEqual(res, self.fixtures)
@@ -99,7 +100,8 @@ class TestTestRunsController(unittest2.TestCase):
         request.body = json.dumps(testruns)
 
         with patch.object(self.controller, '_kill') as kill_mock:
-            kill_mock.side_effect = lambda *args, **kwargs: self.fixtures[0]
+            kill_mock.side_effect = \
+                lambda *args, **kwargs: self.fixtures[0]
             res = self.controller.put()
             kill_mock.assert_called_once_with(testruns[0])
             self.assertEqual(res, [self.fixtures[0]])
@@ -164,7 +166,7 @@ class TestTestRunsController(unittest2.TestCase):
         request.storage = self.storage
         self.storage.get_test_run.return_value = self.fixtures[0]
         with patch.object(
-            self.controller, '_check_last_running') as check_mock:
+                self.controller, '_check_last_running') as check_mock:
             check_mock.return_value = True
             res = self.controller._restart(test_run)
             self.assertEqual(res, self.fixtures[0].frontend)

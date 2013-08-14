@@ -34,5 +34,3 @@ class SilentTestProgram(core.TestProgram):
                                            verbosity=0,
                                            config=self.config)
         return self.testRunner.run(self.test).wasSuccessful()
-
-

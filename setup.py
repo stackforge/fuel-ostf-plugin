@@ -39,6 +39,16 @@ requirements = [
     'WSME==0.5b2'
 ]
 
+test_requires = [
+    'mock==1.0.1',
+    'pep8==1.4.6',
+    'py==1.4.15',
+    'six==1.3.0',
+    'tox==1.5.0',
+    'unittest2',
+    'nose'
+]
+
 setuptools.setup(
 
     name='testing_adapter',
@@ -70,6 +80,8 @@ setuptools.setup(
     include_package_data=True,
 
     install_requires=requirements,
+
+    test_requires=test_requires,
 
     entry_points={
         'plugins': [

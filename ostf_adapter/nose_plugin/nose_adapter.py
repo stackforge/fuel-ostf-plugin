@@ -23,22 +23,6 @@ from ostf_adapter.nose_plugin import nose_storage_plugin
 from ostf_adapter.nose_plugin import nose_test_runner
 
 
-COMMANDS = [
-    {
-        "id": "fuel_smoke",
-        "test_path": "fuel_health.tests.smoke",
-        "driver": "nose",
-        "description": "Smoke tests. Runs 3 min - 8 min",
-        "cleanup_path": "fuel_health.cleanup"
-    },
-    {
-        "id": "fuel_sanity",
-        "test_path": "fuel_health.tests.sanity",
-        "driver": "nose",
-        "description": "Sanity tests. Runs 30sec - 2 min"
-    }
-]
-
 LOG = logging.getLogger(__name__)
 
 
@@ -82,7 +66,6 @@ class NoseDriver(object):
 
         self._named_threads[test_run.id] = nose_utils.run_proc(
             self._run_tests, test_run.id, test_run.cluster_id, argv_add)
-
 
     def _run_tests(self, test_run_id, cluster_id, argv_add):
         try:
@@ -130,8 +113,3 @@ class NoseDriver(object):
 
         finally:
             self.storage.update_test_run(test_run_id, status='finished')
-
-
-
-
-

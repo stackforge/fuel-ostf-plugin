@@ -68,6 +68,6 @@ def discovery(path=None):
     """
     tests = [CORE_PATH, path] if path else [CORE_PATH]
     nose_test_runner.SilentTestProgram(
-            addplugins=[DiscoveryPlugin()],
-            exit=False,
-            argv=['tests_discovery','--collect-only', '--q'] + tests)
+        addplugins=[DiscoveryPlugin()],
+        exit=False,
+        argv=['tests_discovery', '--collect-only', '--q'] + tests)
