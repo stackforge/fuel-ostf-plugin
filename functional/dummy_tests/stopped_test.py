@@ -12,6 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+__profile__ = {
+    "id": "stopped_test",
+    "driver": "nose",
+    "test_path": "functional/dummy_tests/stopped_test.py",
+    "description": "Long running 25 secs fake tests"
+}
+
 import time
 import unittest
 

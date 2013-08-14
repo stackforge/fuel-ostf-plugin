@@ -12,6 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+__profile__ = {
+    "id": "general_test",
+    "driver": "nose",
+    "test_path": "functional/dummy_tests/general_test.py",
+    "description": "General fake tests"
+}
+
 import time
 import httplib
 import unittest

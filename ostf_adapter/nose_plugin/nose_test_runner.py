@@ -20,18 +20,8 @@ class SilentTestRunner(core.TextTestRunner):
         """Overrides to provide plugin hooks and defer all output to
         the test result class.
         """
-        wrapper = self.config.plugins.prepareTest(test)
-        if wrapper is not None:
-            test = wrapper
-
-        # plugins can decorate or capture the output stream
-        wrapped = self.config.plugins.setOutputStream(self.stream)
-        if wrapped is not None:
-            self.stream = wrapped
-
         result = self._makeResult()
         test(result)
-        self.config.plugins.finalize(result)
         return result
 
 
@@ -40,12 +30,9 @@ class SilentTestProgram(core.TestProgram):
         """Run Tests. Returns true on success, false on failure, and sets
         self.success to the same value.
         """
-        if self.testRunner is None:
-            self.testRunner = SilentTestRunner(stream=self.config.stream,
-                                               verbosity=0,
-                                               config=self.config)
-        result = self.testRunner.run(self.test)
-        self.success = result.wasSuccessful()
-        return self.success
+        self.testRunner = SilentTestRunner(stream=self.config.stream,
+                                           verbosity=0,
+                                           config=self.config)
+        return self.testRunner.run(self.test).wasSuccessful()
 
 

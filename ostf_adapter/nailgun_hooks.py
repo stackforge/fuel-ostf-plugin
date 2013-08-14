@@ -12,16 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest2
-from ostf_adapter.storage import sql_storage
-from sqlalchemy import pool
+import logging
+from ostf_adapter.storage import alembic_cli
+from ostf_adapter.nose_plugin import nose_discovery
+
+LOG = logging.getLogger(__name__)
 
 
-class TestSqlStorage(unittest2.TestCase):
-
-    def setUp(self):
-        self.storage = sql_storage.SqlStorage('sqlite:///',
-                                              poolclass=pool.QueuePool)
-
-    def test_add_test_run(self):
-        pass
+def after_initialization_environment_hook():
+    try:
+        alembic_cli.do_apply_migrations()
+        nose_discovery.discovery()
+        return 0
+    except Exception:
+        LOG.exception('Exception on initialization.')
+        return 1

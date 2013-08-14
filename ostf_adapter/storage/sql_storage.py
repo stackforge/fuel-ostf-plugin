@@ -45,20 +45,23 @@ class SqlStorage(object):
                                   status=status)
         session.add(test_run)
         for test in tests:
-            new_test = models.Test()
-            mapper = object_mapper(test)
-            primary_keys = set([col.key for col in mapper.primary_key])
-            for column in mapper.iterate_properties:
-                if column.key not in primary_keys:
-                    setattr(new_test, column.key, getattr(test, column.key))
-            new_test.test_run_id = test_run.id
-            if predefined_tests and new_test.name not in predefined_tests:
-                new_test.status = 'disabled'
-            else:
-                new_test.status = 'wait_running'
-            session.add(new_test)
+            session.add(self._copy_test(test, test_run, predefined_tests))
         session.commit()
         return test_run
+
+    def _copy_test(self, test, test_run, predefined_tests):
+        new_test = models.Test()
+        mapper = object_mapper(test)
+        primary_keys = set([col.key for col in mapper.primary_key])
+        for column in mapper.iterate_properties:
+            if column.key not in primary_keys:
+                setattr(new_test, column.key, getattr(test, column.key))
+        new_test.test_run_id = test_run.id
+        if predefined_tests and new_test.name not in predefined_tests:
+            new_test.status = 'disabled'
+        else:
+            new_test.status = 'wait_running'
+        return new_test
 
     def add_test_set(self, test_set):
         session = self.get_session()

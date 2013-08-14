@@ -47,6 +47,7 @@ class NoseDriver(object):
         self.storage = storage.get_storage()
         self._named_threads = {}
         self.discovery()
+        self.storage.update_all_running_test_runs()
 
     def discovery(self):
         if conf.debug:
@@ -56,7 +57,6 @@ class NoseDriver(object):
         for test_set in test_sets:
             test_set = self.storage.add_test_set(test_set)
             self.tests_discovery(test_set)
-        self.storage.update_all_running_test_runs()
 
     def tests_discovery(self, test_set):
         nose_test_runner.SilentTestProgram(

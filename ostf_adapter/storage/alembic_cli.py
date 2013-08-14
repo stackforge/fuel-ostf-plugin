@@ -29,6 +29,6 @@ def do_apply_migrations():
     alembic_conf.set_main_option('script_location',
                                  'ostf_adapter.storage:migrations')
     alembic_conf.set_main_option('sqlalchemy.url', conf.dbpath)
-    getattr(command, 'upgrade')(alembic_conf, 'head')
+    command.upgrade(alembic_conf, 'head')
     return 0
 
