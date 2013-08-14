@@ -175,7 +175,7 @@ class TestTestRunsController(unittest2.TestCase):
         request.storage = self.storage
         self.storage.get_last_test_run.return_value = None
         res = self.controller._check_last_running(test_set, cluster_id)
-        self.assertFalse(res)
+        self.assertTrue(res)
 
     def test_check_last_running_true(self, request):
         test_set = 'test_simple'

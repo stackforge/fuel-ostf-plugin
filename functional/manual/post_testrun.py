@@ -32,4 +32,4 @@ def make_requests(claster_id, test_set):
 
 
 if __name__ == '__main__':
-    make_requests('308', 'plugin_general')
+    make_requests('308', 'general_test')

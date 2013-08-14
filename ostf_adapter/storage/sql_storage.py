@@ -15,7 +15,7 @@
 from datetime import datetime
 import logging
 
-from sqlalchemy import create_engine, exc, desc, func, asc
+from sqlalchemy import create_engine, desc, func, asc
 from sqlalchemy.orm import sessionmaker, joinedload, object_mapper
 from sqlalchemy import pool
 

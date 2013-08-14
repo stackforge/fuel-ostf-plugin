@@ -13,8 +13,13 @@
 #    under the License.
 
 import json
+import logging
+
 
 from pecan import rest, expose, request
+from ostf_adapter import exceptions
+
+LOG = logging.getLogger(__name__)
 
 
 class BaseRestController(rest.RestController):
@@ -83,9 +88,12 @@ class TestrunsController(BaseRestController):
             res.append(self._run(test_set, metadata, tests))
         return res
 
-    def _run(self, test_set, metadata, tests):
+    def _run(self, test_set_data, metadata, tests):
         session = request.storage.get_session()
-        test_set = request.storage.get_test_set(test_set)
+        test_set = request.storage.get_test_set(test_set_data)
+        if test_set is None:
+            LOG.error('No test set %s.', test_set_data)
+            raise exceptions.OstfException()
         transport = request.plugin_manager[test_set.driver]
         if self._check_last_running(test_set.id, metadata['cluster_id']):
             test_run = request.storage.add_test_run(
@@ -110,7 +118,7 @@ class TestrunsController(BaseRestController):
 
     def _check_last_running(self, test_set, cluster_id):
         test_run = request.storage.get_last_test_run(test_set, cluster_id)
-        return bool(test_run) and test_run.is_finished()
+        return not bool(test_run) or test_run.is_finished()
 
     def _restart(self, test_run):
         tests = test_run.get('tests', [])

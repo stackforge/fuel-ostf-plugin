@@ -36,10 +36,10 @@ class AdapterTests(BaseAdapterTest):
             'functional.dummy_tests.stopped_test.dummy_tests_stopped.test_one_no_so_long': 'so_long'
         }
         cls.testsets = {
-            "fuel_smoke": None,
-            "fuel_sanity": None,
-            "plugin_general": ['fast_pass', 'fast_error', 'fast_fail', 'long_pass'],
-            "plugin_stopped": ['really_long', 'not_long', 'so_long']
+            # "fuel_smoke": None,
+            # "fuel_sanity": None,
+            "general_test": ['fast_pass', 'fast_error', 'fast_fail', 'long_pass'],
+            "stopped_test": ['really_long', 'not_long', 'so_long']
         }
 
         cls.adapter = adapter(url)
@@ -67,7 +67,7 @@ class AdapterTests(BaseAdapterTest):
     def test_run_testset(self):
         """Verify that test status changes in time from running to success
         """
-        testset = "plugin_general"
+        testset = "general_test"
         cluster_id = 1
 
         self.client.start_testrun(testset, cluster_id)
@@ -76,7 +76,7 @@ class AdapterTests(BaseAdapterTest):
         r = self.client.testruns_last(cluster_id)
 
         assertions = Response([{'status': 'running',
-                                'testset': 'plugin_general',
+                                'testset': 'general_test',
                                 'tests': [
                                     {'id': 'fast_pass', 'status': 'success', 'name': 'fast pass test',
                                      'description': """        This is a simple always pass test
@@ -94,7 +94,7 @@ class AdapterTests(BaseAdapterTest):
 
         r = self.client.testruns_last(cluster_id)
 
-        assertions.plugin_general['status'] = 'finished'
+        assertions.general_test['status'] = 'finished'
         assertions.long_pass['status'] = 'success'
 
         self.compare(r, assertions)
@@ -102,7 +102,7 @@ class AdapterTests(BaseAdapterTest):
     def test_stop_testset(self):
         """Verify that long running testrun can be stopped
         """
-        testset = "plugin_stopped"
+        testset = "stopped_test"
         cluster_id = 2
 
         self.client.start_testrun(testset, cluster_id)
@@ -110,7 +110,7 @@ class AdapterTests(BaseAdapterTest):
         r = self.client.testruns_last(cluster_id)
         assertions = Response([
             {'status': 'running',
-                'testset': 'plugin_stopped',
+                'testset': 'stopped_test',
                 'tests': [
                     {'id': 'not_long', 'status': 'success'},
                     {'id': 'so_long', 'status': 'success'},
@@ -121,14 +121,14 @@ class AdapterTests(BaseAdapterTest):
         self.client.stop_testrun_last(testset, cluster_id)
         r = self.client.testruns_last(cluster_id)
 
-        assertions.plugin_stopped['status'] = 'finished'
+        assertions.stopped_test['status'] = 'finished'
         assertions.really_long['status'] = 'stopped'
         self.compare(r, assertions)
 
     def test_cant_start_while_running(self):
         """Verify that you can't start new testrun for the same cluster_id while previous run is running"""
-        testsets = {"plugin_stopped": None,
-                    "plugin_general": None}
+        testsets = {"stopped_test": None,
+                    "general_test": None}
         cluster_id = 3
 
         for testset in testsets:
@@ -145,7 +145,7 @@ class AdapterTests(BaseAdapterTest):
 
     def test_start_many_runs(self):
         """Verify that you can start 20 testruns in a row with different cluster_id"""
-        testset = "plugin_general"
+        testset = "general_test"
 
         for cluster_id in range(100, 105):
             r = self.client.start_testrun(testset, cluster_id)
@@ -156,7 +156,7 @@ class AdapterTests(BaseAdapterTest):
 
     def test_run_single_test(self):
         """Verify that you can run individual tests from given testset"""
-        testset = "plugin_general"
+        testset = "general_test"
         tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail']
         cluster_id = 50
@@ -164,7 +164,7 @@ class AdapterTests(BaseAdapterTest):
         r = self.client.start_testrun_tests(testset, tests, cluster_id)
         assertions = Response([
             {'status': 'running',
-             'testset': 'plugin_general',
+             'testset': 'general_test',
              'tests': [
                 {'status': 'disabled', 'id': 'fast_error'},
                 {'status': 'wait_running', 'id': 'fast_fail'},
@@ -175,14 +175,14 @@ class AdapterTests(BaseAdapterTest):
         time.sleep(2)
 
         r = self.client.testruns_last(cluster_id)
-        assertions.plugin_general['status'] = 'finished'
+        assertions.general_test['status'] = 'finished'
         assertions.fast_fail['status'] = 'failure'
         assertions.fast_pass['status'] = 'success'
         self.compare(r, assertions)
 
     def test_single_test_restart(self):
         """Verify that you restart individual tests for given testrun"""
-        testset = "plugin_general"
+        testset = "general_test"
         tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail']
         cluster_id = 60
@@ -192,7 +192,7 @@ class AdapterTests(BaseAdapterTest):
         r = self.client.restart_tests_last(testset, tests, cluster_id)
         assertions = Response([
             {'status': 'running',
-                'testset': 'plugin_general',
+                'testset': 'general_test',
                 'tests': [
                     {'id': 'fast_pass',  'status': 'wait_running'},
                     {'id': 'long_pass',  'status': 'success'},
@@ -203,7 +203,7 @@ class AdapterTests(BaseAdapterTest):
         time.sleep(5)
 
         r = self.client.testruns_last(cluster_id)
-        assertions.plugin_general['status'] = 'finished'
+        assertions.general_test['status'] = 'finished'
         assertions.fast_pass['status'] = 'success'
         assertions.fast_fail['status'] = 'failure'
 
@@ -211,7 +211,7 @@ class AdapterTests(BaseAdapterTest):
 
     def test_restart_combinations(self):
         """Verify that you can restart both tests that ran and did not run during single test start"""
-        testset = "plugin_general"
+        testset = "general_test"
         tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail']
         disabled_test = ['functional.dummy_tests.general_test.Dummy_test.test_fast_error', ]
@@ -223,7 +223,7 @@ class AdapterTests(BaseAdapterTest):
         r = self.client.restart_tests_last(testset, disabled_test, cluster_id)
         assertions = Response([
             {'status': 'running',
-             'testset': 'plugin_general',
+             'testset': 'general_test',
              'tests': [
             {'status': 'wait_running', 'id': 'fast_error'},
             {'status': 'failure', 'id': 'fast_fail'},
@@ -234,12 +234,12 @@ class AdapterTests(BaseAdapterTest):
         time.sleep(5)
 
         r = self.client.testruns_last(cluster_id)
-        assertions.plugin_general['status'] = 'finished'
+        assertions.general_test['status'] = 'finished'
         assertions.fast_error['status'] = 'error'
         self.compare(r, assertions)
 
     def test_cant_restart_during_run(self):
-        testset = 'plugin_general'
+        testset = 'general_test'
         tests = ['functional.dummy_tests.general_test.Dummy_test.test_fast_pass',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_fail',
                  'functional.dummy_tests.general_test.Dummy_test.test_fast_pass']
