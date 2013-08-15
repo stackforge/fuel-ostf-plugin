@@ -18,6 +18,7 @@ from pecan import hooks
 from stevedore import extension
 
 from ostf_adapter import storage
+from ostf_adapter.storage import engine
 
 
 LOG = logging.getLogger(__name__)
@@ -47,3 +48,9 @@ class PluginsHook(hooks.PecanHook):
 
     def before(self, state):
         state.request.plugin_manager = self.plugin_manager
+
+
+class SessionHook(hooks.PecanHook):
+
+    def before(self, state):
+        state.request.session = engine.get_session()

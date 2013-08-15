@@ -43,7 +43,8 @@ def setup_config(pecan_config):
 def setup_app(config=None):
     setup_config(config or {})
     app_hooks = [hooks.StorageHook(),
-                 hooks.PluginsHook()]
+                 hooks.PluginsHook(),
+                 hooks.SessionHook()]
     app = pecan.make_app(
         pecan.conf.app.root,
         debug=pecan.conf.debug,

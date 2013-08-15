@@ -24,15 +24,12 @@ class TestTestsController(unittest2.TestCase):
 
     def setUp(self):
         self.fixtures = [models.Test(), models.Test()]
-        self.storage = MagicMock()
-
         self.controller = controllers.TestsController()
 
     def test_get_all(self, request):
-        request.storage = self.storage
-        self.storage.get_tests.return_value = self.fixtures
+        request.session.query().all.return_value =\
+            self.fixtures
         res = self.controller.get_all()
-        self.storage.get_tests.assert_called_once_with()
         self.assertEqual(res, [f.frontend for f in self.fixtures])
 
     def test_get_one(self, request):
@@ -44,14 +41,12 @@ class TestTestSetsController(unittest2.TestCase):
 
     def setUp(self):
         self.fixtures = [models.TestSet(), models.TestSet()]
-        self.storage = MagicMock()
         self.controller = controllers.TestsetsController()
 
     def test_get_all(self, request):
-        request.storage = self.storage
-        self.storage.get_test_sets.return_value = self.fixtures
+        request.session.query().all.return_value =\
+            self.fixtures
         res = self.controller.get_all()
-        self.storage.get_test_sets.assert_called_once_with()
         self.assertEqual(res, [f.frontend for f in self.fixtures])
 
     def test_get_one(self, request):
@@ -69,8 +64,16 @@ class TestTestRunsController(unittest2.TestCase):
         self.controller = controllers.TestrunsController()
 
     def test_get_all(self, request):
-        request.storage = self.storage
-        pass
+        request.session.query().all.return_value =\
+            self.fixtures
+        res = self.controller.get_all()
+        self.assertEqual(res, [f.frontend for f in self.fixtures])
+
+    def test_get_one(self, request):
+        request.session.query().filter_by().first.return_value =\
+            self.fixtures[0]
+        res = self.controller.get_one(1)
+        self.assertEqual(res, self.fixtures[0].frontend)
 
     def test_post(self, request):
         request.storage = self.storage
@@ -106,7 +109,6 @@ class TestTestRunsController(unittest2.TestCase):
             kill_mock.assert_called_once_with(testruns[0])
             self.assertEqual(res, [self.fixtures[0]])
 
-
     def test_put_restarted(self, request):
         request.storage = self.storage
         testruns = [
@@ -123,11 +125,10 @@ class TestTestRunsController(unittest2.TestCase):
             self.assertEqual(res, [self.fixtures[0]])
 
     def test_get_last(self, request):
-        request.storage = self.storage
         cluster_id = 1
-        self.storage.get_last_test_results.return_value = self.fixtures
+        request.session.query().group_by().filter_by.return_value = [10, 11]
+        request.session.query().options().filter.return_value = self.fixtures
         res = self.controller.get_last(cluster_id)
-        self.storage.get_last_test_results.assert_called_once_with(cluster_id)
         self.assertEqual(res, [f.frontend for f in self.fixtures])
 
     def test_run_check_false(self, request):

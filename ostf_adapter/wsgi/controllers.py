@@ -15,8 +15,11 @@
 import json
 import logging
 
-
 from pecan import rest, expose, request
+from ostf_adapter.storage import models
+
+from sqlalchemy import desc, func, asc
+from sqlalchemy.orm import joinedload
 
 LOG = logging.getLogger(__name__)
 
@@ -43,18 +46,27 @@ class TestsController(BaseRestController):
 
     @expose('json')
     def get_all(self):
-        return [item.frontend for item in request.storage.get_tests()]
+        with request.session.begin(subtransactions=True):
+            return [item.frontend for item
+                    in request.session.query(models.Test).all()]
 
 
 class TestsetsController(BaseRestController):
 
     @expose('json')
     def get_one(self, test_set):
-        raise NotImplementedError()
+        with request.session.begin(subtransactions=True):
+            test_set = request.session.query(models.TestSet)\
+                .filter_by(id=test_set).first()
+            if test_set and isinstance(test_set, models.TestSet):
+                return test_set.frontend
+            return {}
 
     @expose('json')
     def get_all(self):
-        return [item.frontend for item in request.storage.get_test_sets()]
+        with request.session.begin(subtransactions=True):
+            return [item.frontend for item
+                    in request.session.query(models.TestSet).all()]
 
 
 class TestrunsController(BaseRestController):
@@ -65,16 +77,29 @@ class TestrunsController(BaseRestController):
 
     @expose('json')
     def get_all(self):
-        raise NotImplementedError()
+        with request.session.begin(subtransactions=True):
+            return [item.frontend for item
+                    in request.session.query(models.TestRun).all()]
 
     @expose('json')
     def get_one(self, test_run_id):
-        raise NotImplementedError()
+        with request.session.begin(subtransactions=True):
+            test_run = request.session.query(models.TestRun)\
+                .filter_by(id=test_run_id).first()
+            if test_run and isinstance(test_run, models.TestRun):
+                return test_run.frontend
+            return {}
 
     @expose('json')
     def get_last(self, cluster_id):
-        return [item.frontend for
-                item in request.storage.get_last_test_results(cluster_id)]
+        with request.session.begin(subtransactions=True):
+            test_run_ids = request.session.query(func.max(models.TestRun.id)) \
+                .group_by(models.TestRun.test_set_id).\
+                filter_by(cluster_id=cluster_id)
+            test_runs = request.session.query(models.TestRun). \
+                options(joinedload('tests')). \
+                filter(models.TestRun.id.in_(test_run_ids))
+            return [item.frontend for item in test_runs]
 
     @expose('json')
     def post(self):

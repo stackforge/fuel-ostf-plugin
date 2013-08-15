@@ -20,6 +20,8 @@ from sqlalchemy.orm import sessionmaker, joinedload, object_mapper
 from sqlalchemy import pool
 
 from ostf_adapter.storage import models
+from ostf_adapter.storage import storage_utils
+from ostf_adapter.storage import engine
 
 
 log = logging.getLogger(__name__)
@@ -45,23 +47,11 @@ class SqlStorage(object):
                                   status=status)
         session.add(test_run)
         for test in tests:
-            session.add(self._copy_test(test, test_run, predefined_tests))
+            session.add(storage_utils.copy_test(
+                test, test_run, predefined_tests))
         session.commit()
         return test_run
 
-    def _copy_test(self, test, test_run, predefined_tests):
-        new_test = models.Test()
-        mapper = object_mapper(test)
-        primary_keys = set([col.key for col in mapper.primary_key])
-        for column in mapper.iterate_properties:
-            if column.key not in primary_keys:
-                setattr(new_test, column.key, getattr(test, column.key))
-        new_test.test_run_id = test_run.id
-        if predefined_tests and new_test.name not in predefined_tests:
-            new_test.status = 'disabled'
-        else:
-            new_test.status = 'wait_running'
-        return new_test
 
     def add_test_set(self, test_set):
         session = self.get_session()
@@ -72,28 +62,12 @@ class SqlStorage(object):
         session.close()
         return new_obj
 
-    def get_test_sets(self):
-        session = self.get_session()
-        test_sets = session.query(models.TestSet).all()
-        session.commit()
-        session.close()
-        return test_sets
-
     def get_test_set(self, test_set):
         session = self.get_session()
         test_set = session.query(models.TestSet).filter_by(id=test_set).first()
         session.commit()
         session.close()
         return test_set
-
-    def get_tests(self):
-        session = self.get_session()
-        tests = session.query(models.Test).order_by(
-            asc(models.Test.test_set_id), asc(models.Test.name)). \
-            filter_by(test_run_id=None).all()
-        session.commit()
-        session.close()
-        return tests
 
     def add_test_for_testset(self, test_set, test_name, data):
         session = self.get_session()
@@ -124,22 +98,6 @@ class SqlStorage(object):
             order_by(desc(models.TestRun.id))
         session.commit()
         session.close()
-        return test_runs
-
-    def get_last_test_results(self, cluster_id):
-        session = self.get_session()
-        test_run_ids = session.query(func.max(models.TestRun.id)) \
-            .group_by(models.TestRun.test_set_id).\
-            filter_by(cluster_id=cluster_id)
-        test_runs = session.query(models.TestRun). \
-            options(joinedload('tests')). \
-            filter(models.TestRun.id.in_(test_run_ids))
-        session.commit()
-        session.close()
-        if not test_runs:
-            msg = 'Database does not contains ' \
-                  'Test Run with ID %s' % cluster_id
-            log.warning(msg)
         return test_runs
 
     def get_test_run(self, test_run_id, joined=False):

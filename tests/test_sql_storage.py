@@ -13,15 +13,9 @@
 #    under the License.
 
 import unittest2
-from ostf_adapter.storage import sql_storage
-from sqlalchemy import pool
 
 
 class TestSqlStorage(unittest2.TestCase):
-
-    def setUp(self):
-        self.storage = sql_storage.SqlStorage('sqlite:///',
-                                              poolclass=pool.QueuePool)
 
     def test_add_test_run(self):
         pass

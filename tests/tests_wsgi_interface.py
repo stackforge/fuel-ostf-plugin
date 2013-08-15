@@ -18,7 +18,6 @@ from webtest import TestApp
 from ostf_adapter.wsgi import app
 import json
 
-# patch.TEST_PREFIX = ''
 
 @patch('ostf_adapter.wsgi.controllers.request')
 class WsgiInterfaceTests(unittest2.TestCase):
@@ -28,7 +27,6 @@ class WsgiInterfaceTests(unittest2.TestCase):
 
     def test_get_all_tests(self, request):
         self.app.get('/v1/tests')
-        request.storage.get_tests.assert_called_once_with()
 
     def test_get_one_test(self, request):
         self.assertRaises(NotImplementedError,
@@ -37,20 +35,15 @@ class WsgiInterfaceTests(unittest2.TestCase):
 
     def test_get_all_testsets(self, request):
         self.app.get('/v1/testsets')
-        request.storage.get_test_sets.assert_called_once_with()
 
     def test_get_one_testset(self, request):
-        self.assertRaises(NotImplementedError,
-                          self.app.get,
-                          '/v1/testsets/1')
+        self.app.get('/v1/testsets/plugin_test')
 
     def test_get_one_testruns(self, request):
-        self.assertRaises(NotImplementedError, self.app.get,
-                          '/v1/testruns/1')
+        self.app.get('/v1/testruns/1')
 
     def test_get_all_testruns(self, request):
-        self.assertRaises(NotImplementedError, self.app.get,
-                          '/v1/testruns')
+        self.app.get('/v1/testruns')
 
     def test_post_testruns(self, request):
         testruns = [
