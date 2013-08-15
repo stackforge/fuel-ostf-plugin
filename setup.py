@@ -46,7 +46,8 @@ test_requires = [
     'six==1.3.0',
     'tox==1.5.0',
     'unittest2',
-    'nose'
+    'nose',
+    'requests'
 ]
 
 setuptools.setup(

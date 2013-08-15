@@ -7,3 +7,5 @@ nosetests.xml
 .tox
 build
 dist
+*.out
+.coverage
