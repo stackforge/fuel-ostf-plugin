@@ -21,6 +21,9 @@ LOG = logging.getLogger(__name__)
 
 
 def after_initialization_environment_hook():
+    """Expect 0 on success by nailgun
+    Exception is good enough signal that something goes wrong
+    """
     alembic_cli.do_apply_migrations()
     nose_discovery.discovery(conf.debug_tests)
     return 0

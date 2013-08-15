@@ -44,7 +44,7 @@ def main():
     log = logging.getLogger(__name__)
 
     root = app.setup_app(config=config)
-
+    nailgun_hooks.nose_discovery.discovery()
     if getattr(cli_args, 'after_init_hook'):
         return nailgun_hooks.after_initialization_environment_hook()
 

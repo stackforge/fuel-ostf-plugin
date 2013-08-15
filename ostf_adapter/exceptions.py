@@ -1,5 +1,0 @@
-
-
-class OstfException(Exception):
-
-    pass

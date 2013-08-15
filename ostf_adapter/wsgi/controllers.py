@@ -17,7 +17,6 @@ import logging
 
 
 from pecan import rest, expose, request
-from ostf_adapter import exceptions
 
 LOG = logging.getLogger(__name__)
 
@@ -91,9 +90,6 @@ class TestrunsController(BaseRestController):
     def _run(self, test_set_data, metadata, tests):
         session = request.storage.get_session()
         test_set = request.storage.get_test_set(test_set_data)
-        if test_set is None:
-            LOG.error('No test set %s.', test_set_data)
-            raise exceptions.OstfException()
         transport = request.plugin_manager[test_set.driver]
         if self._check_last_running(test_set.id, metadata['cluster_id']):
             test_run = request.storage.add_test_run(
