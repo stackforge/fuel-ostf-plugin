@@ -14,7 +14,7 @@
 
 import unittest2
 from ostf_adapter.nose_plugin import nose_discovery
-from mock import patch, MagicMock
+from mock import patch
 from ostf_adapter.storage import models
 
 
@@ -32,20 +32,17 @@ general__profile__ = {
 }
 
 
-@patch('ostf_adapter.nose_plugin.nose_discovery.storage')
+@patch('ostf_adapter.nose_plugin.nose_discovery.engine')
 class TestNoseDiscovery(unittest2.TestCase):
 
     def setUp(self):
         self.fixtures = [models.TestSet(**stopped__profile__),
                          models.TestSet(**general__profile__)]
         self.fixtures_iter = iter(self.fixtures)
-        self.storage = MagicMock()
 
-    def test_discovery(self, storage_mock):
-        storage_mock.get_storage.return_value = self.storage
-        self.storage.add_test_set.side_effect = \
-            lambda *args, **kwargs: next(self.fixtures_iter)
+    def test_discovery(self, engine):
+        engine.get_session().merge.return_value = \
+            lambda *args, **kwargs: self.fixtures_iter.next()
         nose_discovery.discovery(path='functional/dummy_tests')
-        self.assertEqual(self.storage.add_test_set.call_count, 2)
-        self.assertEqual(self.storage.add_test_for_testset.call_count, 8)
+        self.assertEqual(engine.get_session().merge.call_count, 2)
 

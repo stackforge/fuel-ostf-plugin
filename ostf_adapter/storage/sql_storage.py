@@ -15,13 +15,11 @@
 from datetime import datetime
 import logging
 
-from sqlalchemy import create_engine, desc, func, asc
-from sqlalchemy.orm import sessionmaker, joinedload, object_mapper
+from sqlalchemy import create_engine, desc
+from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy import pool
 
 from ostf_adapter.storage import models
-from ostf_adapter.storage import storage_utils
-from ostf_adapter.storage import engine
 
 
 log = logging.getLogger(__name__)
@@ -47,20 +45,9 @@ class SqlStorage(object):
                                   status=status)
         session.add(test_run)
         for test in tests:
-            session.add(storage_utils.copy_test(
-                test, test_run, predefined_tests))
+            session.add(test.copy_test(test_run, predefined_tests))
         session.commit()
         return test_run
-
-
-    def add_test_set(self, test_set):
-        session = self.get_session()
-        test_set_obj = models.TestSet(**test_set)
-        new_obj = session.merge(test_set_obj)
-        session.add(new_obj)
-        session.commit()
-        session.close()
-        return new_obj
 
     def get_test_set(self, test_set):
         session = self.get_session()
@@ -68,19 +55,6 @@ class SqlStorage(object):
         session.commit()
         session.close()
         return test_set
-
-    def add_test_for_testset(self, test_set, test_name, data):
-        session = self.get_session()
-        old_test_obj = session.query(models.Test).filter_by(
-            name=test_name, test_set_id=test_set, test_run_id=None).\
-            update(data, synchronize_session=False)
-        if not old_test_obj:
-            data.update({'test_set_id': test_set,
-                         'name': test_name})
-            test_obj = models.Test(**data)
-            session.add(test_obj)
-        session.commit()
-        session.close()
 
     def get_last_test_run(self, test_set, cluster_id):
         session = self.get_session()
@@ -113,15 +87,6 @@ class SqlStorage(object):
         session.close()
         return test_run
 
-    def add_test_result(
-            self, test_run_id, test_name, data):
-        session = self.get_session()
-        session.query(models.Test). \
-            filter_by(name=test_name, test_run_id=test_run_id). \
-            update(data, synchronize_session=False)
-        session.commit()
-        session.close()
-
     def update_test_run(self, test_run_id, status=None):
         session = self.get_session()
         updated_data = {}
@@ -141,24 +106,6 @@ class SqlStorage(object):
             filter(models.Test.test_run_id == test_run_id,
                    models.Test.status.in_(('running', 'wait_running'))). \
             update({'status': status}, synchronize_session=False)
-        session.commit()
-        session.close()
-
-    def flush_testsets(self):
-        session = self.get_session()
-        session.query(models.Test).filter_by(test_run_id=None).delete()
-        session.query(models.TestSet).delete()
-        session.commit()
-        session.close()
-
-    def update_all_running_test_runs(self, status='finished'):
-        session = self.get_session()
-        session.query(models.TestRun). \
-            filter_by(status='running'). \
-            update({'status': 'finished'}, synchronize_session=False)
-        session.query(models.Test). \
-            filter(models.Test.status.in_(('running', 'wait_running'))). \
-            update({'status': 'stopped'}, synchronize_session=False)
         session.commit()
         session.close()
 

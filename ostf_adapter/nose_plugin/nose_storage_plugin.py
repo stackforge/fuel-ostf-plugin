@@ -16,29 +16,28 @@ from time import time
 import logging
 import os
 
-from nose.plugins import Plugin
+from nose import plugins
 from nose.suite import ContextSuite
 from pecan import conf
 
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.storage import get_storage
+from ostf_adapter.storage import models
+from ostf_adapter.storage import engine
 
 
 LOG = logging.getLogger(__name__)
 
 
-class StoragePlugin(Plugin):
+class StoragePlugin(plugins.Plugin):
     enabled = True
     name = 'storage'
     score = 15000
 
     def __init__(
-            self, test_run_id, cluster_id, discovery=False):
-        self._capture = []
+            self, test_run_id, cluster_id):
         self.test_run_id = test_run_id
         self.cluster_id = cluster_id
-        self.storage = get_storage()
-        self.discovery = discovery
         super(StoragePlugin, self).__init__()
         self._start_time = None
 
@@ -69,28 +68,23 @@ class StoragePlugin(Plugin):
         else:
             data['step'], data['message'] = None, u''
             data['traceback'] = u''
-        if isinstance(test, ContextSuite):
-            for sub_test in test._tests:
-                data['title'], data['description'], data['duration'] = \
-                    nose_utils.get_description(test)
-                self.storage.add_test_result(
-                    self.test_run_id, sub_test.id(), data)
-        else:
-            self.storage.add_test_result(
-                self.test_run_id, test.id(), data)
+
+        session = engine.get_session()
+
+        with session.begin(subtransactions=True):
+
+            if isinstance(test, ContextSuite):
+                for sub_test in test._tests:
+                    data['title'], data['description'], data['duration'] = \
+                        nose_utils.get_description(test)
+                    models.Test.add_result(
+                        session, self.test_run_id, sub_test.id(), data)
+            else:
+                models.Test.add_result(
+                    session, self.test_run_id, test.id(), data)
 
     def addSuccess(self, test, capt=None):
-        if self.discovery:
-            data = dict()
-            data['title'], data['description'], data['duration'] = \
-                nose_utils.get_description(test)
-            data['message'] = None
-            data['step'] = None
-            data['traceback'] = None
-            self.storage.add_test_for_testset(
-                self.test_run_id, test.id(), data)
-        else:
-            self._add_message(test, status='success')
+        self._add_message(test, status='success')
 
     def addFailure(self, test, err):
         LOG.error('%s', test.id(), exc_info=err)

@@ -21,6 +21,8 @@ from ostf_adapter import storage
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
 from ostf_adapter.nose_plugin import nose_test_runner
+from ostf_adapter.storage import engine
+from ostf_adapter.storage import storage_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -30,24 +32,9 @@ class NoseDriver(object):
     def __init__(self):
         self.storage = storage.get_storage()
         self._named_threads = {}
-        self.storage.update_all_running_test_runs()
-
-    # def discovery(self):
-    #     if conf.debug:
-    #         test_sets = nose_utils.parse_json_file('commands.json')
-    #     else:
-    #         test_sets = COMMANDS
-    #     for test_set in test_sets:
-    #         test_set = self.storage.add_test_set(test_set)
-    #         self.tests_discovery(test_set)
-    #
-    # def tests_discovery(self, test_set):
-    #     nose_test_runner.SilentTestProgram(
-    #         defaultTest=test_set.test_path,
-    #         addplugins=[nose_storage_plugin.StoragePlugin(
-    #             test_set.id, '', discovery=True)],
-    #         exit=False,
-    #         argv=['tests_discovery', '--collect-only', '-q'])
+        session = engine.get_session()
+        with session.begin(subtransactions=True):
+            storage_utils.update_all_running_test_runs(session)
 
     def check_current_running(self, unique_id):
         return unique_id in self._named_threads

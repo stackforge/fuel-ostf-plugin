@@ -112,18 +112,32 @@ class TestrunsController(BaseRestController):
             res.append(self._run(test_set, metadata, tests))
         return res
 
+    # def _run(self, test_set_data, metadata, tests):
+    #     session = request.storage.get_session()
+    #     test_set = request.storage.get_test_set(test_set_data)
+    #     transport = request.plugin_manager[test_set.driver]
+    #     if self._check_last_running(test_set.id, metadata['cluster_id']):
+    #         test_run = request.storage.add_test_run(
+    #             session, test_set.id, metadata['cluster_id'], tests=tests)
+    #         transport.obj.run(test_run, test_set)
+    #         data = test_run.frontend
+    #         session.close()
+    #         return data
+    #     return {}
+
     def _run(self, test_set_data, metadata, tests):
-        session = request.storage.get_session()
-        test_set = request.storage.get_test_set(test_set_data)
-        transport = request.plugin_manager[test_set.driver]
-        if self._check_last_running(test_set.id, metadata['cluster_id']):
-            test_run = request.storage.add_test_run(
-                session, test_set.id, metadata['cluster_id'], tests=tests)
-            transport.obj.run(test_run, test_set)
-            data = test_run.frontend
-            session.close()
-            return data
-        return {}
+        with request.session.begin(subtransactions=True):
+            test_set = models.TestSet.get_test_set(
+                request.session, test_set_data)
+            plugin = request.plugin_manager[test_set.driver]
+            if models.TestRun.is_last_running(
+                    request.session, test_set.id, metadata['cluster_id']):
+                test_run = models.TestRun.add_test_run(
+                    request.session, test_set.id,
+                    metadata['cluster_id'], tests=tests)
+                plugin.obj.run(test_run, test_set)
+                return test_run.frontend
+            return {}
 
     @expose('json')
     def put(self):

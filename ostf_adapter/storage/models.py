@@ -13,13 +13,13 @@
 #    under the License.
 
 from datetime import datetime
-import json
 
 import sqlalchemy as sa
+from sqlalchemy import desc
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import joinedload, relationship, object_mapper
 
-from ostf_adapter.storage import fields
+from ostf_adapter.storage import fields, engine
 
 
 BASE = declarative_base()
@@ -69,6 +69,69 @@ class TestRun(BASE):
             test_run_data['tests'] = [test.frontend for test in self.tests]
         return test_run_data
 
+    @classmethod
+    def add_test_run(cls, session, test_set, cluster_id, status='running',
+                     tests=None):
+        predefined_tests = tests or []
+        tests = session.query(Test).filter_by(
+            test_set_id=test_set, test_run_id=None)
+        test_run = cls(test_set_id=test_set, cluster_id=cluster_id,
+                       status=status)
+        session.add(test_run)
+        for test in tests:
+            session.add(test.copy_test(test_run, predefined_tests))
+        return test_run
+
+    @classmethod
+    def get_last_test_run(cls, session, test_set, cluster_id):
+        test_run = session.query(cls). \
+            filter_by(cluster_id=cluster_id, test_set_id=test_set). \
+            order_by(desc(cls.id)).first()
+        return test_run
+
+    @classmethod
+    def get_test_results(cls):
+        session = engine.get_session()
+        test_runs = session.query(cls). \
+            options(joinedload('tests')). \
+            order_by(desc(cls.id))
+        session.commit()
+        session.close()
+        return test_runs
+
+    @classmethod
+    def get_test_run(cls, test_run_id, joined=False):
+        session = engine.get_session()
+        if not joined:
+            test_run = session.query(cls). \
+                filter_by(id=test_run_id).first()
+        else:
+            test_run = session.query(cls). \
+                options(joinedload('tests')). \
+                filter_by(id=test_run_id).first()
+        session.commit()
+        session.close()
+        return test_run
+
+    @classmethod
+    def update_test_run(cls, test_run_id, status=None):
+        session = engine.get_session()
+        updated_data = {}
+        if status:
+            updated_data['status'] = status
+        if status in ['finished']:
+            updated_data['ended_at'] = datetime.utcnow()
+        session.query(cls). \
+            filter(cls.id == test_run_id). \
+            update(updated_data, synchronize_session=False)
+        session.commit()
+        session.close()
+
+    @classmethod
+    def is_last_running(cls, session, test_set, cluster_id):
+        test_run = cls.get_last_test_run(session, test_set, cluster_id)
+        return not bool(test_run) or test_run.is_finished()
+
 
 class TestSet(BASE):
 
@@ -88,6 +151,10 @@ class TestSet(BASE):
     @property
     def frontend(self):
         return {'id': self.id, 'name': self.description}
+
+    @classmethod
+    def get_test_set(cls, session, test_set):
+        return session.query(cls).filter_by(id=test_set).first()
 
 
 class Test(BASE):
@@ -131,3 +198,44 @@ class Test(BASE):
             'status': self.status,
             'taken': self.time_taken
         }
+
+    @classmethod
+    def add_result(cls, session, test_run_id, test_name, data):
+        session.query(cls).\
+            filter_by(name=test_name, test_run_id=test_run_id).\
+            update(data, synchronize_session=False)
+
+    @classmethod
+    def update_running_tests(cls, test_run_id, status='stopped'):
+        session = engine.get_session()
+        session.query(cls). \
+            filter(cls.test_run_id == test_run_id,
+                   cls.status.in_(('running', 'wait_running'))). \
+            update({'status': status}, synchronize_session=False)
+        session.commit()
+        session.close()
+
+    @classmethod
+    def update_test_run_tests(cls, test_run_id,
+                              tests_names, status='wait_running'):
+        session = engine.get_session()
+        session.query(cls). \
+            filter(cls.name.in_(tests_names),
+                   cls.test_run_id == test_run_id). \
+            update({'status': status}, synchronize_session=False)
+        session.commit()
+        session.close()
+
+    def copy_test(self, test_run, predefined_tests):
+        new_test = self.__class__()
+        mapper = object_mapper(self)
+        primary_keys = set([col.key for col in mapper.primary_key])
+        for column in mapper.iterate_properties:
+            if column.key not in primary_keys:
+                setattr(new_test, column.key, getattr(self, column.key))
+        new_test.test_run_id = test_run.id
+        if predefined_tests and new_test.name not in predefined_tests:
+            new_test.status = 'disabled'
+        else:
+            new_test.status = 'wait_running'
+        return new_test
