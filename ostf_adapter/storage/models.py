@@ -46,6 +46,12 @@ class TestRun(BASE):
     test_set = relationship('TestSet', backref='test_runs')
     tests = relationship('Test', backref='test_run', order_by='Test.name')
 
+    def update(self, session, status):
+        self.status = status
+        if status == 'finished':
+            self.ended_at = datetime.utcnow()
+        session.add(self)
+
     @property
     def enabled_tests(self):
         return [test.name for test in self.tests if test.status != 'disabled']
@@ -100,8 +106,7 @@ class TestRun(BASE):
         return test_runs
 
     @classmethod
-    def get_test_run(cls, test_run_id, joined=False):
-        session = engine.get_session()
+    def get_test_run(cls, session, test_run_id, joined=False):
         if not joined:
             test_run = session.query(cls). \
                 filter_by(id=test_run_id).first()
@@ -109,13 +114,10 @@ class TestRun(BASE):
             test_run = session.query(cls). \
                 options(joinedload('tests')). \
                 filter_by(id=test_run_id).first()
-        session.commit()
-        session.close()
         return test_run
 
     @classmethod
-    def update_test_run(cls, test_run_id, status=None):
-        session = engine.get_session()
+    def update_test_run(cls, session, test_run_id, status=None):
         updated_data = {}
         if status:
             updated_data['status'] = status
@@ -124,8 +126,6 @@ class TestRun(BASE):
         session.query(cls). \
             filter(cls.id == test_run_id). \
             update(updated_data, synchronize_session=False)
-        session.commit()
-        session.close()
 
     @classmethod
     def is_last_running(cls, session, test_set, cluster_id):
@@ -206,25 +206,19 @@ class Test(BASE):
             update(data, synchronize_session=False)
 
     @classmethod
-    def update_running_tests(cls, test_run_id, status='stopped'):
-        session = engine.get_session()
+    def update_running_tests(cls, session, test_run_id, status='stopped'):
         session.query(cls). \
             filter(cls.test_run_id == test_run_id,
                    cls.status.in_(('running', 'wait_running'))). \
             update({'status': status}, synchronize_session=False)
-        session.commit()
-        session.close()
 
     @classmethod
-    def update_test_run_tests(cls, test_run_id,
+    def update_test_run_tests(cls, session, test_run_id,
                               tests_names, status='wait_running'):
-        session = engine.get_session()
         session.query(cls). \
             filter(cls.name.in_(tests_names),
                    cls.test_run_id == test_run_id). \
             update({'status': status}, synchronize_session=False)
-        session.commit()
-        session.close()
 
     def copy_test(self, test_run, predefined_tests):
         new_test = self.__class__()

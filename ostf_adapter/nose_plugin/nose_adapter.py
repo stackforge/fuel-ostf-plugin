@@ -21,7 +21,7 @@ from ostf_adapter import storage
 from ostf_adapter.nose_plugin import nose_utils
 from ostf_adapter.nose_plugin import nose_storage_plugin
 from ostf_adapter.nose_plugin import nose_test_runner
-from ostf_adapter.storage import engine
+from ostf_adapter.storage import engine, models
 from ostf_adapter.storage import storage_utils
 
 
@@ -30,7 +30,6 @@ LOG = logging.getLogger(__name__)
 
 class NoseDriver(object):
     def __init__(self):
-        self.storage = storage.get_storage()
         self._named_threads = {}
         session = engine.get_session()
         with session.begin(subtransactions=True):
@@ -55,6 +54,7 @@ class NoseDriver(object):
             self._run_tests, test_run.id, test_run.cluster_id, argv_add)
 
     def _run_tests(self, test_run_id, cluster_id, argv_add):
+        session = engine.get_session()
         try:
             nose_test_runner.SilentTestProgram(
                 addplugins=[nose_storage_plugin.StoragePlugin(
@@ -65,9 +65,11 @@ class NoseDriver(object):
         except Exception, e:
             LOG.exception('Test run: %s\n', test_run_id)
         finally:
-            self.storage.update_test_run(test_run_id, status='finished')
+            models.TestRun.update_test_run(
+                session, test_run_id, status='finished')
 
     def kill(self, test_run_id, cluster_id, cleanup=None):
+        session = engine.get_session()
         if test_run_id in self._named_threads:
 
             self._named_threads[test_run_id].terminate()
@@ -80,12 +82,14 @@ class NoseDriver(object):
                     cluster_id,
                     cleanup)
             else:
-                self.storage.update_test_run(test_run_id, status='finished')
+                models.TestRun.update_test_run(
+                    session, test_run_id, status='finished')
 
             return True
         return False
 
     def _clean_up(self, test_run_id, external_id, cleanup):
+        session = engine.get_session()
         try:
             module_obj = __import__(cleanup, -1)
 
@@ -99,4 +103,5 @@ class NoseDriver(object):
             LOG.exception('EXCEPTION IN CLEANUP')
 
         finally:
-            self.storage.update_test_run(test_run_id, status='finished')
+            models.TestRun.update_test_run(
+                session, test_run_id, status='finished')

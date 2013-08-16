@@ -45,7 +45,8 @@ class WsgiInterfaceTests(unittest2.TestCase):
     def test_get_all_testruns(self, request):
         self.app.get('/v1/testruns')
 
-    def test_post_testruns(self, request):
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_post_testruns(self, models, request):
         testruns = [
             {'testset': 'test_simple',
              'metadata': {'cluster_id': 3}
@@ -54,18 +55,18 @@ class WsgiInterfaceTests(unittest2.TestCase):
              'metadata': {'cluster_id': 4}
             }]
         request.body = json.dumps(testruns)
-        request.storage.add_test_run.return_value = MagicMock(frontend={})
+        models.TestRun.add_test_run.return_value = MagicMock(frontend={})
         self.app.post_json('/v1/testruns', testruns)
 
     def test_put_testruns(self, request):
         testruns = [
             {'id': 2,
              'metadata': {'cluster_id': 3},
-             'status': 'restarted'
+             'status': 'non_exist'
             },
             {'id': 1,
              'metadata': {'cluster_id': 4},
-             'status': 'stopped'
+             'status': 'non_exist'
             }]
         request.body = json.dumps(testruns)
         request.storage.get_test_run.return_value = MagicMock(frontend={})

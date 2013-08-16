@@ -17,7 +17,6 @@ import logging
 from pecan import hooks
 from stevedore import extension
 
-from ostf_adapter import storage
 from ostf_adapter.storage import engine
 
 
@@ -29,13 +28,13 @@ class ExceptionHandlingHook(hooks.PecanHook):
         LOG.exception('Pecan state %s', state)
 
 
-class StorageHook(hooks.PecanHook):
-    def __init__(self):
-        super(StorageHook, self).__init__()
-        self.storage = storage.get_storage()
-
-    def before(self, state):
-        state.request.storage = self.storage
+# class StorageHook(hooks.PecanHook):
+#     def __init__(self):
+#         super(StorageHook, self).__init__()
+#         self.storage = storage.get_storage()
+#
+#     def before(self, state):
+#         state.request.storage = self.storage
 
 
 class PluginsHook(hooks.PecanHook):

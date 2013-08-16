@@ -18,8 +18,7 @@ import os
 
 from ostf_adapter.nose_plugin import nose_test_runner
 from ostf_adapter.nose_plugin import nose_utils
-from ostf_adapter.storage import engine
-from ostf_adapter.storage import models
+from ostf_adapter.storage import engine, models
 
 
 CORE_PATH = 'fuel_health'

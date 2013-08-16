@@ -58,6 +58,7 @@ class TestTestRunsController(unittest2.TestCase):
     def setUp(self):
         self.fixtures = [models.TestRun(status='finished'),
                          models.TestRun(status='running')]
+        self.fixtures[0].test_set = models.TestSet(driver='nose')
         self.storage = MagicMock()
         self.plugin = MagicMock()
         self.session = MagicMock()
@@ -131,67 +132,37 @@ class TestTestRunsController(unittest2.TestCase):
         res = self.controller.get_last(cluster_id)
         self.assertEqual(res, [f.frontend for f in self.fixtures])
 
-    def test_run_check_false(self, request):
-        request.storage = self.storage
-        self.storage.get_session.return_value = self.session
-        with patch.object(self.controller, '_check_last_running') as check:
-            check.return_value = False
-            res = self.controller._run(
-                'plugin_stopped',  {'cluster_id': 4}, [])
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_run_check_false(self, models, request):
+        models.TestRun.is_last_running.return_value = False
+        res = self.controller._run(
+            'plugin_stopped',  {'cluster_id': 4}, [])
         self.assertEqual(res, {})
 
-    def test_run_check_true(self, request):
-        request.storage = self.storage
-        self.storage.add_test_run.return_value = self.fixtures[0]
-        with patch.object(self.controller, '_check_last_running') as check:
-            check.return_value = True
-            res = self.controller._run(
-                'plugin_stopped',  {'cluster_id': 4}, [])
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_run_check_true(self, models, request):
+        models.TestRun.is_last_running.return_value = True
+        models.TestRun.add_test_run.return_value = self.fixtures[0]
+        res = self.controller._run(
+            'plugin_stopped',  {'cluster_id': 4}, [])
         self.assertEqual(res, self.fixtures[0].frontend)
 
-    def test_kill(self, request):
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_kill(self, models, request):
         test_run = {'id': 2,
              'metadata': {'cluster_id': 3},
              'status': 'stopped'
             }
-        request.storage = self.storage
-        self.storage.get_test_run.return_value = self.fixtures[0]
+        models.TestRun.get_test_run.return_value = self.fixtures[0]
         res = self.controller._kill(test_run)
         self.assertEqual(res, self.fixtures[0].frontend)
 
-    def test_restart(self, request):
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_restart(self, models, request):
         test_run = {'id': 2,
             'metadata': {'cluster_id': 3},
             'status': 'restarted'
             }
-        request.storage = self.storage
-        self.storage.get_test_run.return_value = self.fixtures[0]
-        with patch.object(
-                self.controller, '_check_last_running') as check_mock:
-            check_mock.return_value = True
-            res = self.controller._restart(test_run)
-            self.assertEqual(res, self.fixtures[0].frontend)
-
-    def test_check_last_running_none(self, request):
-        test_set = 'test_simple'
-        cluster_id = 1
-        request.storage = self.storage
-        self.storage.get_last_test_run.return_value = None
-        res = self.controller._check_last_running(test_set, cluster_id)
-        self.assertTrue(res)
-
-    def test_check_last_running_true(self, request):
-        test_set = 'test_simple'
-        cluster_id = 1
-        request.storage = self.storage
-        self.storage.get_last_test_run.return_value = self.fixtures[0]
-        res = self.controller._check_last_running(test_set, cluster_id)
-        self.assertTrue(res)
-
-    def test_check_last_running_false(self, request):
-        test_set = 'test_simple'
-        cluster_id = 1
-        request.storage = self.storage
-        self.storage.get_last_test_run.return_value = self.fixtures[1]
-        res = self.controller._check_last_running(test_set, cluster_id)
-        self.assertFalse(res)
+        models.TestRun.get_test_run.return_value = self.fixtures[0]
+        res = self.controller._restart(test_run)
+        self.assertEqual(res, self.fixtures[0].frontend)

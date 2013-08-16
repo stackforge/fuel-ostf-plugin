@@ -21,7 +21,6 @@ from nose.suite import ContextSuite
 from pecan import conf
 
 from ostf_adapter.nose_plugin import nose_utils
-from ostf_adapter.storage import get_storage
 from ostf_adapter.storage import models
 from ostf_adapter.storage import engine
 
