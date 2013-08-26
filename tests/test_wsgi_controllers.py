@@ -76,7 +76,8 @@ class TestTestRunsController(unittest2.TestCase):
         res = self.controller.get_one(1)
         self.assertEqual(res, self.fixtures[0].frontend)
 
-    def test_post(self, request):
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_post(self, models, request):
         request.storage = self.storage
         testruns = [
             {'testset': 'test_simple',
@@ -86,15 +87,15 @@ class TestTestRunsController(unittest2.TestCase):
              'metadata': {'cluster_id': 4}
             }]
         request.body = json.dumps(testruns)
-        fixtures_iterable = iter(self.fixtures)
-        with patch.object(self.controller, '_run') as run_mock:
-            run_mock.side_effect = \
-                lambda *args, **kwargs: fixtures_iterable.next()
-            res = self.controller.post()
-            self.assertEqual(run_mock.call_count, 2)
-            self.assertEqual(res, self.fixtures)
+        fixtures_iterable = (f.frontend for f in self.fixtures)
 
-    def test_put_stopped(self, request):
+        models.TestRun.start.side_effect = \
+            lambda *args, **kwargs: fixtures_iterable.next()
+        res = self.controller.post()
+        self.assertEqual(res, [f.frontend for f in self.fixtures])
+
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_put_stopped(self, models, request):
         request.storage = self.storage
         testruns = [
             {'id': 1,
@@ -103,14 +104,13 @@ class TestTestRunsController(unittest2.TestCase):
             }]
         request.body = json.dumps(testruns)
 
-        with patch.object(self.controller, '_kill') as kill_mock:
-            kill_mock.side_effect = \
-                lambda *args, **kwargs: self.fixtures[0]
-            res = self.controller.put()
-            kill_mock.assert_called_once_with(testruns[0])
-            self.assertEqual(res, [self.fixtures[0]])
+        models.TestRun.get_test_run().stop.side_effect = \
+            lambda *args, **kwargs: self.fixtures[0].frontend
+        res = self.controller.put()
+        self.assertEqual(res, [self.fixtures[0].frontend])
 
-    def test_put_restarted(self, request):
+    @patch('ostf_adapter.wsgi.controllers.models')
+    def test_put_restarted(self, models, request):
         request.storage = self.storage
         testruns = [
             {'id': 1,
@@ -119,11 +119,10 @@ class TestTestRunsController(unittest2.TestCase):
             }]
         request.body = json.dumps(testruns)
 
-        with patch.object(self.controller, '_restart') as restart_mock:
-            restart_mock.side_effect = lambda *args, **kwargs: self.fixtures[0]
-            res = self.controller.put()
-            restart_mock.assert_called_once_with(testruns[0])
-            self.assertEqual(res, [self.fixtures[0]])
+        models.TestRun.get_test_run().restart.side_effect = \
+            lambda *args, **kwargs: self.fixtures[0].frontend
+        res = self.controller.put()
+        self.assertEqual(res, [self.fixtures[0].frontend])
 
     def test_get_last(self, request):
         cluster_id = 1
@@ -131,38 +130,3 @@ class TestTestRunsController(unittest2.TestCase):
         request.session.query().options().filter.return_value = self.fixtures
         res = self.controller.get_last(cluster_id)
         self.assertEqual(res, [f.frontend for f in self.fixtures])
-
-    @patch('ostf_adapter.wsgi.controllers.models')
-    def test_run_check_false(self, models, request):
-        models.TestRun.is_last_running.return_value = False
-        res = self.controller._run(
-            'plugin_stopped',  {'cluster_id': 4}, [])
-        self.assertEqual(res, {})
-
-    @patch('ostf_adapter.wsgi.controllers.models')
-    def test_run_check_true(self, models, request):
-        models.TestRun.is_last_running.return_value = True
-        models.TestRun.add_test_run.return_value = self.fixtures[0]
-        res = self.controller._run(
-            'plugin_stopped',  {'cluster_id': 4}, [])
-        self.assertEqual(res, self.fixtures[0].frontend)
-
-    @patch('ostf_adapter.wsgi.controllers.models')
-    def test_kill(self, models, request):
-        test_run = {'id': 2,
-             'metadata': {'cluster_id': 3},
-             'status': 'stopped'
-            }
-        models.TestRun.get_test_run.return_value = self.fixtures[0]
-        res = self.controller._kill(test_run)
-        self.assertEqual(res, self.fixtures[0].frontend)
-
-    @patch('ostf_adapter.wsgi.controllers.models')
-    def test_restart(self, models, request):
-        test_run = {'id': 2,
-            'metadata': {'cluster_id': 3},
-            'status': 'restarted'
-            }
-        models.TestRun.get_test_run.return_value = self.fixtures[0]
-        res = self.controller._restart(test_run)
-        self.assertEqual(res, self.fixtures[0].frontend)

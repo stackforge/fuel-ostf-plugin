@@ -112,8 +112,9 @@ class TestrunsController(BaseRestController):
             with request.session.begin(subtransactions=True):
                 test_set = models.TestSet.get_test_set(
                     request.session, test_set)
-                res.append(test_set.start_test_run(
-                    request.session, metadata, tests))
+                test_run = models.TestRun.start(
+                    request.session, test_set, metadata, tests)
+                res.append(test_run)
         return res
 
     @expose('json')
