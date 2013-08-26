@@ -109,7 +109,11 @@ class TestrunsController(BaseRestController):
             test_set = test_run['testset']
             metadata = test_run['metadata']
             tests = test_run.get('tests', [])
-            res.append(self._run(test_set, metadata, tests))
+            with request.session.begin(subtransactions=True):
+                test_set = models.TestSet.get_test_set(
+                    request.session, test_set)
+                res.append(test_set.start_test_run(
+                    request.session, metadata, tests))
         return res
 
     @expose('json')
@@ -118,52 +122,12 @@ class TestrunsController(BaseRestController):
         data = []
         for test_run in test_runs:
             status = test_run.get('status')
-            if status == 'stopped':
-                data.append(self._kill(test_run))
-            elif status == 'restarted':
-                data.append(self._restart(test_run))
-        return data
-
-    def _run(self, test_set_data, metadata, tests):
-        with request.session.begin(subtransactions=True):
-            test_set = models.TestSet.get_test_set(
-                request.session, test_set_data)
-            plugin = request.plugin_manager[test_set.driver]
-            if models.TestRun.is_last_running(
-                    request.session, test_set.id, metadata['cluster_id']):
-                test_run = models.TestRun.add_test_run(
-                    request.session, test_set.id,
-                    metadata['cluster_id'], tests=tests)
-                plugin.obj.run(test_run, test_set)
-                return test_run.frontend
-            return {}
-
-    def _restart(self, test_run):
-        with request.session.begin(subtransactions=True):
-            tests = test_run.get('tests', [])
-            test_run = models.TestRun.get_test_run(request.session,
+            tests=test_run.get('tests', [])
+            with request.session.begin(subtransactions=True):
+                test_run = models.TestRun.get_test_run(request.session,
                                                    test_run['id'])
-            if models.TestRun.is_last_running(request.session,
-                                              test_run.test_set_id,
-                                              test_run.cluster_id):
-                plugin = request.plugin_manager[test_run.test_set.driver]
-                test_run.update(request.session, 'running')
-                if tests:
-                    models.Test.update_test_run_tests(
-                        request.session, test_run.id, tests)
-                plugin.obj.run(test_run, test_run.test_set, tests)
-                return test_run.frontend
-            return {}
-
-    def _kill(self, test_run):
-        with request.session.begin(subtransactions=True):
-            test_run = models.TestRun.get_test_run(
-                request.session, test_run['id'])
-            transport = request.plugin_manager[test_run.test_set.driver]
-            killed = transport.obj.kill(
-                test_run.id, test_run.cluster_id,
-                cleanup=test_run.test_set.cleanup_path)
-            if killed:
-                models.Test.update_running_tests(
-                    request.session, test_run.id, status='stopped')
-            return test_run.frontend
+                if status == 'stopped':
+                    data.append(test_run.stop(request.session))
+                elif status == 'restarted':
+                    data.append(test_run.restart(request.session, tests=tests))
+        return data

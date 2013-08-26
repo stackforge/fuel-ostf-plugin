@@ -30,6 +30,7 @@ LOG = logging.getLogger(__name__)
 
 class NoseDriver(object):
     def __init__(self):
+        LOG.warning('WTF')
         self._named_threads = {}
         session = engine.get_session()
         with session.begin(subtransactions=True):

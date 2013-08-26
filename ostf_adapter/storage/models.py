@@ -20,6 +20,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import joinedload, relationship, object_mapper
 
 from ostf_adapter.storage import fields, engine
+from ostf_adapter import nose_plugin
 
 
 BASE = declarative_base()
@@ -132,6 +133,35 @@ class TestRun(BASE):
         test_run = cls.get_last_test_run(session, test_set, cluster_id)
         return not bool(test_run) or test_run.is_finished()
 
+    def restart(self, session, tests=None):
+        """Restart test run with
+            if tests given they will be enabled
+        """
+        if TestRun.is_last_running(session,
+                                  self.test_set_id,
+                                  self.cluster_id):
+            plugin = nose_plugin.get_plugin(self.test_set.driver)
+            self.update(session, 'running')
+            if tests:
+                Test.update_test_run_tests(
+                    session, self.id, tests)
+            plugin.run(self, self.test_set, tests)
+            return self.frontend
+        return {}
+
+    def stop(self, session):
+        """Stop test run if running
+        """
+        plugin = nose_plugin.get_plugin(self.test_set.driver)
+        killed = plugin.kill(
+            self.id, self.cluster_id,
+            cleanup=self.test_set.cleanup_path)
+        if killed:
+            Test.update_running_tests(
+                session, self.id, status='stopped')
+        return self.frontend
+
+
 
 class TestSet(BASE):
 
@@ -155,6 +185,19 @@ class TestSet(BASE):
     @classmethod
     def get_test_set(cls, session, test_set):
         return session.query(cls).filter_by(id=test_set).first()
+
+    def start_test_run(self, session, metadata, tests):
+        plugin = nose_plugin.get_plugin(self.driver)
+        if TestRun.is_last_running(session, self.id,
+                                   metadata['cluster_id']):
+            test_run = TestRun.add_test_run(
+                session, self.id,
+                metadata['cluster_id'], tests=tests)
+            plugin.run(test_run, self)
+            return test_run.frontend
+        return {}
+
+
 
 
 class Test(BASE):
