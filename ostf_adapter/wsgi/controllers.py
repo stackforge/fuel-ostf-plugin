@@ -105,11 +105,12 @@ class TestrunsController(BaseRestController):
     def post(self):
         test_runs = json.loads(request.body)
         res = []
-        for test_run in test_runs:
-            test_set = test_run['testset']
-            metadata = test_run['metadata']
-            tests = test_run.get('tests', [])
-            with request.session.begin(subtransactions=True):
+        with request.session.begin(subtransactions=True):
+            for test_run in test_runs:
+                test_set = test_run['testset']
+                metadata = test_run['metadata']
+                tests = test_run.get('tests', [])
+
                 test_set = models.TestSet.get_test_set(
                     request.session, test_set)
                 test_run = models.TestRun.start(
@@ -121,10 +122,10 @@ class TestrunsController(BaseRestController):
     def put(self):
         test_runs = json.loads(request.body)
         data = []
-        for test_run in test_runs:
-            status = test_run.get('status')
-            tests=test_run.get('tests', [])
-            with request.session.begin(subtransactions=True):
+        with request.session.begin(subtransactions=True):
+            for test_run in test_runs:
+                status = test_run.get('status')
+                tests=test_run.get('tests', [])
                 test_run = models.TestRun.get_test_run(request.session,
                                                    test_run['id'])
                 if status == 'stopped':
